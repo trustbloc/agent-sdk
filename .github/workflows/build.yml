@@ -10,7 +10,7 @@ on:
 jobs:
   publish:
     name: Publish images and packages
-    if: github.event_name == 'push' && (github.repository == 'trustbloc/agent-sdk' && github.ref == 'refs/heads/master')
+    #if: github.event_name == 'push' && (github.repository == 'trustbloc/agent-sdk' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-18.04
     timeout-minutes: 10
     steps:
@@ -21,7 +21,7 @@ jobs:
         id: go
 
       - name: Setup Node.js
-        uses: actions/setup-node@v1.4.0
+        uses: actions/setup-node@v1.4.4
         with:
           node-version: 12.14.x
           registry-url: "https://npm.pkg.github.com"
@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Publish npm packages
-        working-directory: ./cmd/aries-js-worker
+        working-directory: ./cmd/agent-js-worker
         run: |
           npm install
           npm publish
