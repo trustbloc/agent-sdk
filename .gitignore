@@ -28,3 +28,6 @@ coverage.txt
 # Exclude build directory
 .build
 *.log
+
+node_modules
+/dist
