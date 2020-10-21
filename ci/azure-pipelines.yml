@@ -63,4 +63,10 @@ jobs:
     steps:
       - template: azp-dependencies.yml
       - checkout: self
-      - bash: echo "Publish ..."
+      - bash: |
+          cd ./cmd/agent-js-worker
+          echo '//npm.pkg.github.com/:_authToken=${NPM_TOKEN}' > ~/.npmrc
+          npm install
+          npm publish
+        env:
+          NPM_TOKEN: $(DOCKER_PASSWORD)
