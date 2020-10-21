@@ -10,7 +10,7 @@ on:
 jobs:
   publish:
     name: Publish images and packages
-    if: github.event_name == 'push' && ((github.repository == 'trustbloc/agent-sdk' && github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && (github.repository == 'trustbloc/agent-sdk' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-18.04
     timeout-minutes: 10
     steps:
