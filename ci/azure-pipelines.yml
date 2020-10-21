@@ -1,0 +1,66 @@
+# Copyright SecureKey Technologies Inc. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+
+name: $(SourceBranchName)-$(Date:yyyyMMdd).$(Rev:r)
+trigger:
+  - master
+pr:
+  - master
+variables:
+  GO_VERSION: 1.15
+  GOPATH: $(Agent.BuildDirectory)/go
+
+jobs:
+  - job: Checks
+    pool:
+      vmImage: ubuntu-18.04
+    timeoutInMinutes: 30
+    steps:
+      - template: azp-dependencies.yml
+      - checkout: self
+      - bash: |
+          echo '//npm.pkg.github.com/:_authToken=${DOCKER_PASSWORD}' > ~/.npmrc
+          echo '@hyperledger:registry=https://npm.pkg.github.com' >> ~/.npmrc
+          echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
+          make checks
+        env:
+          DOCKER_PASSWORD: $(DOCKER_PASSWORD)
+        displayName: Run checks
+  - job: UnitTest
+    pool:
+      vmImage: ubuntu-18.04
+    timeoutInMinutes: 30
+    steps:
+      - template: azp-dependencies.yml
+      - checkout: self
+      - script: make unit-test
+        displayName: Run unit test
+      - script: bash <(curl https://codecov.io/bash) -t $CODECOV_UPLOAD_TOKEN
+        env:
+          CODECOV_UPLOAD_TOKEN: $(CODECOV_UPLOAD_TOKEN)
+        displayName: Upload coverage to Codecov
+
+  - job: UnitTestWasm
+    pool:
+      vmImage: ubuntu-18.04
+    timeoutInMinutes: 30
+    steps:
+      - template: azp-dependencies.yml
+      - checkout: self
+      - script: make unit-test-wasm
+        displayName: Run unit test wasm
+  - job: Publish
+    dependsOn:
+      - Checks
+      - UnitTest
+      - UnitTestWasm
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+    pool:
+      vmImage: ubuntu-18.04
+    timeoutInMinutes: 30
+    steps:
+      - template: azp-dependencies.yml
+      - checkout: self
+      - bash: echo "Publish ..."
