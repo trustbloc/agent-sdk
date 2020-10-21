@@ -1,5 +1,5 @@
 {
-  "name": "@trustbloc/agent-sdk-js-worker",
+  "name": "@trustbloc/agent-sdk",
   "version": "0.1.0",
   "description": "TrustBloc Agent Wasm API",
   "main": "dist/web/agent.js",
