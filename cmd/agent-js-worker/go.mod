@@ -14,6 +14,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/trustbloc/agent-sdk v0.0.0
 	github.com/trustbloc/edge-core v0.1.5-0.20200916124536-c32454a16108
+	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201020134433-7a5917ab71d7
 )
 
 replace github.com/trustbloc/agent-sdk => ../../
