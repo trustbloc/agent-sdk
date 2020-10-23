@@ -19,19 +19,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
 	"github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb"
 	ariesctrl "github.com/hyperledger/aries-framework-go/pkg/controller"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/messaging/msghandler"
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
+	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
-
 	"github.com/mitchellh/mapstructure"
-	"github.com/trustbloc/edge-core/pkg/log"
-
 	agentctrl "github.com/trustbloc/agent-sdk/pkg/controller"
+	"github.com/trustbloc/edge-core/pkg/log"
+	"github.com/trustbloc/trustbloc-did-method/pkg/vdri/trustbloc"
 )
 
 var logger = log.New("agent-js-worker")
@@ -79,6 +78,7 @@ type agentStartOpts struct {
 	LogLevel             string   `json:"log-level"`
 	DBNamespace          string   `json:"db-namespace"`
 	BlocDomain           string   `json:"blocDomain"`
+	TrustblocResolver    string   `json:"trustbloc-resolver"`
 	SDSServerURL         string   `json:"sdsServerURL"`
 }
 
@@ -425,6 +425,50 @@ func startOpts(payload map[string]interface{}) (*agentStartOpts, error) {
 	return opts, nil
 }
 
+func createVDRs(resolvers []string, blocDomain, trustblocResolver string) ([]vdr.VDR, error) {
+	const numPartsResolverOption = 2
+	// set maps resolver to its methods
+	// e.g the set of ["trustbloc@http://resolver.com", "v1@http://resolver.com"] will be
+	// {"http://resolver.com": {"trustbloc":{}, "v1":{} }}
+	set := make(map[string]map[string]struct{})
+
+	for _, resolver := range resolvers {
+		r := strings.Split(resolver, "@")
+		if len(r) != numPartsResolverOption {
+			return nil, fmt.Errorf("invalid http resolver options found: %s", resolver)
+		}
+
+		if set[r[1]] == nil {
+			set[r[1]] = map[string]struct{}{}
+		}
+
+		set[r[1]][r[0]] = struct{}{}
+	}
+
+	var VDRs []vdr.VDR
+
+	for url := range set {
+		resolverVDR, err := httpbinding.New(url,
+			httpbinding.WithAccept(func(method string) bool {
+				_, ok := set[url][method]
+				return ok
+			}))
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to create new universal resolver vdr: %w", err)
+		}
+
+		VDRs = append(VDRs, resolverVDR)
+	}
+
+	VDRs = append(VDRs, trustbloc.New(
+		trustbloc.WithDomain(blocDomain),
+		trustbloc.WithResolverURL(trustblocResolver),
+	))
+
+	return VDRs, nil
+}
+
 func agentOpts(opts *agentStartOpts) ([]aries.Option, error) {
 	msgHandler := msghandler.NewRegistrar()
 
@@ -438,6 +482,15 @@ func agentOpts(opts *agentStartOpts) ([]aries.Option, error) {
 	store, err := jsindexeddb.NewProvider(opts.DBNamespace)
 	if err != nil {
 		return nil, err
+	}
+
+	VDRs, err := createVDRs(opts.HTTPResolvers, opts.BlocDomain, opts.TrustblocResolver)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range VDRs {
+		options = append(options, aries.WithVDR(VDRs[i]))
 	}
 
 	options = append(options, aries.WithStoreProvider(store))
@@ -458,41 +511,7 @@ func agentOpts(opts *agentStartOpts) ([]aries.Option, error) {
 		}
 	}
 
-	if len(opts.HTTPResolvers) > 0 {
-		rsopts, err := getResolverOpts(opts.HTTPResolvers)
-		if err != nil {
-			return nil, fmt.Errorf("failed to prepare http resolver opts : %w", err)
-		}
-
-		options = append(options, rsopts...)
-	}
-
 	return options, nil
-}
-
-func getResolverOpts(httpResolvers []string) ([]aries.Option, error) {
-	var opts []aries.Option
-
-	const numPartsResolverOption = 2
-
-	if len(httpResolvers) > 0 {
-		for _, httpResolver := range httpResolvers {
-			r := strings.Split(httpResolver, "@")
-			if len(r) != numPartsResolverOption {
-				return nil, fmt.Errorf("invalid http resolver options found")
-			}
-
-			httpVDRI, err := httpbinding.New(r[1],
-				httpbinding.WithAccept(func(method string) bool { return method == r[0] }))
-			if err != nil {
-				return nil, fmt.Errorf("failed to setup http resolver :  %w", err)
-			}
-
-			opts = append(opts, aries.WithVDR(httpVDRI))
-		}
-	}
-
-	return opts, nil
 }
 
 func setLogLevel(logLevel string) error {
