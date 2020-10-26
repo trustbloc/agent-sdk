@@ -12,12 +12,13 @@ import (
 	"io"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	"github.com/trustbloc/edge-core/pkg/log"
+	didclient "github.com/trustbloc/trustbloc-did-method/pkg/did"
+
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/internal/cmdutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/internal/logutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/sdscomm"
-	"github.com/trustbloc/edge-core/pkg/log"
-	didclient "github.com/trustbloc/trustbloc-did-method/pkg/did"
 )
 
 var logger = log.New("agent-sdk-didclient")

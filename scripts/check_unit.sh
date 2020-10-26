@@ -23,3 +23,10 @@ fi
 PKGS=`go list github.com/trustbloc/agent-sdk/... 2> /dev/null`
 go test $PKGS -count=1 -race -coverprofile=profile.out -covermode=atomic -timeout=10m
 amend_coverage_file
+
+# Running http server unit tests
+cd cmd/http-server
+PKGS=`go list github.com/trustbloc/agent-sdk/cmd/http-server/... 2> /dev/null`
+go test $PKGS -count=1 -race -coverprofile=profile.out -covermode=atomic -timeout=10m
+amend_coverage_file
+cd "$pwd" || exit

@@ -18,3 +18,5 @@ fi
 
 echo "Linting top-level module..."
 ${DOCKER_CMD} run --rm -v $(pwd):/opt/workspace -w /opt/workspace golangci/golangci-lint:$GOLANGCI_LINT_VER golangci-lint run
+echo "Linting http-server module..."
+${DOCKER_CMD} run --rm -v $(pwd):/opt/workspace -w /opt/workspace/cmd/http-server golangci/golangci-lint:$GOLANGCI_LINT_VER golangci-lint run -c ../../.golangci.yml

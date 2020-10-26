@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/internal/cmdutil"
 )
