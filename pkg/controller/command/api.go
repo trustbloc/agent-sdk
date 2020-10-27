@@ -3,6 +3,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+// Package command provides commands for rest/wasm/cli usage.
 package command
 
 import (

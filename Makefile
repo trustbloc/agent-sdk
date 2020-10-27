@@ -4,9 +4,18 @@
 
 
 GOBIN_PATH             = $(abspath .)/build/bin
+ARIES_AGENT_REST_PATH=cmd/agent-rest
+
+# Namespace for the agent images
+DOCKER_OUTPUT_NS   ?= docker.pkg.github.com
+REPO_IMAGE_NAME   ?= trustbloc/agent-sdk
+AGENT_NAME ?= agent-rest
+
+ALPINE_VER ?= 3.12
+GO_VER ?= 1.15
 
 .PHONY: all
-all: clean checks unit-test unit-test-wasm
+all: clean checks unit-test unit-test-wasm agent-rest agent-rest-docker
 
 .PHONY: checks
 checks: license lint
@@ -27,6 +36,21 @@ unit-test:
 unit-test-wasm: export GOBIN=$(GOBIN_PATH)
 unit-test-wasm: depend
 	@scripts/check_unit_wasm.sh
+
+.PHONY: agent-rest
+agent-rest:
+	@echo "Building aries-agent-rest"
+	@mkdir -p ./build/bin
+	@cd ${ARIES_AGENT_REST_PATH} && go build -o ../../build/bin/agent-rest main.go
+
+.PHONY: agent-rest-docker
+agent-rest-docker:
+	@echo "Building aries agent rest docker image"
+	@docker build -f ./images/agent-rest/Dockerfile --no-cache -t $(DOCKER_OUTPUT_NS)/$(REPO_IMAGE_NAME)/${AGENT_NAME}:latest \
+	--build-arg GO_VER=$(GO_VER) \
+	--build-arg ALPINE_VER=$(ALPINE_VER) \
+	--build-arg GO_TAGS=$(GO_TAGS) \
+	--build-arg GOPROXY=$(GOPROXY) .
 
 .PHONY: depend
 depend:

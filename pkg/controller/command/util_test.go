@@ -8,8 +8,9 @@ package command_test
 import (
 	"testing"
 
-	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/edge-core/pkg/log"
+
+	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 )
 
 func Test_WriteNillableResponse(t *testing.T) {

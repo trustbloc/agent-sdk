@@ -6,7 +6,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package main
+package main // nolint: testpackage
 
 import (
 	"encoding/json"

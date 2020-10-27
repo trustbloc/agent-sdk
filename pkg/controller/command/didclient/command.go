@@ -3,6 +3,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+// Package didclient provides did commands.
 package didclient
 
 import (
@@ -16,12 +17,13 @@ import (
 	mediatorservice "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
+	"github.com/trustbloc/edge-core/pkg/log"
+	didclient "github.com/trustbloc/trustbloc-did-method/pkg/did"
+
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/internal/cmdutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/internal/logutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/sdscomm"
-	"github.com/trustbloc/edge-core/pkg/log"
-	didclient "github.com/trustbloc/trustbloc-did-method/pkg/did"
 )
 
 var logger = log.New("agent-sdk-didclient")
@@ -46,7 +48,7 @@ const (
 	// CreateDIDErrorCode is typically a code for create did errors.
 	CreateDIDErrorCode
 
-	// errors
+	// errors.
 	errDecodeDIDDocDataErrMsg    = "failure while decoding DID data"
 	errStoreDIDDocErrMsg         = "failure while storing DID document in SDS"
 	errInvalidRouterConnectionID = "invalid router connection ID"
@@ -73,12 +75,14 @@ type mediatorClient interface {
 func New(domain string, sdsComm *sdscomm.SDSComm, p provider) (*Command, error) {
 	client := didclient.New()
 
-	mediator, err := mediator.New(p)
+	mClient, err := mediator.New(p)
 	if err != nil {
 		return nil, err
 	}
 
-	s, err := p.Service(mediatorservice.Coordination)
+	var s interface{}
+
+	s, err = p.Service(mediatorservice.Coordination)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +97,7 @@ func New(domain string, sdsComm *sdscomm.SDSComm, p provider) (*Command, error) 
 		domain:         domain,
 		sdsComm:        sdsComm,
 		vdrRegistry:    p.VDRegistry(),
-		mediatorClient: mediator,
+		mediatorClient: mClient,
 		mediatorSvc:    mediatorSvc,
 	}, nil
 }
@@ -168,7 +172,7 @@ func (c *Command) CreateBlocDID(rw io.Writer, req io.Reader) command.Error {
 }
 
 // CreatePeerDID creates a new peer DID.
-func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error {
+func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //nolint: funlen
 	var request CreatePeerDIDRequest
 
 	err := json.NewDecoder(req).Decode(&request)
