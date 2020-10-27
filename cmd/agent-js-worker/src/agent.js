@@ -1055,14 +1055,31 @@ const Agent = function(opts) {
             pkgname: "didclient",
 
             /**
-             * Creates a DID.
+             * Creates a trustbloc DID.
              *
              * @param req - json document
              * @returns {Promise<Object>}
              */
-            createDID: async function (req) {
-                return invoke(aw, pending, this.pkgname, "CreateDID", req, "timeout while creating did")
+            createBlocDID: async function (req) {
+                return invoke(aw, pending, this.pkgname, "CreateBlocDID", req, "timeout while creating did")
             },
+
+            /**
+             * Creates a trustbloc DID.
+             *
+             * @param req - json document
+             * @returns {Promise<Object>}
+             */
+            createPeerDID: async function (req) {
+                return invoke(aw, pending, this.pkgname, "CreatePeerDID", req, "timeout while creating did")
+            },
+
+            /**
+             * saves given DID to underlying SDS storage
+             *
+             * @param req
+             * @returns {Promise<*>}
+             */
             saveDID: async function (req) {
                 return invoke(aw, pending, this.pkgname, "SaveDID", req, "timeout while saving did")
             },

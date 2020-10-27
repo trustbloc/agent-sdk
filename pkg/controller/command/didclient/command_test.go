@@ -13,9 +13,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
+	mediatorsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	mockprotocol "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol"
+	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
+	mockvdr "github.com/hyperledger/aries-framework-go/pkg/mock/vdr"
 	"github.com/stretchr/testify/require"
+
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/sdscomm"
 	"github.com/trustbloc/edv/pkg/edvprovider/memedvprovider"
@@ -25,42 +32,65 @@ import (
 
 func TestNew(t *testing.T) {
 	t.Run("test success", func(t *testing.T) {
-		c := New("domain", &sdscomm.SDSComm{})
+		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		require.NoError(t, err)
 		require.NotNil(t, c)
 		require.NotNil(t, c.GetHandlers())
 	})
+
+	t.Run("test no coordination service error", func(t *testing.T) {
+		c, err := New("domain", &sdscomm.SDSComm{}, &mockprotocol.MockProvider{
+			ServiceErr: fmt.Errorf("sample-error"),
+		})
+		require.Error(t, err)
+		require.Nil(t, c)
+		require.EqualError(t, err, "sample-error")
+	})
+
+	t.Run("test invalid coordination service error", func(t *testing.T) {
+		c, err := New("domain", &sdscomm.SDSComm{}, &mockprotocol.MockProvider{
+			ServiceMap: map[string]interface{}{
+				mediator.Coordination: "xyz",
+			},
+		})
+		require.Error(t, err)
+		require.Nil(t, c)
+		require.EqualError(t, err, "cast service to route service failed")
+	})
 }
 
-func TestCommand_CreateDID(t *testing.T) {
+func TestCommand_CreateBlocDID(t *testing.T) {
 	t.Run("test error from request", func(t *testing.T) {
-		c := New("domain", &sdscomm.SDSComm{})
+		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		require.NoError(t, err)
 		require.NotNil(t, c)
 
-		c.didClient = &mockDIDClient{createDIDErr: fmt.Errorf("error create did")}
+		c.didBlocClient = &mockDIDClient{createDIDErr: fmt.Errorf("error create did")}
 
 		var b bytes.Buffer
 
-		cmdErr := c.CreateDID(&b, bytes.NewBufferString("--"))
+		cmdErr := c.CreateBlocDID(&b, bytes.NewBufferString("--"))
 		require.Error(t, cmdErr)
 		require.Equal(t, InvalidRequestErrorCode, cmdErr.Code())
 		require.Equal(t, command.ValidationError, cmdErr.Type())
 	})
 
 	t.Run("test error from create did", func(t *testing.T) {
-		c := New("domain", &sdscomm.SDSComm{})
+		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		require.NoError(t, err)
 		require.NotNil(t, c)
 
-		c.didClient = &mockDIDClient{createDIDErr: fmt.Errorf("error create did")}
+		c.didBlocClient = &mockDIDClient{createDIDErr: fmt.Errorf("error create did")}
 
 		var b bytes.Buffer
 
-		req, err := json.Marshal(CreateDIDRequest{PublicKeys: []PublicKey{{
+		req, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{{
 			ID: "key1", Type: "key1",
 			Value: base64.RawURLEncoding.EncodeToString([]byte("value")),
 		}}})
 		require.NoError(t, err)
 
-		cmdErr := c.CreateDID(&b, bytes.NewBuffer(req))
+		cmdErr := c.CreateBlocDID(&b, bytes.NewBuffer(req))
 		require.Error(t, cmdErr)
 		require.Equal(t, CreateDIDErrorCode, cmdErr.Code())
 		require.Equal(t, command.ExecuteError, cmdErr.Type())
@@ -68,49 +98,229 @@ func TestCommand_CreateDID(t *testing.T) {
 	})
 
 	t.Run("test error from did base64 decode", func(t *testing.T) {
-		c := New("domain", &sdscomm.SDSComm{})
+		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		require.NoError(t, err)
 		require.NotNil(t, c)
 
-		c.didClient = &mockDIDClient{createDIDErr: fmt.Errorf("error create did")}
+		c.didBlocClient = &mockDIDClient{createDIDErr: fmt.Errorf("error create did")}
 
 		var b bytes.Buffer
 
-		req, err := json.Marshal(CreateDIDRequest{PublicKeys: []PublicKey{{
+		req, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{{
 			ID: "key1", Type: "key1",
 			Value: "value",
 		}}})
 		require.NoError(t, err)
 
-		cmdErr := c.CreateDID(&b, bytes.NewBuffer(req))
+		cmdErr := c.CreateBlocDID(&b, bytes.NewBuffer(req))
 		require.Error(t, cmdErr)
 		require.Equal(t, CreateDIDErrorCode, cmdErr.Code())
 		require.Equal(t, command.ExecuteError, cmdErr.Type())
 		require.Contains(t, cmdErr.Error(), "illegal base64 data")
 	})
 
-	c := New("domain", &sdscomm.SDSComm{})
+	c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+	require.NoError(t, err)
 	require.NotNil(t, c)
 
-	c.didClient = &mockDIDClient{createDIDValue: &did.Doc{ID: "1"}}
+	c.didBlocClient = &mockDIDClient{createDIDValue: &did.Doc{ID: "1"}}
 
 	var b bytes.Buffer
 
 	t.Run("test success create did with Ed25519 key", func(t *testing.T) {
 		// ED key
-		r, err := json.Marshal(CreateDIDRequest{PublicKeys: []PublicKey{{
+		r, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{{
 			ID: "key1", Type: "key1", KeyType: "Ed25519",
 			Value: base64.RawURLEncoding.EncodeToString([]byte("value")),
 		}}})
 		require.NoError(t, err)
 
-		cmdErr := c.CreateDID(&b, bytes.NewBuffer(r))
+		cmdErr := c.CreateBlocDID(&b, bytes.NewBuffer(r))
 		require.NoError(t, cmdErr)
 
 		resp := &CreateDIDResponse{}
 		err = json.NewDecoder(&b).Decode(&resp)
 		require.NoError(t, err)
 
-		require.Equal(t, "1", resp.DID["id"])
+		var didMap map[string]string
+		err = json.Unmarshal(resp.DID, &didMap)
+		require.NoError(t, err)
+
+		require.Equal(t, "1", didMap["id"])
+	})
+}
+
+func TestCommand_CreatePeerDID(t *testing.T) {
+	t.Run("test error from request", func(t *testing.T) {
+		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		var b bytes.Buffer
+
+		cmdErr := c.CreatePeerDID(&b, bytes.NewBufferString("--"))
+		require.Error(t, cmdErr)
+		require.Equal(t, InvalidRequestErrorCode, cmdErr.Code())
+		require.Equal(t, command.ValidationError, cmdErr.Type())
+
+		cmdErr = c.CreatePeerDID(&b, bytes.NewBufferString("{}"))
+		require.Error(t, cmdErr)
+		require.Equal(t, InvalidRequestErrorCode, cmdErr.Code())
+		require.Equal(t, command.ValidationError, cmdErr.Type())
+	})
+
+	t.Run("success (registered route)", func(t *testing.T) {
+		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		routerEndpoint := "http://router.com"
+		keys := []string{"abc", "xyz"}
+		c.vdrRegistry = &mockvdr.MockVDRegistry{CreateValue: &did.Doc{
+			Context: []string{"https://w3id.org/did/v1"},
+			Service: []did.Service{
+				{
+					ID:              uuid.New().String(),
+					Type:            didCommServiceType,
+					ServiceEndpoint: routerEndpoint,
+					RoutingKeys:     keys,
+					RecipientKeys:   []string{"1ert5", "x5356s"},
+				},
+			},
+		}}
+
+		mediatorConfig := mediatorsvc.NewConfig(routerEndpoint, keys)
+		c.mediatorClient = &mockMediatorClient{
+			GetConfigFunc: func(connID string) (*mediatorsvc.Config, error) {
+				return mediatorConfig, nil
+			},
+		}
+
+		var b bytes.Buffer
+
+		cmdErr := c.CreatePeerDID(&b, bytes.NewBufferString(`{
+			"routerConnectionID" : "abcd-sample-id"
+		}`))
+		require.Nil(t, cmdErr)
+
+		resp := &CreateDIDResponse{}
+		err = json.NewDecoder(&b).Decode(&resp)
+		require.NoError(t, err)
+
+		var didMap map[string]interface{}
+		err = json.Unmarshal(resp.DID, &didMap)
+		require.NoError(t, err)
+		require.NotEmpty(t, didMap["service"])
+	})
+
+	t.Run("success (default)", func(t *testing.T) {
+		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		c.vdrRegistry = &mockvdr.MockVDRegistry{CreateValue: &did.Doc{
+			Context: []string{"https://w3id.org/did/v1"},
+			Service: []did.Service{
+				{
+					ID:              uuid.New().String(),
+					Type:            didCommServiceType,
+					ServiceEndpoint: "http://router.com",
+				},
+			},
+		}}
+
+		c.mediatorClient = &mockMediatorClient{
+			GetConfigFunc: func(connID string) (*mediatorsvc.Config, error) {
+				return &mediatorsvc.Config{}, nil
+			},
+		}
+
+		var b bytes.Buffer
+
+		cmdErr := c.CreatePeerDID(&b, bytes.NewBufferString(`{
+			"routerConnectionID" : "abcd-sample-id"
+		}`))
+		require.Nil(t, cmdErr)
+
+		resp := &CreateDIDResponse{}
+		err = json.NewDecoder(&b).Decode(&resp)
+		require.NoError(t, err)
+
+		var didMap map[string]interface{}
+		err = json.Unmarshal(resp.DID, &didMap)
+		require.NoError(t, err)
+		require.NotEmpty(t, didMap["service"])
+	})
+
+	t.Run("test error while creating peer DID", func(t *testing.T) {
+		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		// error while getting mediator config
+		c.mediatorClient = &mockMediatorClient{
+			GetConfigFunc: func(connID string) (*mediatorsvc.Config, error) {
+				return nil, fmt.Errorf("sample-error-1")
+			},
+		}
+
+		var b bytes.Buffer
+
+		cmdErr := c.CreatePeerDID(&b, bytes.NewBufferString(`{
+			"routerConnectionID" : "abcd-sample-id"
+		}`))
+		require.Error(t, cmdErr)
+		require.Equal(t, cmdErr.Error(), "sample-error-1")
+
+		// error while create peer DID from vdri
+		c.mediatorClient = &mockMediatorClient{
+			GetConfigFunc: func(connID string) (*mediatorsvc.Config, error) {
+				return &mediatorsvc.Config{}, nil
+			},
+		}
+
+		c.vdrRegistry = &mockvdr.MockVDRegistry{CreateErr: fmt.Errorf("sample-error-2")}
+
+		cmdErr = c.CreatePeerDID(&b, bytes.NewBufferString(`{
+			"routerConnectionID" : "abcd-sample-id"
+		}`))
+		require.Error(t, cmdErr)
+		require.Equal(t, cmdErr.Error(), "sample-error-2")
+
+		// error for missing 'did-communication'
+		c.vdrRegistry = &mockvdr.MockVDRegistry{CreateValue: &did.Doc{
+			Context: []string{"https://w3id.org/did/v1"},
+		}}
+
+		cmdErr = c.CreatePeerDID(&b, bytes.NewBufferString(`{
+			"routerConnectionID" : "abcd-sample-id"
+		}`))
+		require.Error(t, cmdErr)
+		require.Equal(t, cmdErr.Error(), fmt.Sprintf(errMissingDIDCommServiceType, didCommServiceType))
+
+		// error while adding router key
+		c.vdrRegistry = &mockvdr.MockVDRegistry{CreateValue: &did.Doc{
+			Context: []string{"https://w3id.org/did/v1"},
+			Service: []did.Service{
+				{
+					ID:              uuid.New().String(),
+					Type:            didCommServiceType,
+					ServiceEndpoint: "http://router.com",
+					RecipientKeys:   []string{"1ert5", "x5356s"},
+				},
+			},
+		}}
+
+		c.mediatorSvc = &mockroute.MockMediatorSvc{
+			AddKeyErr: fmt.Errorf("sample-error-3"),
+		}
+
+		cmdErr = c.CreatePeerDID(&b, bytes.NewBufferString(`{
+			"routerConnectionID" : "abcd-sample-id"
+		}`))
+
+		require.Error(t, cmdErr)
+		require.Contains(t, cmdErr.Error(), "sample-error-3")
 	})
 }
 
@@ -126,19 +336,21 @@ func TestCommand_SaveDID(t *testing.T) {
 
 		sdsComm := sdscomm.New(fmt.Sprintf("%s/encrypted-data-vaults", sdsSrv.URL))
 
-		cmd := New("", sdsComm)
+		cmd, err := New("", sdsComm, getMockProvider())
+		require.NoError(t, err)
+
 		cmdErr := cmd.SaveDID(nil, bytes.NewBuffer(didDocDataBytes))
 		require.NoError(t, cmdErr)
 	})
 	t.Run("Fail to unmarshal - invalid SaveDIDDocToSDSRequest", func(t *testing.T) {
-		cmd := New("", sdscomm.New("SomeURL"))
+		cmd, err := New("", sdscomm.New("SomeURL"), getMockProvider())
+		require.NoError(t, err)
 		cmdErr := cmd.SaveDID(nil, bytes.NewBuffer([]byte("")))
-		require.Contains(t, cmdErr.Error(), failDecodeDIDDocDataErrMsg)
+		require.Contains(t, cmdErr.Error(), errDecodeDIDDocDataErrMsg)
 	})
 	t.Run("Fail to save DID document - bad SDS server URL", func(t *testing.T) {
-		sdsComm := sdscomm.New("BadURL")
-
-		cmd := New("", sdsComm)
+		cmd, err := New("", sdscomm.New("BadURL"), getMockProvider())
+		require.NoError(t, err)
 
 		sampleDIDDocData := sdscomm.SaveDIDDocToSDSRequest{}
 
@@ -161,6 +373,26 @@ func (m *mockDIDClient) CreateDID(domain string, opts ...didclient.CreateDIDOpti
 	return m.createDIDValue, m.createDIDErr
 }
 
+// mockMediatorClient mock mediator client.
+type mockMediatorClient struct {
+	RegisterErr   error
+	GetConfigFunc func(connID string) (*mediatorsvc.Config, error)
+}
+
+// Register registers with the router.
+func (c *mockMediatorClient) Register(connectionID string) error {
+	if c.RegisterErr != nil {
+		return c.RegisterErr
+	}
+
+	return nil
+}
+
+// GetConfig gets the router config.
+func (c *mockMediatorClient) GetConfig(connID string) (*mediatorsvc.Config, error) {
+	return c.GetConfigFunc(connID)
+}
+
 func newTestEDVServer(t *testing.T) *httptest.Server {
 	edvService, err := restapi.New(memedvprovider.NewProvider())
 	require.NoError(t, err)
@@ -174,4 +406,12 @@ func newTestEDVServer(t *testing.T) *httptest.Server {
 	}
 
 	return httptest.NewServer(router)
+}
+
+func getMockProvider() provider {
+	return &mockprotocol.MockProvider{
+		ServiceMap: map[string]interface{}{
+			mediator.Coordination: &mockroute.MockMediatorSvc{},
+		},
+	}
 }

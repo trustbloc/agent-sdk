@@ -8,10 +8,14 @@ package didclient
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 
+	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
+	mediatorservice "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/internal/cmdutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/internal/logutil"
@@ -26,10 +30,13 @@ const (
 	// command name.
 	commandName = "didclient"
 	// command methods.
-	createDIDCommandMethod = "CreateDID"
-	saveDIDCommandMethod   = "SaveDID"
+	createBlocDIDCommandMethod = "CreateBlocDID"
+	createPeerDIDCommandMethod = "CreatePeerDID"
+	saveDIDCommandMethod       = "SaveDID"
 	// log constants.
 	successString = "success"
+
+	didCommServiceType = "did-communication"
 )
 
 const (
@@ -39,47 +46,84 @@ const (
 	// CreateDIDErrorCode is typically a code for create did errors.
 	CreateDIDErrorCode
 
-	failDecodeDIDDocDataErrMsg = "failure while decoding DID data"
-	failStoreDIDDocErrMsg      = "failure while storing DID document in SDS"
+	// errors
+	errDecodeDIDDocDataErrMsg    = "failure while decoding DID data"
+	errStoreDIDDocErrMsg         = "failure while storing DID document in SDS"
+	errInvalidRouterConnectionID = "invalid router connection ID"
+	errMissingDIDCommServiceType = "did document missing '%s' service type"
+	errFailedToRegisterDIDRecKey = "failed to register did doc recipient key : %w"
 )
+
+type provider interface {
+	VDRegistry() vdr.Registry
+	Service(id string) (interface{}, error)
+}
 
 type didBlocClient interface {
 	CreateDID(domain string, opts ...didclient.CreateDIDOption) (*did.Doc, error)
 }
 
+// mediatorClient is client interface for mediator.
+type mediatorClient interface {
+	Register(connectionID string) error
+	GetConfig(connID string) (*mediatorservice.Config, error)
+}
+
 // New returns new DID Exchange controller command instance.
-func New(domain string, sdsComm *sdscomm.SDSComm) *Command {
+func New(domain string, sdsComm *sdscomm.SDSComm, p provider) (*Command, error) {
 	client := didclient.New()
 
-	return &Command{
-		didClient: client,
-		domain:    domain,
-		sdsComm:   sdsComm,
+	mediator, err := mediator.New(p)
+	if err != nil {
+		return nil, err
 	}
+
+	s, err := p.Service(mediatorservice.Coordination)
+	if err != nil {
+		return nil, err
+	}
+
+	mediatorSvc, ok := s.(mediatorservice.ProtocolService)
+	if !ok {
+		return nil, errors.New("cast service to route service failed")
+	}
+
+	return &Command{
+		didBlocClient:  client,
+		domain:         domain,
+		sdsComm:        sdsComm,
+		vdrRegistry:    p.VDRegistry(),
+		mediatorClient: mediator,
+		mediatorSvc:    mediatorSvc,
+	}, nil
 }
 
 // Command is controller command for DID Exchange.
 type Command struct {
-	didClient didBlocClient
-	domain    string
-	sdsComm   *sdscomm.SDSComm
+	didBlocClient  didBlocClient
+	domain         string
+	sdsComm        *sdscomm.SDSComm
+	vdrRegistry    vdr.Registry
+	mediatorClient mediatorClient
+	mediatorSvc    mediatorservice.ProtocolService
 }
 
 // GetHandlers returns list of all commands supported by this controller command.
 func (c *Command) GetHandlers() []command.Handler {
 	return []command.Handler{
-		cmdutil.NewCommandHandler(commandName, createDIDCommandMethod, c.CreateDID),
+		cmdutil.NewCommandHandler(commandName, createBlocDIDCommandMethod, c.CreateBlocDID),
+		cmdutil.NewCommandHandler(commandName, createPeerDIDCommandMethod, c.CreatePeerDID),
 		cmdutil.NewCommandHandler(commandName, saveDIDCommandMethod, c.SaveDID),
 	}
 }
 
-// CreateDID creates a new DID.
-func (c *Command) CreateDID(rw io.Writer, req io.Reader) command.Error {
-	var request CreateDIDRequest
+// CreateBlocDID creates a new trust bloc DID.
+func (c *Command) CreateBlocDID(rw io.Writer, req io.Reader) command.Error {
+	var request CreateBlocDIDRequest
 
 	err := json.NewDecoder(req).Decode(&request)
 	if err != nil {
-		logutil.LogError(logger, commandName, createDIDCommandMethod, err.Error())
+		logutil.LogError(logger, commandName, createBlocDIDCommandMethod, err.Error())
 
 		return command.NewValidationError(InvalidRequestErrorCode, err)
 	}
@@ -89,7 +133,7 @@ func (c *Command) CreateDID(rw io.Writer, req io.Reader) command.Error {
 	for _, v := range request.PublicKeys {
 		value, decodeErr := base64.RawURLEncoding.DecodeString(v.Value)
 		if decodeErr != nil {
-			logutil.LogError(logger, commandName, createDIDCommandMethod, decodeErr.Error())
+			logutil.LogError(logger, commandName, createBlocDIDCommandMethod, decodeErr.Error())
 
 			return command.NewExecuteError(CreateDIDErrorCode, decodeErr)
 		}
@@ -100,33 +144,95 @@ func (c *Command) CreateDID(rw io.Writer, req io.Reader) command.Error {
 		}))
 	}
 
-	didDoc, err := c.didClient.CreateDID(c.domain, opts...)
+	didDoc, err := c.didBlocClient.CreateDID(c.domain, opts...)
 	if err != nil {
-		logutil.LogError(logger, commandName, createDIDCommandMethod, err.Error())
+		logutil.LogError(logger, commandName, createBlocDIDCommandMethod, err.Error())
 
 		return command.NewExecuteError(CreateDIDErrorCode, err)
 	}
 
 	bytes, err := didDoc.JSONBytes()
 	if err != nil {
-		logutil.LogError(logger, commandName, createDIDCommandMethod, err.Error())
-
-		return command.NewExecuteError(CreateDIDErrorCode, err)
-	}
-
-	m := make(map[string]interface{})
-
-	if err := json.Unmarshal(bytes, &m); err != nil {
-		logutil.LogError(logger, commandName, createDIDCommandMethod, err.Error())
+		logutil.LogError(logger, commandName, createBlocDIDCommandMethod, err.Error())
 
 		return command.NewExecuteError(CreateDIDErrorCode, err)
 	}
 
 	command.WriteNillableResponse(rw, &CreateDIDResponse{
-		DID: m,
+		DID: bytes,
 	}, logger)
 
-	logutil.LogDebug(logger, commandName, createDIDCommandMethod, successString)
+	logutil.LogDebug(logger, commandName, createBlocDIDCommandMethod, successString)
+
+	return nil
+}
+
+// CreatePeerDID creates a new peer DID.
+func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error {
+	var request CreatePeerDIDRequest
+
+	err := json.NewDecoder(req).Decode(&request)
+	if err != nil {
+		logutil.LogError(logger, commandName, createPeerDIDCommandMethod, err.Error())
+
+		return command.NewValidationError(InvalidRequestErrorCode, err)
+	}
+
+	if request.RouterConnectionID == "" {
+		logutil.LogError(logger, commandName, createPeerDIDCommandMethod, errInvalidRouterConnectionID)
+
+		return command.NewValidationError(InvalidRequestErrorCode, fmt.Errorf(errInvalidRouterConnectionID))
+	}
+
+	config, err := c.mediatorClient.GetConfig(request.RouterConnectionID)
+	if err != nil {
+		logutil.LogError(logger, commandName, createPeerDIDCommandMethod, err.Error())
+
+		return command.NewExecuteError(CreateDIDErrorCode, err)
+	}
+
+	newDidDoc, err := c.vdrRegistry.Create(
+		"peer",
+		vdr.WithServices(did.Service{
+			ServiceEndpoint: config.Endpoint(),
+			RoutingKeys:     config.Keys(),
+		}),
+	)
+	if err != nil {
+		logutil.LogError(logger, commandName, createPeerDIDCommandMethod, err.Error())
+
+		return command.NewExecuteError(CreateDIDErrorCode, err)
+	}
+
+	didSvc, ok := did.LookupService(newDidDoc, didCommServiceType)
+	if !ok {
+		logutil.LogError(logger, commandName, createPeerDIDCommandMethod, errMissingDIDCommServiceType)
+
+		return command.NewExecuteError(CreateDIDErrorCode, fmt.Errorf(errMissingDIDCommServiceType, didCommServiceType))
+	}
+
+	for _, val := range didSvc.RecipientKeys {
+		err = mediatorservice.AddKeyToRouter(c.mediatorSvc, request.RouterConnectionID, val)
+
+		if err != nil {
+			logutil.LogError(logger, commandName, createPeerDIDCommandMethod, err.Error())
+
+			return command.NewExecuteError(CreateDIDErrorCode, fmt.Errorf(errFailedToRegisterDIDRecKey, err))
+		}
+	}
+
+	bytes, err := newDidDoc.JSONBytes()
+	if err != nil {
+		logutil.LogError(logger, commandName, createBlocDIDCommandMethod, err.Error())
+
+		return command.NewExecuteError(CreateDIDErrorCode, err)
+	}
+
+	command.WriteNillableResponse(rw, &CreateDIDResponse{
+		DID: bytes,
+	}, logger)
+
+	logutil.LogDebug(logger, commandName, createBlocDIDCommandMethod, successString)
 
 	return nil
 }
@@ -138,10 +244,10 @@ func (c *Command) SaveDID(_ io.Writer, req io.Reader) command.Error {
 	err := json.NewDecoder(req).Decode(&didDataToStore)
 	if err != nil {
 		logutil.LogError(logger, commandName, saveDIDCommandMethod,
-			fmt.Sprintf("%s: %s", failDecodeDIDDocDataErrMsg, err.Error()))
+			fmt.Sprintf("%s: %s", errDecodeDIDDocDataErrMsg, err.Error()))
 
 		return command.NewValidationError(InvalidRequestErrorCode,
-			fmt.Errorf("%s: %w", failDecodeDIDDocDataErrMsg, err))
+			fmt.Errorf("%s: %w", errDecodeDIDDocDataErrMsg, err))
 	}
 
 	return c.saveDID(&didDataToStore)
@@ -151,10 +257,10 @@ func (c *Command) saveDID(didDataToStore *sdscomm.SaveDIDDocToSDSRequest) comman
 	err := c.sdsComm.StoreDIDDocument(didDataToStore)
 	if err != nil {
 		logutil.LogError(logger, commandName, saveDIDCommandMethod,
-			fmt.Sprintf("%s: %s", failStoreDIDDocErrMsg, err.Error()))
+			fmt.Sprintf("%s: %s", errStoreDIDDocErrMsg, err.Error()))
 
 		return command.NewValidationError(InvalidRequestErrorCode,
-			fmt.Errorf("%s: %w", failStoreDIDDocErrMsg, err))
+			fmt.Errorf("%s: %w", errStoreDIDDocErrMsg, err))
 	}
 
 	return nil

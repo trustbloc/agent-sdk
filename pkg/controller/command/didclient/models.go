@@ -5,12 +5,22 @@ SPDX-License-Identifier: Apache-2.0
 
 package didclient
 
-// CreateDIDRequest model
+import "encoding/json"
+
+// CreateBlocDIDRequest model
 //
-// This is used for creating DID
+// This is used for creating trustbloc DID
 //
-type CreateDIDRequest struct {
+type CreateBlocDIDRequest struct {
 	PublicKeys []PublicKey `json:"publicKeys,omitempty"`
+}
+
+// CreatePeerDIDRequest model
+//
+// This is used for creating peer DID
+//
+type CreatePeerDIDRequest struct {
+	RouterConnectionID string `json:"routerConnectionID,omitempty"`
 }
 
 // PublicKey public key.
@@ -27,5 +37,5 @@ type PublicKey struct {
 
 // CreateDIDResponse contains the newly-create DID doc.
 type CreateDIDResponse struct {
-	DID map[string]interface{}
+	DID json.RawMessage
 }
