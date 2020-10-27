@@ -64,18 +64,29 @@ jobs:
       - template: azp-dependencies.yml
       - checkout: self
       - bash: |
+          function logout {
+            docker logout
+          }
+          trap logout EXIT
+          git lfs install
+          git lfs pull
           source ci/version_var.sh
-          cd ./cmd/agent-js-worker
-          echo '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' > ~/.npmrc
+          echo $DOCKER_PASSWORD | docker login docker.pkg.github.com --username $DOCKER_USER --password-stdin
+          echo '//npm.pkg.github.com/:_authToken=${DOCKER_PASSWORD}' > ~/.npmrc
           echo '@hyperledger:registry=https://npm.pkg.github.com' >> ~/.npmrc
           echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
+          make agent-rest-docker
+          docker tag docker.pkg.github.com/trustbloc/agent-sdk/agent-sdk-wasm:latest ${AGENT_SDK_PKG}:${AGENT_SDK_TAG}
+          docker push ${AGENT_SDK_PKG}:${AGENT_SDK_TAG}
+          cd ./cmd/agent-js-worker
           sed -i 's/"version": "0.1.0"/"version": "'$NPM_PKG_TAG'"/g' package.json
           sed -i 's#"name": "@trustbloc/agent-sdk"#"name": "@'${NPM_PKG_NAME}'"#g' package.json
           sed -i 's#"url": "git://github.com/trustbloc/agent-sdk.git"#"url": "git://github.com/'${NPM_PKG_REPO}'.git"#g' package.json
           npm install
           npm publish
         env:
-          NODE_AUTH_TOKEN: $(DOCKER_PASSWORD)
+          DOCKER_PASSWORD: $(DOCKER_PASSWORD)
+          DOCKER_USER: $(DOCKER_USER)
           NPM_PKG_TAG: $(NPM_PKG_TAG)
           NPM_PKG_NAME: $(NPM_PKG_NAME)
           NPM_PKG_REPO: $(NPM_PKG_REPO)

@@ -4,12 +4,14 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+// Package controller provides command handlers.
 package controller
 
 import (
 	"fmt"
 
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
+
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	credentialclientcmd "github.com/trustbloc/agent-sdk/pkg/controller/command/credentialclient"
 	didclientcmd "github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"

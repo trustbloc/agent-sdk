@@ -15,19 +15,18 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	mediatorsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	mockprotocol "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
 	mockvdr "github.com/hyperledger/aries-framework-go/pkg/mock/vdr"
 	"github.com/stretchr/testify/require"
-
-	"github.com/trustbloc/agent-sdk/pkg/controller/command"
-	"github.com/trustbloc/agent-sdk/pkg/controller/command/sdscomm"
 	"github.com/trustbloc/edv/pkg/edvprovider/memedvprovider"
 	"github.com/trustbloc/edv/pkg/restapi"
 	didclient "github.com/trustbloc/trustbloc-did-method/pkg/did"
+
+	"github.com/trustbloc/agent-sdk/pkg/controller/command"
+	"github.com/trustbloc/agent-sdk/pkg/controller/command/sdscomm"
 )
 
 func TestNew(t *testing.T) {
@@ -50,7 +49,7 @@ func TestNew(t *testing.T) {
 	t.Run("test invalid coordination service error", func(t *testing.T) {
 		c, err := New("domain", &sdscomm.SDSComm{}, &mockprotocol.MockProvider{
 			ServiceMap: map[string]interface{}{
-				mediator.Coordination: "xyz",
+				mediatorsvc.Coordination: "xyz",
 			},
 		})
 		require.Error(t, err)
@@ -411,7 +410,7 @@ func newTestEDVServer(t *testing.T) *httptest.Server {
 func getMockProvider() provider {
 	return &mockprotocol.MockProvider{
 		ServiceMap: map[string]interface{}{
-			mediator.Coordination: &mockroute.MockMediatorSvc{},
+			mediatorsvc.Coordination: &mockroute.MockMediatorSvc{},
 		},
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 )
 

@@ -11,9 +11,9 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/defaults"
-
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 	"github.com/stretchr/testify/require"
+
 	"github.com/trustbloc/agent-sdk/pkg/controller"
 )
 

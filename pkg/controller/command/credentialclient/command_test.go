@@ -14,9 +14,10 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
-	"github.com/trustbloc/agent-sdk/pkg/controller/command/sdscomm"
 	"github.com/trustbloc/edv/pkg/edvprovider/memedvprovider"
 	"github.com/trustbloc/edv/pkg/restapi"
+
+	"github.com/trustbloc/agent-sdk/pkg/controller/command/sdscomm"
 )
 
 func TestNew(t *testing.T) {

@@ -3,6 +3,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+// Package credentialclient provides credential commands.
 package credentialclient
 
 import (
@@ -10,11 +11,12 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/trustbloc/edge-core/pkg/log"
+
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/internal/cmdutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/internal/logutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/sdscomm"
-	"github.com/trustbloc/edge-core/pkg/log"
 )
 
 var logger = log.New("agent-sdk-credentialclient")

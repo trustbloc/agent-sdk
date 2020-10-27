@@ -29,9 +29,10 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/mitchellh/mapstructure"
-	agentctrl "github.com/trustbloc/agent-sdk/pkg/controller"
 	"github.com/trustbloc/edge-core/pkg/log"
 	"github.com/trustbloc/trustbloc-did-method/pkg/vdri/trustbloc"
+
+	agentctrl "github.com/trustbloc/agent-sdk/pkg/controller"
 )
 
 var logger = log.New("agent-js-worker")
@@ -454,7 +455,6 @@ func createVDRs(resolvers []string, blocDomain, trustblocResolver string) ([]vdr
 				_, ok := set[url][method]
 				return ok
 			}))
-
 		if err != nil {
 			return nil, fmt.Errorf("failed to create new universal resolver vdr: %w", err)
 		}
