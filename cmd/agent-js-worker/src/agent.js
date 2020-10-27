@@ -1060,7 +1060,7 @@ const Agent = function(opts) {
              * @param req - json document
              * @returns {Promise<Object>}
              */
-            CreateTrustBlocDID: async function (req) {
+            createTrustBlocDID: async function (req) {
                 return invoke(aw, pending, this.pkgname, "CreateTrustBlocDID", req, "timeout while creating did")
             },
 

@@ -30,7 +30,7 @@ const (
 	// command name.
 	commandName = "didclient"
 	// command methods.
-	createBlocDIDCommandMethod = "CreateBlocDID"
+	createBlocDIDCommandMethod = "CreateTrustBlocDID"
 	createPeerDIDCommandMethod = "CreatePeerDID"
 	saveDIDCommandMethod       = "SaveDID"
 	// log constants.
