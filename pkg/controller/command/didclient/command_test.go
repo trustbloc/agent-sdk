@@ -68,7 +68,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 		var b bytes.Buffer
 
-		cmdErr := c.CreateBlocDID(&b, bytes.NewBufferString("--"))
+		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBufferString("--"))
 		require.Error(t, cmdErr)
 		require.Equal(t, InvalidRequestErrorCode, cmdErr.Code())
 		require.Equal(t, command.ValidationError, cmdErr.Type())
@@ -89,7 +89,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		}}})
 		require.NoError(t, err)
 
-		cmdErr := c.CreateBlocDID(&b, bytes.NewBuffer(req))
+		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(req))
 		require.Error(t, cmdErr)
 		require.Equal(t, CreateDIDErrorCode, cmdErr.Code())
 		require.Equal(t, command.ExecuteError, cmdErr.Type())
@@ -111,7 +111,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		}}})
 		require.NoError(t, err)
 
-		cmdErr := c.CreateBlocDID(&b, bytes.NewBuffer(req))
+		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(req))
 		require.Error(t, cmdErr)
 		require.Equal(t, CreateDIDErrorCode, cmdErr.Code())
 		require.Equal(t, command.ExecuteError, cmdErr.Type())
@@ -134,7 +134,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		}}})
 		require.NoError(t, err)
 
-		cmdErr := c.CreateBlocDID(&b, bytes.NewBuffer(r))
+		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(r))
 		require.NoError(t, cmdErr)
 
 		resp := &CreateDIDResponse{}

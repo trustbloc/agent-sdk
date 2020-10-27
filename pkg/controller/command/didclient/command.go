@@ -115,14 +115,14 @@ type Command struct {
 // GetHandlers returns list of all commands supported by this controller command.
 func (c *Command) GetHandlers() []command.Handler {
 	return []command.Handler{
-		cmdutil.NewCommandHandler(commandName, createBlocDIDCommandMethod, c.CreateBlocDID),
+		cmdutil.NewCommandHandler(commandName, createBlocDIDCommandMethod, c.CreateTrustBlocDID),
 		cmdutil.NewCommandHandler(commandName, createPeerDIDCommandMethod, c.CreatePeerDID),
 		cmdutil.NewCommandHandler(commandName, saveDIDCommandMethod, c.SaveDID),
 	}
 }
 
-// CreateBlocDID creates a new trust bloc DID.
-func (c *Command) CreateBlocDID(rw io.Writer, req io.Reader) command.Error {
+// CreateTrustBlocDID creates a new trust bloc DID.
+func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error {
 	var request CreateBlocDIDRequest
 
 	err := json.NewDecoder(req).Decode(&request)
