@@ -7,6 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package controller
 
 import (
+	"fmt"
+
+	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	credentialclientcmd "github.com/trustbloc/agent-sdk/pkg/controller/command/credentialclient"
 	didclientcmd "github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
@@ -37,7 +40,7 @@ func WithSDSServerURL(sdsServerURL string) Opt {
 }
 
 // GetCommandHandlers returns all command handlers provided by controller.
-func GetCommandHandlers(opts ...Opt) ([]command.Handler, error) {
+func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, error) {
 	cmdOpts := &allOpts{}
 	// Apply options
 	for _, opt := range opts {
@@ -47,7 +50,10 @@ func GetCommandHandlers(opts ...Opt) ([]command.Handler, error) {
 	sdsComm := sdscomm.New(cmdOpts.sdsServerURL)
 
 	// did client command operation
-	didClientCmd := didclientcmd.New(cmdOpts.blocDomain, sdsComm)
+	didClientCmd, err := didclientcmd.New(cmdOpts.blocDomain, sdsComm, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize DID client: %w", err)
+	}
 
 	// credential client command operation
 	credentialClientCmd := credentialclientcmd.New(sdsComm)

@@ -26,6 +26,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
+	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/mitchellh/mapstructure"
 	agentctrl "github.com/trustbloc/agent-sdk/pkg/controller"
@@ -229,12 +230,17 @@ func addAgentHandlers(pkgMap map[string]map[string]func(*command) *result) {
 			return newErrResult(c.ID, err.Error())
 		}
 
-		handlers, err := getAriesHandlers(a, msgHandler, cOpts)
+		ctx, err := a.Context()
 		if err != nil {
 			return newErrResult(c.ID, err.Error())
 		}
 
-		agentHandlers, err := getAgentHandlers(cOpts)
+		handlers, err := getAriesHandlers(ctx, msgHandler, cOpts)
+		if err != nil {
+			return newErrResult(c.ID, err.Error())
+		}
+
+		agentHandlers, err := getAgentHandlers(ctx, cOpts)
 		if err != nil {
 			return newErrResult(c.ID, err.Error())
 		}
@@ -264,12 +270,7 @@ type commandHandler struct {
 	exec   execFn
 }
 
-func getAriesHandlers(a *aries.Aries, r *msghandler.Registrar, opts *agentStartOpts) ([]commandHandler, error) {
-	ctx, err := a.Context()
-	if err != nil {
-		return nil, err
-	}
-
+func getAriesHandlers(ctx *context.Provider, r *msghandler.Registrar, opts *agentStartOpts) ([]commandHandler, error) {
 	handlers, err := ariesctrl.GetCommandHandlers(ctx, ariesctrl.WithMessageHandler(r),
 		ariesctrl.WithDefaultLabel(opts.Label), ariesctrl.WithNotifier(&jsNotifier{}))
 	if err != nil {
@@ -296,8 +297,8 @@ func getAriesHandlers(a *aries.Aries, r *msghandler.Registrar, opts *agentStartO
 	return hh, nil
 }
 
-func getAgentHandlers(opts *agentStartOpts) ([]commandHandler, error) {
-	handlers, err := agentctrl.GetCommandHandlers(agentctrl.WithBlocDomain(opts.BlocDomain),
+func getAgentHandlers(ctx *context.Provider, opts *agentStartOpts) ([]commandHandler, error) {
+	handlers, err := agentctrl.GetCommandHandlers(ctx, agentctrl.WithBlocDomain(opts.BlocDomain),
 		agentctrl.WithSDSServerURL(opts.SDSServerURL))
 	if err != nil {
 		return nil, err
