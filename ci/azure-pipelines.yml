@@ -76,7 +76,7 @@ jobs:
           echo '@hyperledger:registry=https://npm.pkg.github.com' >> ~/.npmrc
           echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
           make agent-rest-docker
-          docker tag docker.pkg.github.com/trustbloc/agent-sdk/agent-sdk-wasm:latest ${AGENT_SDK_PKG}:${AGENT_SDK_TAG}
+          docker tag docker.pkg.github.com/trustbloc/agent-sdk/agent-rest:latest ${AGENT_SDK_PKG}:${AGENT_SDK_TAG}
           docker push ${AGENT_SDK_PKG}:${AGENT_SDK_TAG}
           cd ./cmd/agent-js-worker
           sed -i 's/"version": "0.1.0"/"version": "'$NPM_PKG_TAG'"/g' package.json

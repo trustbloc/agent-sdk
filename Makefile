@@ -9,7 +9,7 @@ ARIES_AGENT_REST_PATH=cmd/agent-rest
 # Namespace for the agent images
 DOCKER_OUTPUT_NS   ?= docker.pkg.github.com
 REPO_IMAGE_NAME   ?= trustbloc/agent-sdk
-AGENT_NAME ?= agent-rest
+DOCKER_AGENT_NAME ?= agent-rest
 
 ALPINE_VER ?= 3.12
 GO_VER ?= 1.15
@@ -46,7 +46,7 @@ agent-rest:
 .PHONY: agent-rest-docker
 agent-rest-docker:
 	@echo "Building aries agent rest docker image"
-	@docker build -f ./images/agent-rest/Dockerfile --no-cache -t $(DOCKER_OUTPUT_NS)/$(REPO_IMAGE_NAME)/${AGENT_NAME}:latest \
+	@docker build -f ./images/agent-rest/Dockerfile --no-cache -t $(DOCKER_OUTPUT_NS)/$(REPO_IMAGE_NAME)/${DOCKER_AGENT_NAME}:latest \
 	--build-arg GO_VER=$(GO_VER) \
 	--build-arg ALPINE_VER=$(ALPINE_VER) \
 	--build-arg GO_TAGS=$(GO_TAGS) \
