@@ -58,9 +58,9 @@ linters-settings:
       - performance
       - style
       - opinionated
+      - whyNoLint
     disabled-checks:
       - unnamedResult
-      - whyNoLint # TODO enable https://github.com/trustbloc/agent-sdk/issues/12
   funlen:
     lines: 60
     statements: 40
