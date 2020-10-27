@@ -9,7 +9,7 @@ ARIES_AGENT_REST_PATH=cmd/agent-rest
 # Namespace for the agent images
 DOCKER_OUTPUT_NS   ?= docker.pkg.github.com
 REPO_IMAGE_NAME   ?= trustbloc/agent-sdk
-DOCKER_AGENT_NAME ?= agent-rest
+DOCKER_AGENT_NAME ?= agent-sdk-rest
 
 ALPINE_VER ?= 3.12
 GO_VER ?= 1.15
