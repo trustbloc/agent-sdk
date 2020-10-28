@@ -13,7 +13,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.0
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/google/tink/go v1.5.0 // indirect
-	github.com/gorilla/mux v1.7.3
+	github.com/gorilla/mux v1.7.4
 	github.com/hyperledger/aries-framework-go v0.1.5-0.20201022202135-f8f69217453b
 	github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20201023190138-360774a56bd6
 	github.com/hyperledger/aries-framework-go-ext/component/storage/mysql v0.0.0-20201023190138-360774a56bd6
@@ -22,6 +22,7 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.6.1
+	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201020134433-7a5917ab71d7
 	golang.org/x/net v0.0.0-20201027133719-8eef5233e2a1 // indirect
 )
 
