@@ -29,6 +29,7 @@ import (
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
+	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/defaults"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 	"github.com/hyperledger/aries-framework-go/pkg/storage"
@@ -36,6 +37,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/rs/cors"
 	"github.com/spf13/cobra"
+	"github.com/trustbloc/trustbloc-did-method/pkg/vdri/trustbloc"
 )
 
 const (
@@ -111,6 +113,21 @@ const (
 		" Alternatively, this can be set with the following environment variable (in CSV format): " +
 		agentHTTPResolverEnvKey
 
+	// trustbloc domain url flag.
+	agentTrustblocDomainFlagName      = "trustbloc-domain"
+	agentTrustblocDomainEnvKey        = "ARIESD_TRUSTBLOC_DOMAIN"
+	agentTrustblocDomainFlagShorthand = "d"
+	agentTrustblocDomainFlagUsage     = "Trustbloc domain URL." +
+		" Alternatively, this can be set with the following environment variable (in CSV format): " +
+		agentTrustblocDomainEnvKey
+
+	// trustbloc resolver url flag.
+	agentTrustblocResolverFlagName  = "trustbloc-resolver"
+	agentTrustblocResolverEnvKey    = "ARIESD_TRUSTBLOC_RESOLVER"
+	agentTrustblocResolverFlagUsage = "Trustbloc resolver URL." +
+		" Alternatively, this can be set with the following environment variable (in CSV format): " +
+		agentTrustblocResolverEnvKey
+
 	// outbound transport flag.
 	agentOutboundTransportFlagName      = "outbound-transport"
 	agentOutboundTransportEnvKey        = "ARIESD_OUTBOUND_TRANSPORT"
@@ -185,6 +202,8 @@ type agentParameters struct {
 	host, defaultLabel, transportReturnRoute       string
 	tlsCertFile, tlsKeyFile                        string
 	token                                          string
+	trustblocDomain                                string
+	trustblocResolver                              string
 	webhookURLs, httpResolvers, outboundTransports []string
 	inboundHostInternals, inboundHostExternals     []string
 	autoAccept                                     bool
@@ -240,7 +259,7 @@ func Cmd(server server) (*cobra.Command, error) {
 	return startCmd, nil
 }
 
-func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo
+func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo, gocognit
 	return &cobra.Command{
 		Use:   "start",
 		Short: "Start an agent",
@@ -303,6 +322,16 @@ func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo
 				return err
 			}
 
+			trustblocDomain, err := getUserSetVar(cmd, agentTrustblocDomainFlagName, agentTrustblocDomainEnvKey, true)
+			if err != nil {
+				return err
+			}
+
+			trustblocResolver, err := getUserSetVar(cmd, agentTrustblocResolverFlagName, agentTrustblocResolverEnvKey, true)
+			if err != nil {
+				return err
+			}
+
 			outboundTransports, err := getUserSetVars(cmd, agentOutboundTransportFlagName,
 				agentOutboundTransportEnvKey, true)
 			if err != nil {
@@ -335,6 +364,8 @@ func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo
 				defaultLabel:         defaultLabel,
 				webhookURLs:          webhookURLs,
 				httpResolvers:        httpResolvers,
+				trustblocDomain:      trustblocDomain,
+				trustblocResolver:    trustblocResolver,
 				outboundTransports:   outboundTransports,
 				autoAccept:           autoAccept,
 				transportReturnRoute: transportReturnRoute,
@@ -399,7 +430,7 @@ func getAutoAcceptValue(cmd *cobra.Command) (bool, error) {
 	return strconv.ParseBool(v)
 }
 
-func createFlags(startCmd *cobra.Command) {
+func createFlags(startCmd *cobra.Command) { // nolint: funlen
 	// agent host flag
 	startCmd.Flags().StringP(agentHostFlagName, agentHostFlagShorthand, "", agentHostFlagUsage)
 
@@ -432,6 +463,13 @@ func createFlags(startCmd *cobra.Command) {
 	// http resolver url flag
 	startCmd.Flags().StringSliceP(agentHTTPResolverFlagName, agentHTTPResolverFlagShorthand, []string{},
 		agentHTTPResolverFlagUsage)
+
+	// trustbloc domain url flag
+	startCmd.Flags().StringP(agentTrustblocDomainFlagName, agentTrustblocDomainFlagShorthand, "",
+		agentTrustblocDomainFlagUsage)
+
+	// trustbloc resolver url flag
+	startCmd.Flags().StringP(agentTrustblocResolverFlagName, "", "", agentTrustblocResolverFlagUsage)
 
 	// agent default label flag
 	startCmd.Flags().StringP(agentDefaultLabelFlagName, agentDefaultLabelFlagShorthand, "",
@@ -505,29 +543,49 @@ func getUserSetVars(cmd *cobra.Command, flagName, envKey string, isOptional bool
 		"It must be set via either command line or environment variable", flagName)
 }
 
-func getResolverOpts(httpResolvers []string) ([]aries.Option, error) {
-	var opts []aries.Option
-
+func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) ([]vdr.VDR, error) {
 	const numPartsResolverOption = 2
+	// set maps resolver to its methods
+	// e.g the set of ["trustbloc@http://resolver.com", "v1@http://resolver.com"] will be
+	// {"http://resolver.com": {"trustbloc":{}, "v1":{} }}
+	set := make(map[string]map[string]struct{})
 
-	if len(httpResolvers) > 0 {
-		for _, httpResolver := range httpResolvers {
-			r := strings.Split(httpResolver, "@")
-			if len(r) != numPartsResolverOption {
-				return nil, fmt.Errorf("invalid http resolver options found")
-			}
-
-			httpVDR, err := httpbinding.New(r[1],
-				httpbinding.WithAccept(func(method string) bool { return method == r[0] }))
-			if err != nil {
-				return nil, fmt.Errorf("failed to setup http resolver :  %w", err)
-			}
-
-			opts = append(opts, aries.WithVDR(httpVDR))
+	for _, resolver := range resolvers {
+		r := strings.Split(resolver, "@")
+		if len(r) != numPartsResolverOption {
+			return nil, fmt.Errorf("invalid http resolver options found: %s", resolver)
 		}
+
+		if set[r[1]] == nil {
+			set[r[1]] = map[string]struct{}{}
+		}
+
+		set[r[1]][r[0]] = struct{}{}
 	}
 
-	return opts, nil
+	var VDRs []vdr.VDR
+
+	for url := range set {
+		methods := set[url]
+
+		resolverVDR, err := httpbinding.New(url, httpbinding.WithAccept(func(method string) bool {
+			_, ok := methods[method]
+
+			return ok
+		}))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create new universal resolver vdr: %w", err)
+		}
+
+		VDRs = append(VDRs, resolverVDR)
+	}
+
+	VDRs = append(VDRs, trustbloc.New(
+		trustbloc.WithDomain(trustblocDomain),
+		trustbloc.WithResolverURL(trustblocResolver),
+	))
+
+	return VDRs, nil
 }
 
 func getOutboundTransportOpts(outboundTransports []string) ([]aries.Option, error) {
@@ -716,13 +774,14 @@ func createAriesAgent(parameters *agentParameters) (*context.Provider, error) {
 
 	opts = append(opts, inboundTransportOpt...)
 
-	resolverOpts, err := getResolverOpts(parameters.httpResolvers)
+	VDRs, err := createVDRs(parameters.httpResolvers, parameters.trustblocDomain, parameters.trustblocResolver)
 	if err != nil {
-		return nil, fmt.Errorf("failed to start aries agent rest on port [%s], failed to resolver opts : %w",
-			parameters.host, err)
+		return nil, err
 	}
 
-	opts = append(opts, resolverOpts...)
+	for i := range VDRs {
+		opts = append(opts, aries.WithVDR(VDRs[i]))
+	}
 
 	outboundTransportOpts, err := getOutboundTransportOpts(parameters.outboundTransports)
 	if err != nil {

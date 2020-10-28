@@ -71,24 +71,35 @@ func TestCreateVDRs(t *testing.T) {
 		blocDomain        string
 		trustblocResolver string
 		expected          int
+		accept            map[int][]string
 	}{{
 		name: "Empty data",
 		// expects default trustbloc resolver
+		accept:   map[int][]string{0: {"trustbloc"}},
 		expected: 1,
 	}, {
 		name:      "Groups methods by resolver",
 		resolvers: []string{"trustbloc@http://resolver.com", "v1@http://resolver.com"},
+		accept:    map[int][]string{0: {"trustbloc", "v1"}, 1: {"trustbloc"}},
 		// expects resolver.com that supports trustbloc,v1 methods and default trustbloc resolver
 		expected: 2,
 	}, {
 		name:      "Two different resolvers",
 		resolvers: []string{"trustbloc@http://resolver1.com", "v1@http://resolver2.com"},
+		accept:    map[int][]string{0: {"trustbloc"}, 1: {"v1"}, 2: {"trustbloc"}},
 		// expects resolver1.com and resolver2.com that supports trustbloc and v1 methods and default trustbloc resolver
 		expected: 3,
 	}}
 
 	for _, test := range tests {
 		res, err := createVDRs(test.resolvers, test.blocDomain, test.trustblocResolver)
+
+		for i, methods := range test.accept {
+			for _, method := range methods {
+				require.True(t, res[i].Accept(method))
+			}
+		}
+
 		require.NoError(t, err)
 		require.Equal(t, test.expected, len(res))
 	}

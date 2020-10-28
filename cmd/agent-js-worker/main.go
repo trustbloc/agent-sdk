@@ -21,6 +21,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb"
 	ariesctrl "github.com/hyperledger/aries-framework-go/pkg/controller"
+	controllercmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/messaging/msghandler"
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
@@ -90,7 +91,7 @@ func main() {
 	// TODO: capacity was added due to deadlock. Looks like js worker are not able to pick up 'output chan *result'.
 	//  Another fix for that is to wrap 'in <- cmd' in a goroutine. e.g go func() { in <- cmd }()
 	//  We need to figure out what is the root cause of deadlock and fix it properly.
-	input := make(chan *command, 10)
+	input := make(chan *command, 10) // nolint: gomnd
 	output := make(chan *result)
 
 	go pipe(input, output)
@@ -142,6 +143,7 @@ func worker(input chan *command, output chan *result, handlers map[string]map[st
 		if pkg, found := handlers[c.Pkg]; found {
 			if fn, found := pkg[c.Fn]; found {
 				output <- fn(c)
+
 				continue
 			}
 		}
@@ -271,7 +273,8 @@ type commandHandler struct {
 	exec   execFn
 }
 
-func getAriesHandlers(ctx *context.Provider, r *msghandler.Registrar, opts *agentStartOpts) ([]commandHandler, error) {
+func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
+	opts *agentStartOpts) ([]commandHandler, error) {
 	handlers, err := ariesctrl.GetCommandHandlers(ctx, ariesctrl.WithMessageHandler(r),
 		ariesctrl.WithDefaultLabel(opts.Label), ariesctrl.WithNotifier(&jsNotifier{}))
 	if err != nil {
@@ -282,6 +285,7 @@ func getAriesHandlers(ctx *context.Provider, r *msghandler.Registrar, opts *agen
 
 	for _, h := range handlers {
 		handle := h.Handle()
+
 		hh = append(hh, commandHandler{
 			name:   h.Name(),
 			method: h.Method(),
@@ -290,6 +294,7 @@ func getAriesHandlers(ctx *context.Provider, r *msghandler.Registrar, opts *agen
 				if e != nil {
 					return fmt.Errorf("code: %+v, message: %s", e.Code(), e.Error())
 				}
+
 				return nil
 			},
 		})
@@ -309,6 +314,7 @@ func getAgentHandlers(ctx *context.Provider, opts *agentStartOpts) ([]commandHan
 
 	for _, h := range handlers {
 		handle := h.Handle()
+
 		hh = append(hh, commandHandler{
 			name:   h.Name(),
 			method: h.Method(),
@@ -317,6 +323,7 @@ func getAgentHandlers(ctx *context.Provider, opts *agentStartOpts) ([]commandHan
 				if e != nil {
 					return fmt.Errorf("code: %+v, message: %s", e.Code(), e.Error())
 				}
+
 				return nil
 			},
 		})
@@ -376,7 +383,7 @@ func cmdExecToFn(exec execFn) func(*command) *result {
 	}
 }
 
-func addStopAgentHandler(a *aries.Aries, pkgMap map[string]map[string]func(*command) *result) {
+func addStopAgentHandler(a io.Closer, pkgMap map[string]map[string]func(*command) *result) {
 	fnMap := make(map[string]func(*command) *result)
 	fnMap[stopFn] = func(c *command) *result {
 		err := a.Close()
@@ -450,11 +457,13 @@ func createVDRs(resolvers []string, blocDomain, trustblocResolver string) ([]vdr
 	var VDRs []vdr.VDR
 
 	for url := range set {
-		resolverVDR, err := httpbinding.New(url,
-			httpbinding.WithAccept(func(method string) bool {
-				_, ok := set[url][method]
-				return ok
-			}))
+		methods := set[url]
+
+		resolverVDR, err := httpbinding.New(url, httpbinding.WithAccept(func(method string) bool {
+			_, ok := methods[method]
+
+			return ok
+		}))
 		if err != nil {
 			return nil, fmt.Errorf("failed to create new universal resolver vdr: %w", err)
 		}
