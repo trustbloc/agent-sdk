@@ -5,11 +5,16 @@ module github.com/trustbloc/agent-sdk
 
 go 1.15
 
+replace (
+	github.com/kilic/bls12-381 => github.com/trustbloc/bls12-381 v0.0.0-20201008080608-ba2e87ef05ef
+	github.com/phoreproject/bls => github.com/trustbloc/bls v0.0.0-20201008085849-81064514c3cc
+)
+
 require (
 	github.com/google/go-cmp v0.5.1 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.7.4
-	github.com/hyperledger/aries-framework-go v0.1.5-0.20201020160650-4535370d64e4
+	github.com/hyperledger/aries-framework-go v0.1.5-0.20201022202135-f8f69217453b
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/trustbloc/edge-core v0.1.5-0.20200916124536-c32454a16108

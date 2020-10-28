@@ -800,12 +800,24 @@ func TestStoreProvider(t *testing.T) {
 		require.Contains(t, err.Error(), "database type not set to a valid type")
 	})
 
+	t.Run("test error from create new couchdb", func(t *testing.T) {
+		_, err := createAriesAgent(&agentParameters{dbParam: &dbParam{dbType: databaseTypeCouchDBOption}})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "hostURL for new CouchDB provider can't be blank")
+	})
+
+	t.Run("test error from create new mysql", func(t *testing.T) {
+		_, err := createAriesAgent(&agentParameters{dbParam: &dbParam{dbType: databaseTypeMYSQLDBOption}})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "DB URL for new mySQL DB provider can't be blank")
+	})
+
 	t.Run("leveldb database with retry", func(t *testing.T) {
 		retry := true
 		origin := supportedStorageProviders[databaseTypeLevelDBOption]
 		defer func() { supportedStorageProviders[databaseTypeLevelDBOption] = origin }()
 
-		supportedStorageProviders[databaseTypeLevelDBOption] = func(path string) (storage.Provider, error) {
+		supportedStorageProviders[databaseTypeLevelDBOption] = func(_, path string) (storage.Provider, error) {
 			if retry {
 				retry = false
 
@@ -827,7 +839,7 @@ func TestStoreProvider(t *testing.T) {
 		origin := supportedStorageProviders[databaseTypeLevelDBOption]
 		defer func() { supportedStorageProviders[databaseTypeLevelDBOption] = origin }()
 
-		supportedStorageProviders[databaseTypeLevelDBOption] = func(path string) (storage.Provider, error) {
+		supportedStorageProviders[databaseTypeLevelDBOption] = func(_, path string) (storage.Provider, error) {
 			return nil, errors.New("db error")
 		}
 
@@ -836,7 +848,7 @@ func TestStoreProvider(t *testing.T) {
 			prefix:  "/tmp/agent-sdk/test",
 			dbType:  "leveldb",
 		}})
-		require.EqualError(t, err, "failed to connect to storage at /tmp/agent-sdk/test : db error")
+		require.EqualError(t, err, "failed to connect to storage at : db error")
 	})
 }
 
