@@ -549,6 +549,10 @@ func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) (
 	// e.g the set of ["trustbloc@http://resolver.com", "v1@http://resolver.com"] will be
 	// {"http://resolver.com": {"trustbloc":{}, "v1":{} }}
 	set := make(map[string]map[string]struct{})
+	// order maps URL to its initial index
+	order := make(map[string]int)
+
+	idx := -1
 
 	for _, resolver := range resolvers {
 		r := strings.Split(resolver, "@")
@@ -558,12 +562,15 @@ func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) (
 
 		if set[r[1]] == nil {
 			set[r[1]] = map[string]struct{}{}
+			idx++
 		}
+
+		order[r[1]] = idx
 
 		set[r[1]][r[0]] = struct{}{}
 	}
 
-	var VDRs []vdr.VDR
+	VDRs := make([]vdr.VDR, len(set), len(set)+1)
 
 	for url := range set {
 		methods := set[url]
@@ -577,7 +584,7 @@ func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) (
 			return nil, fmt.Errorf("failed to create new universal resolver vdr: %w", err)
 		}
 
-		VDRs = append(VDRs, resolverVDR)
+		VDRs[order[url]] = resolverVDR
 	}
 
 	VDRs = append(VDRs, trustbloc.New(
