@@ -5,6 +5,7 @@
 
 GOBIN_PATH             = $(abspath .)/build/bin
 ARIES_AGENT_REST_PATH=cmd/agent-rest
+ARIES_AGENT_MOBILE_PATH=cmd/agent-mobile
 
 # Namespace for the agent images
 DOCKER_OUTPUT_NS   ?= docker.pkg.github.com
@@ -52,6 +53,16 @@ agent-rest-docker:
 	--build-arg GO_TAGS=$(GO_TAGS) \
 	--build-arg GOPROXY=$(GOPROXY) .
 
+.PHONY: unit-test-mobile
+unit-test-mobile:
+	@echo "Running unit tests for mobile"
+	@cd ${ARIES_AGENT_MOBILE_PATH} && $(MAKE) unit-test
+
+.PHONY: agent-mobile
+agent-mobile:
+	@echo "Building agent-mobile"
+	@cd ${ARIES_AGENT_MOBILE_PATH} && $(MAKE) all
+
 .PHONY: depend
 depend:
 	@mkdir -p ./build/bin
@@ -63,5 +74,6 @@ clean: clean-build
 .PHONY: clean-build
 clean-build:
 	@rm -Rf ./build
+	@rm -Rf $(ARIES_AGENT_MOBILE_PATH)/build
 	@rm -Rf ./cmd/agent-js-worker/node_modules
 	@rm -Rf ./cmd/agent-js-worker/dist
