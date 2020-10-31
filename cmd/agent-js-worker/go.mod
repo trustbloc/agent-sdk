@@ -11,10 +11,9 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/golang/snappy v0.0.2 // indirect
-	github.com/google/tink/go v1.5.0 // indirect
 	github.com/google/uuid v1.1.2
-	github.com/hyperledger/aries-framework-go v0.1.5-0.20201022202135-f8f69217453b
-	github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201022202135-f8f69217453b
+	github.com/hyperledger/aries-framework-go v0.1.5-0.20201029183113-1e234a0af6c6
+	github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201029183113-1e234a0af6c6
 	github.com/jinzhu/copier v0.0.0-20201025035756-632e723a6687 // indirect
 	github.com/kilic/bls12-381 v0.0.0-20201022102231-585cb842ccd9 // indirect
 	github.com/mitchellh/mapstructure v1.3.3
@@ -33,6 +32,6 @@ require (
 
 replace (
 	github.com/kilic/bls12-381 => github.com/trustbloc/bls12-381 v0.0.0-20201008080608-ba2e87ef05ef
-	github.com/phoreproject/bls => github.com/trustbloc/bls v0.0.0-20201008085849-81064514c3cc
+	github.com/phoreproject/bls => github.com/trustbloc/bls v0.0.0-20201023141329-a1e218beb89e
 	github.com/trustbloc/agent-sdk => ../../
 )
