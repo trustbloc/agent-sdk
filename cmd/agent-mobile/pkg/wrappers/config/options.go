@@ -11,22 +11,21 @@ import "github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/api"
 
 // Options represents configurations for Aries.
 type Options struct {
-	UseLocalAgent bool
-
-	AgentURL string
-	APIToken string
-
+	UseLocalAgent        bool
+	AgentURL             string
+	APIToken             string
 	Label                string
 	AutoAccept           bool
 	TransportReturnRoute string
 	LogLevel             string
-
+	TrustblocDomain      string
+	TrustblocResolver    string
+	WebsocketURL         string
+	Logger               api.LoggerProvider
 	// expected to be ignored by gomobile
 	// not intended to be used by golang code
 	HTTPResolvers     []string
 	OutboundTransport []string
-	Logger            api.LoggerProvider
-	WebsocketURL      string
 }
 
 // New returns an instance of Options which can be used to configure an aries controller instance.

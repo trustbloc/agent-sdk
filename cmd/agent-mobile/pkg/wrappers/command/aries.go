@@ -31,8 +31,10 @@ import (
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
+	ariesvdr "github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/storage/mem"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
+	"github.com/trustbloc/trustbloc-did-method/pkg/vdri/trustbloc"
 
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/api"
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/config"
@@ -92,7 +94,7 @@ func NewAries(opts *config.Options) (*Aries, error) {
 	return a, nil
 }
 
-func prepareFrameworkOptions(opts *config.Options) ([]aries.Option, error) {
+func prepareFrameworkOptions(opts *config.Options) ([]aries.Option, error) { // nolint: gocyclo
 	msgHandler := msghandler.NewRegistrar()
 
 	var options []aries.Option
@@ -103,6 +105,15 @@ func prepareFrameworkOptions(opts *config.Options) ([]aries.Option, error) {
 	}
 
 	options = append(options, aries.WithStoreProvider(mem.NewProvider()))
+
+	VDRs, err := createVDRs(opts.HTTPResolvers, opts.TrustblocDomain, opts.TrustblocResolver)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range VDRs {
+		options = append(options, aries.WithVDR(VDRs[i]))
+	}
 
 	for _, transport := range opts.OutboundTransport {
 		switch transport {
@@ -317,4 +328,56 @@ func (a *Aries) GetKMSController() (api.KMSController, error) {
 	}
 
 	return &KMS{handlers: handlers}, nil
+}
+
+func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) ([]ariesvdr.VDR, error) {
+	const numPartsResolverOption = 2
+	// set maps resolver to its methods
+	// e.g the set of ["trustbloc@http://resolver.com", "v1@http://resolver.com"] will be
+	// {"http://resolver.com": {"trustbloc":{}, "v1":{} }}
+	set := make(map[string]map[string]struct{})
+	// order maps URL to its initial index
+	order := make(map[string]int)
+
+	idx := -1
+
+	for _, resolver := range resolvers {
+		r := strings.Split(resolver, "@")
+		if len(r) != numPartsResolverOption {
+			return nil, fmt.Errorf("invalid http resolver options found: %s", resolver)
+		}
+
+		if set[r[1]] == nil {
+			set[r[1]] = map[string]struct{}{}
+			idx++
+		}
+
+		order[r[1]] = idx
+
+		set[r[1]][r[0]] = struct{}{}
+	}
+
+	VDRs := make([]ariesvdr.VDR, len(set), len(set)+1)
+
+	for url := range set {
+		methods := set[url]
+
+		resolverVDR, err := httpbinding.New(url, httpbinding.WithAccept(func(method string) bool {
+			_, ok := methods[method]
+
+			return ok
+		}))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create new universal resolver vdr: %w", err)
+		}
+
+		VDRs[order[url]] = resolverVDR
+	}
+
+	VDRs = append(VDRs, trustbloc.New(
+		trustbloc.WithDomain(trustblocDomain),
+		trustbloc.WithResolverURL(trustblocResolver),
+	))
+
+	return VDRs, nil
 }
