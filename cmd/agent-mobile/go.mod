@@ -8,10 +8,9 @@ go 1.15
 
 require (
 	github.com/google/uuid v1.1.2
-	github.com/gorilla/mux v1.7.4 // indirect
 	github.com/hyperledger/aries-framework-go v0.1.5-0.20201029183113-1e234a0af6c6
-	github.com/multiformats/go-multihash v0.0.14 // indirect
 	github.com/stretchr/testify v1.6.1
+	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201020134433-7a5917ab71d7
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	nhooyr.io/websocket v1.8.3
 )
