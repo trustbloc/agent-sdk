@@ -21,9 +21,9 @@ import (
 	didclient "github.com/trustbloc/trustbloc-did-method/pkg/did"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
-	"github.com/trustbloc/agent-sdk/pkg/controller/command/internal/cmdutil"
-	"github.com/trustbloc/agent-sdk/pkg/controller/command/internal/logutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/sdscomm"
+	"github.com/trustbloc/agent-sdk/pkg/controller/internal/cmdutil"
+	"github.com/trustbloc/agent-sdk/pkg/controller/internal/logutil"
 )
 
 var logger = log.New("agent-sdk-didclient")
@@ -57,7 +57,8 @@ const (
 	errFailedToRegisterDIDRecKey = "failed to register did doc recipient key : %w"
 )
 
-type provider interface {
+// Provider describes dependencies for the client.
+type Provider interface {
 	VDRegistry() vdr.Registry
 	Service(id string) (interface{}, error)
 }
@@ -73,7 +74,7 @@ type mediatorClient interface {
 }
 
 // New returns new DID Exchange controller command instance.
-func New(domain string, sdsComm *sdscomm.SDSComm, p provider) (*Command, error) {
+func New(domain string, sdsComm *sdscomm.SDSComm, p Provider) (*Command, error) {
 	client := didclient.New()
 
 	mClient, err := mediator.New(p)

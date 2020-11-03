@@ -407,7 +407,7 @@ func newTestEDVServer(t *testing.T) *httptest.Server {
 	return httptest.NewServer(router)
 }
 
-func getMockProvider() provider {
+func getMockProvider() Provider {
 	return &mockprotocol.MockProvider{
 		ServiceMap: map[string]interface{}{
 			mediatorsvc.Coordination: &mockroute.MockMediatorSvc{},

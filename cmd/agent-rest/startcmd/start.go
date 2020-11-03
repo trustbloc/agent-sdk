@@ -38,6 +38,8 @@ import (
 	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 	"github.com/trustbloc/trustbloc-did-method/pkg/vdri/trustbloc"
+
+	sdkcontroller "github.com/trustbloc/agent-sdk/pkg/controller"
 )
 
 const (
@@ -121,6 +123,13 @@ const (
 		" Alternatively, this can be set with the following environment variable (in CSV format): " +
 		agentTrustblocDomainEnvKey
 
+	// trustbloc domain url flag.
+	agentSdsServerURLFlagName  = "sds-server-url"
+	agentSdsServerURLEnvKey    = "ARIESD_SDS_SERVER_URL"
+	agentSdsServerURLFlagUsage = "SDS server URL." +
+		" Alternatively, this can be set with the following environment variable (in CSV format): " +
+		agentSdsServerURLEnvKey
+
 	// trustbloc resolver url flag.
 	agentTrustblocResolverFlagName  = "trustbloc-resolver"
 	agentTrustblocResolverEnvKey    = "ARIESD_TRUSTBLOC_RESOLVER"
@@ -203,6 +212,7 @@ type agentParameters struct {
 	tlsCertFile, tlsKeyFile                        string
 	token                                          string
 	trustblocDomain                                string
+	sdsServerURL                                   string
 	trustblocResolver                              string
 	webhookURLs, httpResolvers, outboundTransports []string
 	inboundHostInternals, inboundHostExternals     []string
@@ -327,6 +337,11 @@ func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo, g
 				return err
 			}
 
+			sdsServerURL, err := getUserSetVar(cmd, agentSdsServerURLFlagName, agentSdsServerURLEnvKey, true)
+			if err != nil {
+				return err
+			}
+
 			trustblocResolver, err := getUserSetVar(cmd, agentTrustblocResolverFlagName, agentTrustblocResolverEnvKey, true)
 			if err != nil {
 				return err
@@ -365,6 +380,7 @@ func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo, g
 				webhookURLs:          webhookURLs,
 				httpResolvers:        httpResolvers,
 				trustblocDomain:      trustblocDomain,
+				sdsServerURL:         sdsServerURL,
 				trustblocResolver:    trustblocResolver,
 				outboundTransports:   outboundTransports,
 				autoAccept:           autoAccept,
@@ -467,6 +483,10 @@ func createFlags(startCmd *cobra.Command) { // nolint: funlen
 	// trustbloc domain url flag
 	startCmd.Flags().StringP(agentTrustblocDomainFlagName, agentTrustblocDomainFlagShorthand, "",
 		agentTrustblocDomainFlagUsage)
+
+	// sds server url flag
+	startCmd.Flags().StringP(agentSdsServerURLFlagName, "", "",
+		agentSdsServerURLFlagUsage)
 
 	// trustbloc resolver url flag
 	startCmd.Flags().StringP(agentTrustblocResolverFlagName, "", "", agentTrustblocResolverFlagUsage)
@@ -729,6 +749,19 @@ func startAgent(parameters *agentParameters) error {
 	if err != nil {
 		return fmt.Errorf("failed to start aries agent rest on port [%s], failed to get rest service api :  %w",
 			parameters.host, err)
+	}
+
+	sdkHandlers, err := sdkcontroller.GetRESTHandlers(ctx,
+		sdkcontroller.WithBlocDomain(parameters.trustblocDomain),
+		sdkcontroller.WithSDSServerURL(parameters.sdsServerURL),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to start sdk agent rest on port [%s], failed to get rest service api:  %w",
+			parameters.host, err)
+	}
+
+	for i := range sdkHandlers {
+		handlers = append(handlers, sdkHandlers[i])
 	}
 
 	router := mux.NewRouter()

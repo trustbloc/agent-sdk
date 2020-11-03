@@ -58,3 +58,27 @@ func TestGetCommandHandlers(t *testing.T) {
 		require.NotEmpty(t, handlers)
 	})
 }
+
+func TestGetRESTHandlers(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		framework, err := aries.New()
+		require.NoError(t, err)
+		require.NotNil(t, framework)
+
+		defer func() { require.NoError(t, framework.Close()) }()
+
+		ctx, err := framework.Context()
+		require.NoError(t, err)
+		require.NotNil(t, ctx)
+
+		handlers, err := controller.GetRESTHandlers(ctx, controller.WithBlocDomain("example.com"))
+		require.NoError(t, err)
+		require.NotEmpty(t, handlers)
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		_, err := controller.GetRESTHandlers(&context.Provider{}, controller.WithBlocDomain("example.com"))
+		require.Error(t, err)
+		require.EqualError(t, err, "failed to initialize did-client command: service not found")
+	})
+}

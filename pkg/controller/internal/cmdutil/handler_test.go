@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
-	"github.com/trustbloc/agent-sdk/pkg/controller/command/internal/cmdutil"
+	"github.com/trustbloc/agent-sdk/pkg/controller/internal/cmdutil"
 )
 
 func TestNewHTTPHandler(t *testing.T) {
