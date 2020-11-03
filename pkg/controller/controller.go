@@ -17,6 +17,8 @@ import (
 	didclientcmd "github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
 	presentationclientcmd "github.com/trustbloc/agent-sdk/pkg/controller/command/presentationclient"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/sdscomm"
+	"github.com/trustbloc/agent-sdk/pkg/controller/rest"
+	"github.com/trustbloc/agent-sdk/pkg/controller/rest/didclient"
 )
 
 type allOpts struct {
@@ -42,7 +44,7 @@ func WithSDSServerURL(sdsServerURL string) Opt {
 }
 
 // GetCommandHandlers returns all command handlers provided by controller.
-func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, error) {
+func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, error) { //nolint: interfacer
 	cmdOpts := &allOpts{}
 	// Apply options
 	for _, opt := range opts {
@@ -67,6 +69,27 @@ func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, 
 	allHandlers = append(allHandlers, didClientCmd.GetHandlers()...)
 	allHandlers = append(allHandlers, credentialClientCmd.GetHandlers()...)
 	allHandlers = append(allHandlers, presentationClientCmd.GetHandlers()...)
+
+	return allHandlers, nil
+}
+
+// GetRESTHandlers returns all REST handlers provided by controller.
+func GetRESTHandlers(ctx *context.Provider, opts ...Opt) ([]rest.Handler, error) { //nolint: interfacer
+	restOpts := &allOpts{}
+	// Apply options
+	for _, opt := range opts {
+		opt(restOpts)
+	}
+
+	// DID Client REST operation
+	didClientOp, err := didclient.New(ctx, restOpts.blocDomain, sdscomm.New(restOpts.sdsServerURL))
+	if err != nil {
+		return nil, err
+	}
+
+	// creat handlers from all operations
+	var allHandlers []rest.Handler
+	allHandlers = append(allHandlers, didClientOp.GetRESTHandlers()...)
 
 	return allHandlers, nil
 }

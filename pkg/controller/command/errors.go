@@ -18,6 +18,11 @@ const (
 // Code is the error code of command errors.
 type Code int32
 
+const (
+	// UnknownStatus default error code for unknown errors.
+	UnknownStatus Code = iota
+)
+
 // Group is the error groups.
 // Note: recommended to use [0-9]*000 pattern for any new entries.
 // Example: 2000, 3000, 4000 ...... 25000.
