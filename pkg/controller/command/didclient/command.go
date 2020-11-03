@@ -146,7 +146,7 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 
 		opts = append(opts, didclient.WithPublicKey(&didclient.PublicKey{
 			ID: v.ID, Type: v.Type, Encoding: v.Encoding,
-			KeyType: v.KeyType, Purpose: v.Purpose, Recovery: v.Recovery, Update: v.Update, Value: value,
+			KeyType: v.KeyType, Purposes: v.Purposes, Recovery: v.Recovery, Update: v.Update, Value: value,
 		}))
 	}
 

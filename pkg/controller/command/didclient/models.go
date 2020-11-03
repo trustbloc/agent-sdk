@@ -29,7 +29,7 @@ type PublicKey struct {
 	Type     string   `json:"type,omitempty"`
 	Encoding string   `json:"encoding,omitempty"`
 	KeyType  string   `json:"keyType,omitempty"`
-	Purpose  []string `json:"purpose,omitempty"`
+	Purposes []string `json:"purpose,omitempty"`
 	Recovery bool     `json:"recovery,omitempty"`
 	Update   bool     `json:"update,omitempty"`
 	Value    string   `json:"value,omitempty"`
