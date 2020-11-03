@@ -8,6 +8,8 @@ package command
 import (
 	"encoding/json"
 	"io"
+
+	"github.com/hyperledger/aries-framework-go/pkg/controller/command"
 )
 
 type logger interface {
@@ -25,5 +27,21 @@ func WriteNillableResponse(w io.Writer, v interface{}, l logger) {
 	// TODO as of now, just log errors for writing response
 	if err := json.NewEncoder(w).Encode(obj); err != nil {
 		l.Errorf("Unable to send error response, %s", err)
+	}
+}
+
+// AriesHandler implements aries handler.
+type AriesHandler struct {
+	Handler
+}
+
+// Handle execute function of the command.
+func (ah AriesHandler) Handle() command.Exec {
+	return func(rw io.Writer, req io.Reader) command.Error {
+		if err := ah.Handler.Handle()(rw, req); err != nil {
+			return command.NewExecuteError(command.Code(err.Code()), err)
+		}
+
+		return nil
 	}
 }

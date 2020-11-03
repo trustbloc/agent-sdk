@@ -188,6 +188,11 @@ func (ar *Aries) GetVerifiableController() (api.VerifiableController, error) {
 	return &Verifiable{endpoints: endpoints, URL: ar.URL, Token: ar.Token, httpClient: &http.Client{}}, nil
 }
 
+// GetDIDClient returns a DIDClient instance.
+func (ar *Aries) GetDIDClient() (api.DIDClient, error) {
+	return nil, errors.New("not implemented yet")
+}
+
 // GetDIDExchangeController returns a DIDExchange instance.
 func (ar *Aries) GetDIDExchangeController() (api.DIDExchangeController, error) {
 	endpoints, ok := ar.endpoints[didexchange.OperationID]

@@ -39,6 +39,9 @@ import (
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/api"
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/config"
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/notifier"
+	sdkcontroller "github.com/trustbloc/agent-sdk/pkg/controller"
+	sdkcommand "github.com/trustbloc/agent-sdk/pkg/controller/command"
+	"github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
 )
 
 var logger = log.New("aries-agent-mobile/wrappers/command")
@@ -77,6 +80,16 @@ func NewAries(opts *config.Options) (*Aries, error) {
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get command handlers: %w", err)
+	}
+
+	sdkCommandHandlers, err := sdkcontroller.GetCommandHandlers(context,
+		sdkcontroller.WithBlocDomain(opts.TrustblocDomain))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sdk command handlers: %w", err)
+	}
+
+	for i := range sdkCommandHandlers {
+		commandHandlers = append(commandHandlers, sdkcommand.AriesHandler{Handler: sdkCommandHandlers[i]})
 	}
 
 	handlers := make(map[string]map[string]command.Exec)
@@ -248,6 +261,16 @@ func (a *Aries) GetVerifiableController() (api.VerifiableController, error) {
 	}
 
 	return &Verifiable{handlers: handlers}, nil
+}
+
+// GetDIDClient returns a DIDClient instance.
+func (a *Aries) GetDIDClient() (api.DIDClient, error) {
+	handlers, ok := a.handlers[didclient.CommandName]
+	if !ok {
+		return nil, fmt.Errorf("no handlers found for controller [%s]", didexchange.CommandName)
+	}
+
+	return &DIDClient{handlers: handlers}, nil
 }
 
 // GetDIDExchangeController returns a DIDExchange instance.
