@@ -22,6 +22,9 @@ type AriesController interface {
 	// GetPresentProofController returns an implementation of PresentProofController
 	GetPresentProofController() (PresentProofController, error)
 
+	// GetDIDClient returns an implementation of DIDClient
+	GetDIDClient() (DIDClient, error)
+
 	// GetDIDExchangeController returns an implementation of DIDExchangeController
 	GetDIDExchangeController() (DIDExchangeController, error)
 
