@@ -32,6 +32,7 @@ import (
 
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/api"
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/config"
+	"github.com/trustbloc/agent-sdk/pkg/controller/rest/didclient"
 )
 
 // Aries is an Aries implementation with endpoints to execute operations.
@@ -190,7 +191,12 @@ func (ar *Aries) GetVerifiableController() (api.VerifiableController, error) {
 
 // GetDIDClient returns a DIDClient instance.
 func (ar *Aries) GetDIDClient() (api.DIDClient, error) {
-	return nil, errors.New("not implemented yet")
+	endpoints, ok := ar.endpoints[didclient.OperationID]
+	if !ok {
+		return nil, fmt.Errorf("no endpoints found for controller [%s]", didclient.OperationID)
+	}
+
+	return &DIDClient{endpoints: endpoints, URL: ar.URL, Token: ar.Token, httpClient: &http.Client{}}, nil
 }
 
 // GetDIDExchangeController returns a DIDExchange instance.
