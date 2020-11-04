@@ -7,7 +7,10 @@ package didclient // nolint:testpackage // uses internal implementation details
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"crypto/ed25519"
+	"crypto/elliptic"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -120,6 +123,34 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		require.Contains(t, cmdErr.Error(), "error create did")
 	})
 
+	t.Run("test recovery key not supported", func(t *testing.T) {
+		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		c.didBlocClient = &mockDIDClient{createDIDErr: fmt.Errorf("error create did")}
+
+		var b bytes.Buffer
+
+		req, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+			{
+				KeyType:  "wrong",
+				Recovery: true,
+			},
+			{
+				Type:  "key1",
+				Value: "value",
+			},
+		}})
+		require.NoError(t, err)
+
+		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(req))
+		require.Error(t, cmdErr)
+		require.Equal(t, CreateDIDErrorCode, cmdErr.Code())
+		require.Equal(t, command.ExecuteError, cmdErr.Type())
+		require.Contains(t, cmdErr.Error(), "invalid key type: wrong")
+	})
+
 	t.Run("test error from did base64 decode", func(t *testing.T) {
 		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
 		require.NoError(t, err)
@@ -129,10 +160,12 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 		var b bytes.Buffer
 
-		req, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{{
-			ID: "key1", Type: "key1",
-			Value: "value",
-		}}})
+		req, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+			{
+				Type:  "key1",
+				Value: "value",
+			},
+		}})
 		require.NoError(t, err)
 
 		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(req))
@@ -146,16 +179,36 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, c)
 
+	pubKey, _, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+
+	ecPrivKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	ecPubKeyBytes := elliptic.Marshal(ecPrivKey.PublicKey.Curve, ecPrivKey.PublicKey.X, ecPrivKey.PublicKey.Y)
+
 	c.didBlocClient = &mockDIDClient{createDIDValue: &did.Doc{ID: "1"}}
 
 	var b bytes.Buffer
 
 	t.Run("test success create did with Ed25519 key", func(t *testing.T) {
 		// ED key
-		r, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{{
-			ID: "key1", Type: "key1", KeyType: "Ed25519",
-			Value: base64.RawURLEncoding.EncodeToString([]byte("value")),
-		}}})
+		r, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+			{
+				KeyType:  didclient.Ed25519KeyType,
+				Value:    base64.RawURLEncoding.EncodeToString(pubKey),
+				Recovery: true,
+			},
+			{
+				KeyType: didclient.P256KeyType,
+				Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
+				Update:  true,
+			},
+			{
+				ID: "key1", Type: "key1", KeyType: "Ed25519",
+				Value: base64.RawURLEncoding.EncodeToString([]byte("value")),
+			},
+		}})
 		require.NoError(t, err)
 
 		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(r))
