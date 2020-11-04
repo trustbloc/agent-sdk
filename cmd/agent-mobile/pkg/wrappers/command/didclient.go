@@ -28,7 +28,7 @@ func (de *DIDClient) CreateTrustBlocDID(request *models.RequestEnvelope) *models
 		return &models.ResponseEnvelope{Error: &models.CommandError{Message: err.Error()}}
 	}
 
-	response, cmdErr := exec(de.handlers[didclient.CreateBlocDIDCommandMethod], args)
+	response, cmdErr := exec(de.handlers[didclient.CreateTrustBlocDIDCommandMethod], args)
 	if cmdErr != nil {
 		return &models.ResponseEnvelope{Error: cmdErr}
 	}

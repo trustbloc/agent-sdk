@@ -22,7 +22,7 @@ type DIDClient struct {
 
 // CreateTrustBlocDID creates a new trust bloc DID.
 func (dc *DIDClient) CreateTrustBlocDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
-	return dc.createRespEnvelope(request, didclient.CreateBlocDIDCommandMethod)
+	return dc.createRespEnvelope(request, didclient.CreateTrustBlocDIDCommandMethod)
 }
 
 // CreatePeerDID creates a new peer DID.

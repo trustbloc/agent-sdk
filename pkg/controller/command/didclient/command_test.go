@@ -7,6 +7,7 @@ package didclient // nolint:testpackage // uses internal implementation details
 
 import (
 	"bytes"
+	"crypto/ed25519"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 	"github.com/gorilla/mux"
 	mediatorsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 	mockprotocol "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
 	mockvdr "github.com/hyperledger/aries-framework-go/pkg/mock/vdr"
@@ -72,6 +74,28 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		require.Error(t, cmdErr)
 		require.Equal(t, InvalidRequestErrorCode, cmdErr.Code())
 		require.Equal(t, command.ValidationError, cmdErr.Type())
+	})
+
+	t.Run("bad didDoc", func(t *testing.T) {
+		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		jwk := &jose.JWK{}
+		jwk.Key = ed25519.PublicKey{}
+
+		v, err := did.NewPublicKeyFromJWK("id", "type", "c", jwk)
+		require.NoError(t, err)
+
+		jwk.Key = make(chan struct{})
+
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.Doc{PublicKey: []did.PublicKey{*v}}}
+
+		var b bytes.Buffer
+		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBufferString("{}"))
+		require.Error(t, cmdErr)
+		require.Equal(t, CreateDIDErrorCode, cmdErr.Code())
+		require.Equal(t, command.ExecuteError, cmdErr.Type())
 	})
 
 	t.Run("test error from create did", func(t *testing.T) {

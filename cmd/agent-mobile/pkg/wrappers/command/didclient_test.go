@@ -42,7 +42,7 @@ func TestDIDClient_CreateTrustBlocDID(t *testing.T) {
 		require.NoError(t, err)
 
 		fakeHandler := mockCommandRunner{data: response}
-		client.handlers[didclient.CreateBlocDIDCommandMethod] = fakeHandler.exec
+		client.handlers[didclient.CreateTrustBlocDIDCommandMethod] = fakeHandler.exec
 
 		payload, err := json.Marshal(didclient.CreateBlocDIDRequest{})
 		require.NoError(t, err)
@@ -58,7 +58,7 @@ func TestDIDClient_CreateTrustBlocDID(t *testing.T) {
 	t.Run("custom error", func(t *testing.T) {
 		client := getDIDClient(t)
 
-		client.handlers[didclient.CreateBlocDIDCommandMethod] = func(rw io.Writer, req io.Reader) command.Error {
+		client.handlers[didclient.CreateTrustBlocDIDCommandMethod] = func(rw io.Writer, req io.Reader) command.Error {
 			return command.NewExecuteError(1, errors.New("error"))
 		}
 

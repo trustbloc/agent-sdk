@@ -31,8 +31,8 @@ var logger = log.New("agent-sdk-didclient")
 const (
 	// CommandName package command name.
 	CommandName = "didclient"
-	// CreateBlocDIDCommandMethod command method.
-	CreateBlocDIDCommandMethod = "CreateTrustBlocDID"
+	// CreateTrustBlocDIDCommandMethod command method.
+	CreateTrustBlocDIDCommandMethod = "CreateTrustBlocDID"
 	// CreatePeerDIDCommandMethod command method.
 	CreatePeerDIDCommandMethod = "CreatePeerDID"
 	saveDIDCommandMethod       = "SaveDID"
@@ -117,7 +117,7 @@ type Command struct {
 // GetHandlers returns list of all commands supported by this controller command.
 func (c *Command) GetHandlers() []command.Handler {
 	return []command.Handler{
-		cmdutil.NewCommandHandler(CommandName, CreateBlocDIDCommandMethod, c.CreateTrustBlocDID),
+		cmdutil.NewCommandHandler(CommandName, CreateTrustBlocDIDCommandMethod, c.CreateTrustBlocDID),
 		cmdutil.NewCommandHandler(CommandName, CreatePeerDIDCommandMethod, c.CreatePeerDID),
 		cmdutil.NewCommandHandler(CommandName, saveDIDCommandMethod, c.SaveDID),
 	}
@@ -129,7 +129,7 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 
 	err := json.NewDecoder(req).Decode(&request)
 	if err != nil {
-		logutil.LogError(logger, CommandName, CreateBlocDIDCommandMethod, err.Error())
+		logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, err.Error())
 
 		return command.NewValidationError(InvalidRequestErrorCode, err)
 	}
@@ -139,7 +139,7 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 	for _, v := range request.PublicKeys {
 		value, decodeErr := base64.RawURLEncoding.DecodeString(v.Value)
 		if decodeErr != nil {
-			logutil.LogError(logger, CommandName, CreateBlocDIDCommandMethod, decodeErr.Error())
+			logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, decodeErr.Error())
 
 			return command.NewExecuteError(CreateDIDErrorCode, decodeErr)
 		}
@@ -152,14 +152,14 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 
 	didDoc, err := c.didBlocClient.CreateDID(c.domain, opts...)
 	if err != nil {
-		logutil.LogError(logger, CommandName, CreateBlocDIDCommandMethod, err.Error())
+		logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, err.Error())
 
 		return command.NewExecuteError(CreateDIDErrorCode, err)
 	}
 
 	bytes, err := didDoc.JSONBytes()
 	if err != nil {
-		logutil.LogError(logger, CommandName, CreateBlocDIDCommandMethod, err.Error())
+		logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, err.Error())
 
 		return command.NewExecuteError(CreateDIDErrorCode, err)
 	}
@@ -168,7 +168,7 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 		DID: bytes,
 	}, logger)
 
-	logutil.LogDebug(logger, CommandName, CreateBlocDIDCommandMethod, successString)
+	logutil.LogDebug(logger, CommandName, CreateTrustBlocDIDCommandMethod, successString)
 
 	return nil
 }
@@ -229,7 +229,7 @@ func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //n
 
 	bytes, err := newDidDoc.JSONBytes()
 	if err != nil {
-		logutil.LogError(logger, CommandName, CreateBlocDIDCommandMethod, err.Error())
+		logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, err.Error())
 
 		return command.NewExecuteError(CreateDIDErrorCode, err)
 	}
@@ -238,7 +238,7 @@ func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //n
 		DID: bytes,
 	}, logger)
 
-	logutil.LogDebug(logger, CommandName, CreateBlocDIDCommandMethod, successString)
+	logutil.LogDebug(logger, CommandName, CreateTrustBlocDIDCommandMethod, successString)
 
 	return nil
 }
