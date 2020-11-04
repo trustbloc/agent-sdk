@@ -166,7 +166,7 @@ func getVerifiableEndpoints() map[string]*endpoint {
 
 func getDIDClientEndpoints() map[string]*endpoint {
 	return map[string]*endpoint{
-		cmddidclient.CreateBlocDIDCommandMethod: {
+		cmddidclient.CreateTrustBlocDIDCommandMethod: {
 			Path:   opdidclient.CreateBlocDIDPath,
 			Method: http.MethodPost,
 		},
