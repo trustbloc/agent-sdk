@@ -7,6 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package didclient
 
 import (
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/elliptic"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -124,7 +127,7 @@ func (c *Command) GetHandlers() []command.Handler {
 }
 
 // CreateTrustBlocDID creates a new trust bloc DID.
-func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error {
+func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error { //nolint: funlen
 	var request CreateBlocDIDRequest
 
 	err := json.NewDecoder(req).Decode(&request)
@@ -144,9 +147,35 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 			return command.NewExecuteError(CreateDIDErrorCode, decodeErr)
 		}
 
+		if v.Recovery {
+			k, recoverKeyErr := getKey(v.KeyType, value)
+			if recoverKeyErr != nil {
+				logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, recoverKeyErr.Error())
+
+				return command.NewExecuteError(CreateDIDErrorCode, recoverKeyErr)
+			}
+
+			opts = append(opts, didclient.WithRecoveryPublicKey(k))
+
+			continue
+		}
+
+		if v.Update {
+			k, updateKeyErr := getKey(v.KeyType, value)
+			if updateKeyErr != nil {
+				logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, updateKeyErr.Error())
+
+				return command.NewExecuteError(CreateDIDErrorCode, updateKeyErr)
+			}
+
+			opts = append(opts, didclient.WithUpdatePublicKey(k))
+
+			continue
+		}
+
 		opts = append(opts, didclient.WithPublicKey(&didclient.PublicKey{
 			ID: v.ID, Type: v.Type, Encoding: v.Encoding,
-			KeyType: v.KeyType, Purposes: v.Purposes, Recovery: v.Recovery, Update: v.Update, Value: value,
+			KeyType: v.KeyType, Purposes: v.Purposes, Value: value,
 		}))
 	}
 
@@ -171,6 +200,19 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 	logutil.LogDebug(logger, CommandName, CreateTrustBlocDIDCommandMethod, successString)
 
 	return nil
+}
+
+func getKey(keyType string, value []byte) (interface{}, error) {
+	switch keyType {
+	case didclient.Ed25519KeyType:
+		return ed25519.PublicKey(value), nil
+	case didclient.P256KeyType:
+		x, y := elliptic.Unmarshal(elliptic.P256(), value)
+
+		return &ecdsa.PublicKey{X: x, Y: y, Curve: elliptic.P256()}, nil
+	default:
+		return nil, fmt.Errorf("invalid key type: %s", keyType)
+	}
 }
 
 // CreatePeerDID creates a new peer DID.
