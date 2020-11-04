@@ -29,6 +29,9 @@ import (
 	oppresproof "github.com/hyperledger/aries-framework-go/pkg/controller/rest/presentproof"
 	opvdr "github.com/hyperledger/aries-framework-go/pkg/controller/rest/vdr"
 	opverifiable "github.com/hyperledger/aries-framework-go/pkg/controller/rest/verifiable"
+
+	cmddidclient "github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
+	opdidclient "github.com/trustbloc/agent-sdk/pkg/controller/rest/didclient"
 )
 
 // endpoint describes the fields for making calls to external agents.
@@ -42,6 +45,7 @@ func getControllerEndpoints() map[string]map[string]*endpoint {
 
 	allEndpoints[opintroduce.OperationID] = getIntroduceEndpoints()
 	allEndpoints[opverifiable.VerifiableOperationID] = getVerifiableEndpoints()
+	allEndpoints[opdidclient.OperationID] = getDIDClientEndpoints()
 	allEndpoints[opdidexch.OperationID] = getDIDExchangeEndpoints()
 	allEndpoints[opisscred.OperationID] = getIssueCredentialEndpoints()
 	allEndpoints[oppresproof.OperationID] = getPresentProofEndpoints()
@@ -155,6 +159,19 @@ func getVerifiableEndpoints() map[string]*endpoint {
 		},
 		cmdverifiable.RemovePresentationByNameCommandMethod: {
 			Path:   opverifiable.RemovePresentationByNamePath,
+			Method: http.MethodPost,
+		},
+	}
+}
+
+func getDIDClientEndpoints() map[string]*endpoint {
+	return map[string]*endpoint{
+		cmddidclient.CreateBlocDIDCommandMethod: {
+			Path:   opdidclient.CreateBlocDIDPath,
+			Method: http.MethodPost,
+		},
+		cmddidclient.CreatePeerDIDCommandMethod: {
+			Path:   opdidclient.CreatePeerDIDPath,
 			Method: http.MethodPost,
 		},
 	}

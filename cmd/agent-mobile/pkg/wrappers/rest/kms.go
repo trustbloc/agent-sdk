@@ -4,7 +4,7 @@
  SPDX-License-Identifier: Apache-2.0
 */
 
-package rest
+package rest // nolint: dupl
 
 import (
 	"github.com/hyperledger/aries-framework-go/pkg/controller/command/kms"
