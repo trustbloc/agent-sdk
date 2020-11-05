@@ -390,6 +390,16 @@ const pkgs = {
             method: "POST",
         }
     },
+    didclient: {
+        CreateTrustBlocDID: {
+            path: "/didclient/create-trustbloc-did",
+            method: "POST",
+        },
+        CreatePeerDID: {
+            path: "/didclient/create-peer-did",
+            method: "POST",
+        }
+    }
 }
 
 /**
