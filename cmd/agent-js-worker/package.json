@@ -6,10 +6,16 @@
   "browser": "dist/web/agent.js",
   "scripts": {
     "build:web": "webpack --config ./webpack.config.web.js --mode=production",
+    "build:rest": "webpack --config ./webpack.config.rest.js --mode=production",
     "build:assets": "bash scripts/build_assets.sh",
-    "build": "rm -rf dist/* && cp -p ../../LICENSE . && npm run build:assets && npm run build:web",
+    "build": "rm -rf dist/* && cp -p ../../LICENSE . && npm run build:assets && npm run build:web && npm run build:rest && generate-export-aliases",
     "prepare": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "config": {
+    "exportAliases": {
+      "rest": "./dist/rest/agent.js"
+    }
   },
   "repository": {
     "type": "git",
@@ -43,6 +49,7 @@
   },
   "dependencies": {
     "axios": "0.20.0",
+    "generate-export-aliases": "^1.1.0",
     "minimist": "^1.2.5"
   }
 }
