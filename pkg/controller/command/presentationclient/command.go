@@ -22,10 +22,10 @@ import (
 var logger = log.New("agent-sdk-presentationclient")
 
 const (
-	// command name.
-	commandName = "presentationclient"
-	// command methods.
-	savePresentationCommandMethod = "SavePresentation"
+	// CommandName command name.
+	CommandName = "presentationclient"
+	// SavePresentationCommandMethod command method.
+	SavePresentationCommandMethod = "SavePresentation"
 
 	failDecodePresentationDocDataErrMsg = "failure while decoding presentation data while attempting to store presentation in SDS" // nolint:lll // readability
 	failStorePresentationErrMsg         = "failure while storing presentation in SDS"
@@ -49,7 +49,7 @@ type Command struct {
 // GetHandlers returns list of all commands supported by this controller command.
 func (c *Command) GetHandlers() []command.Handler {
 	return []command.Handler{
-		cmdutil.NewCommandHandler(commandName, savePresentationCommandMethod, c.SavePresentation),
+		cmdutil.NewCommandHandler(CommandName, SavePresentationCommandMethod, c.SavePresentation),
 	}
 }
 
@@ -59,7 +59,7 @@ func (c *Command) SavePresentation(_ io.Writer, req io.Reader) command.Error {
 
 	err := json.NewDecoder(req).Decode(&presentationDataToStore)
 	if err != nil {
-		logutil.LogError(logger, commandName, savePresentationCommandMethod,
+		logutil.LogError(logger, CommandName, SavePresentationCommandMethod,
 			fmt.Sprintf("%s: %s", failDecodePresentationDocDataErrMsg, err.Error()))
 
 		return command.NewValidationError(InvalidRequestErrorCode,
@@ -72,7 +72,7 @@ func (c *Command) SavePresentation(_ io.Writer, req io.Reader) command.Error {
 func (c *Command) savePresentation(presentationDataToStore *sdscomm.SavePresentationToSDSRequest) command.Error {
 	err := c.sdsComm.StorePresentation(presentationDataToStore)
 	if err != nil {
-		logutil.LogError(logger, commandName, savePresentationCommandMethod,
+		logutil.LogError(logger, CommandName, SavePresentationCommandMethod,
 			fmt.Sprintf("%s: %s", failStorePresentationErrMsg, err.Error()))
 
 		return command.NewValidationError(InvalidRequestErrorCode,
