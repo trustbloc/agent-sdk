@@ -22,10 +22,10 @@ import (
 var logger = log.New("agent-sdk-credentialclient")
 
 const (
-	// command name.
-	commandName = "credentialclient"
-	// command methods.
-	saveCredentialCommandMethod = "SaveCredential"
+	// CommandName command name.
+	CommandName = "credentialclient"
+	// SaveCredentialCommandMethod command method.
+	SaveCredentialCommandMethod = "SaveCredential"
 
 	failDecodeCredentialDocDataErrMsg = "failure while decoding credential data while attempting to store credential in SDS" // nolint:lll // readability
 	failStoreCredentialErrMsg         = "failure while storing credential in SDS"
@@ -49,7 +49,7 @@ type Command struct {
 // GetHandlers returns list of all commands supported by this controller command.
 func (c *Command) GetHandlers() []command.Handler {
 	return []command.Handler{
-		cmdutil.NewCommandHandler(commandName, saveCredentialCommandMethod, c.SaveCredential),
+		cmdutil.NewCommandHandler(CommandName, SaveCredentialCommandMethod, c.SaveCredential),
 	}
 }
 
@@ -59,7 +59,7 @@ func (c *Command) SaveCredential(_ io.Writer, req io.Reader) command.Error {
 
 	err := json.NewDecoder(req).Decode(&credentialDataToStore)
 	if err != nil {
-		logutil.LogError(logger, commandName, saveCredentialCommandMethod,
+		logutil.LogError(logger, CommandName, SaveCredentialCommandMethod,
 			fmt.Sprintf("%s: %s", failDecodeCredentialDocDataErrMsg, err.Error()))
 
 		return command.NewValidationError(InvalidRequestErrorCode,
@@ -72,7 +72,7 @@ func (c *Command) SaveCredential(_ io.Writer, req io.Reader) command.Error {
 func (c *Command) saveCredential(credentialDataToStore *sdscomm.SaveCredentialToSDSRequest) command.Error {
 	err := c.sdsComm.StoreCredential(credentialDataToStore)
 	if err != nil {
-		logutil.LogError(logger, commandName, saveCredentialCommandMethod,
+		logutil.LogError(logger, CommandName, SaveCredentialCommandMethod,
 			fmt.Sprintf("%s: %s", failStoreCredentialErrMsg, err.Error()))
 
 		return command.NewValidationError(InvalidRequestErrorCode,

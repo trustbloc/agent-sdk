@@ -30,8 +30,12 @@ import (
 	opvdr "github.com/hyperledger/aries-framework-go/pkg/controller/rest/vdr"
 	opverifiable "github.com/hyperledger/aries-framework-go/pkg/controller/rest/verifiable"
 
+	cmdcredentialclient "github.com/trustbloc/agent-sdk/pkg/controller/command/credentialclient"
 	cmddidclient "github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
+	cmdpresentationclient "github.com/trustbloc/agent-sdk/pkg/controller/command/presentationclient"
+	opcredentialclient "github.com/trustbloc/agent-sdk/pkg/controller/rest/credentialclient"
 	opdidclient "github.com/trustbloc/agent-sdk/pkg/controller/rest/didclient"
+	oppresentationclient "github.com/trustbloc/agent-sdk/pkg/controller/rest/presentationclient"
 )
 
 // endpoint describes the fields for making calls to external agents.
@@ -54,6 +58,8 @@ func getControllerEndpoints() map[string]map[string]*endpoint {
 	allEndpoints[opmessaging.MsgServiceOperationID] = getMessagingEndpoints()
 	allEndpoints[opoob.OperationID] = getOutOfBandEndpoints()
 	allEndpoints[opkms.KmsOperationID] = getKMSEndpoints()
+	allEndpoints[opcredentialclient.OperationID] = getCredentialClientEndpoints()
+	allEndpoints[oppresentationclient.OperationID] = getPresentationClientEndpoints()
 
 	return allEndpoints
 }
@@ -159,6 +165,24 @@ func getVerifiableEndpoints() map[string]*endpoint {
 		},
 		cmdverifiable.RemovePresentationByNameCommandMethod: {
 			Path:   opverifiable.RemovePresentationByNamePath,
+			Method: http.MethodPost,
+		},
+	}
+}
+
+func getCredentialClientEndpoints() map[string]*endpoint {
+	return map[string]*endpoint{
+		cmdcredentialclient.SaveCredentialCommandMethod: {
+			Path:   opcredentialclient.SaveCredentialPath,
+			Method: http.MethodPost,
+		},
+	}
+}
+
+func getPresentationClientEndpoints() map[string]*endpoint {
+	return map[string]*endpoint{
+		cmdpresentationclient.SavePresentationCommandMethod: {
+			Path:   oppresentationclient.SavePresentationPath,
 			Method: http.MethodPost,
 		},
 	}

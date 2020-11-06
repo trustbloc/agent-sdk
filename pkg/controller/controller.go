@@ -18,7 +18,9 @@ import (
 	presentationclientcmd "github.com/trustbloc/agent-sdk/pkg/controller/command/presentationclient"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/sdscomm"
 	"github.com/trustbloc/agent-sdk/pkg/controller/rest"
+	"github.com/trustbloc/agent-sdk/pkg/controller/rest/credentialclient"
 	"github.com/trustbloc/agent-sdk/pkg/controller/rest/didclient"
+	"github.com/trustbloc/agent-sdk/pkg/controller/rest/presentationclient"
 )
 
 type allOpts struct {
@@ -81,15 +83,25 @@ func GetRESTHandlers(ctx *context.Provider, opts ...Opt) ([]rest.Handler, error)
 		opt(restOpts)
 	}
 
+	sdsComm := sdscomm.New(restOpts.sdsServerURL)
+
 	// DID Client REST operation
-	didClientOp, err := didclient.New(ctx, restOpts.blocDomain, sdscomm.New(restOpts.sdsServerURL))
+	didClientOp, err := didclient.New(ctx, restOpts.blocDomain, sdsComm)
 	if err != nil {
 		return nil, err
 	}
 
+	// Credential Client REST operation
+	credentialClientOp := credentialclient.New(sdsComm)
+
+	// Presentation Client REST operation
+	presentationClientOp := presentationclient.New(sdsComm)
+
 	// creat handlers from all operations
 	var allHandlers []rest.Handler
 	allHandlers = append(allHandlers, didClientOp.GetRESTHandlers()...)
+	allHandlers = append(allHandlers, credentialClientOp.GetRESTHandlers()...)
+	allHandlers = append(allHandlers, presentationClientOp.GetRESTHandlers()...)
 
 	return allHandlers, nil
 }

@@ -41,7 +41,9 @@ import (
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/notifier"
 	sdkcontroller "github.com/trustbloc/agent-sdk/pkg/controller"
 	sdkcommand "github.com/trustbloc/agent-sdk/pkg/controller/command"
+	"github.com/trustbloc/agent-sdk/pkg/controller/command/credentialclient"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
+	"github.com/trustbloc/agent-sdk/pkg/controller/command/presentationclient"
 )
 
 var logger = log.New("aries-agent-mobile/wrappers/command")
@@ -271,6 +273,26 @@ func (a *Aries) GetDIDClient() (api.DIDClient, error) {
 	}
 
 	return &DIDClient{handlers: handlers}, nil
+}
+
+// GetCredentialClient returns a CredentialClient instance.
+func (a *Aries) GetCredentialClient() (api.CredentialClient, error) {
+	handlers, ok := a.handlers[credentialclient.CommandName]
+	if !ok {
+		return nil, fmt.Errorf("no handlers found for controller [%s]", credentialclient.CommandName)
+	}
+
+	return &CredentialClient{handlers: handlers}, nil
+}
+
+// GetPresentationClient returns a PresentationClient instance.
+func (a *Aries) GetPresentationClient() (api.PresentationClient, error) {
+	handlers, ok := a.handlers[presentationclient.CommandName]
+	if !ok {
+		return nil, fmt.Errorf("no handlers found for controller [%s]", presentationclient.CommandName)
+	}
+
+	return &PresentationClient{handlers: handlers}, nil
 }
 
 // GetDIDExchangeController returns a DIDExchange instance.
