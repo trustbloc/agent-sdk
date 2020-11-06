@@ -228,6 +228,7 @@ type dbParam struct {
 	timeout uint64
 }
 
+// TODO (#47): Add support for SDS.
 // nolint:gochecknoglobals
 var supportedStorageProviders = map[string]func(url, prefix string) (storage.Provider, error){
 	databaseTypeMemOption: func(_, _ string) (storage.Provider, error) { // nolint:unparam
@@ -753,7 +754,6 @@ func startAgent(parameters *agentParameters) error {
 
 	sdkHandlers, err := sdkcontroller.GetRESTHandlers(ctx,
 		sdkcontroller.WithBlocDomain(parameters.trustblocDomain),
-		sdkcontroller.WithSDSServerURL(parameters.sdsServerURL),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to start sdk agent rest on port [%s], failed to get rest service api:  %w",

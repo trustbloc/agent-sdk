@@ -399,18 +399,6 @@ const pkgs = {
             path: "/didclient/create-peer-did",
             method: "POST",
         }
-    },
-    credentialclient: {
-        SaveCredential: {
-            path: "/credentialclient/save-credential",
-            method: "POST",
-        }
-    },
-    presentationclient: {
-        SavePresentation: {
-            path: "/presentationclient/save-presentation",
-            method: "POST",
-        }
     }
 }
 

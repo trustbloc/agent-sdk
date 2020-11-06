@@ -32,9 +32,7 @@ import (
 
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/api"
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/config"
-	"github.com/trustbloc/agent-sdk/pkg/controller/rest/credentialclient"
 	"github.com/trustbloc/agent-sdk/pkg/controller/rest/didclient"
-	"github.com/trustbloc/agent-sdk/pkg/controller/rest/presentationclient"
 )
 
 // Aries is an Aries implementation with endpoints to execute operations.
@@ -199,26 +197,6 @@ func (ar *Aries) GetDIDClient() (api.DIDClient, error) {
 	}
 
 	return &DIDClient{endpoints: endpoints, URL: ar.URL, Token: ar.Token, httpClient: &http.Client{}}, nil
-}
-
-// GetCredentialClient returns a CredentialClient instance.
-func (ar *Aries) GetCredentialClient() (api.CredentialClient, error) {
-	endpoints, ok := ar.endpoints[credentialclient.OperationID]
-	if !ok {
-		return nil, fmt.Errorf("no endpoints found for controller [%s]", credentialclient.OperationID)
-	}
-
-	return &CredentialClient{endpoints: endpoints, URL: ar.URL, Token: ar.Token, httpClient: &http.Client{}}, nil
-}
-
-// GetPresentationClient returns a PresentationClient instance.
-func (ar *Aries) GetPresentationClient() (api.PresentationClient, error) {
-	endpoints, ok := ar.endpoints[presentationclient.OperationID]
-	if !ok {
-		return nil, fmt.Errorf("no endpoints found for controller [%s]", presentationclient.OperationID)
-	}
-
-	return &PresentationClient{endpoints: endpoints, URL: ar.URL, Token: ar.Token, httpClient: &http.Client{}}, nil
 }
 
 // GetDIDExchangeController returns a DIDExchange instance.

@@ -25,12 +25,6 @@ type AriesController interface {
 	// GetDIDClient returns an implementation of DIDClient
 	GetDIDClient() (DIDClient, error)
 
-	// GetCredentialClient returns an implementation of CredentialClient
-	GetCredentialClient() (CredentialClient, error)
-
-	// GetPresentationClient returns an implementation of PresentationClient
-	GetPresentationClient() (PresentationClient, error)
-
 	// GetDIDExchangeController returns an implementation of DIDExchangeController
 	GetDIDExchangeController() (DIDExchangeController, error)
 

@@ -18,16 +18,25 @@ import (
 	"syscall/js"
 	"time"
 
+	"github.com/google/tink/go/keyset"
+	"github.com/google/tink/go/mac"
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb"
 	ariesctrl "github.com/hyperledger/aries-framework-go/pkg/controller"
 	controllercmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
+	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto"
+	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto/primitive/composite"
+	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto/primitive/composite/ecdhes"
+	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto/primitive/composite/keyio"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/messaging/msghandler"
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
+	"github.com/hyperledger/aries-framework-go/pkg/storage"
+	"github.com/hyperledger/aries-framework-go/pkg/storage/edv"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/mitchellh/mapstructure"
 	"github.com/trustbloc/edge-core/pkg/log"
@@ -39,12 +48,16 @@ import (
 var logger = log.New("agent-js-worker")
 
 const (
-	wasmStartupTopic = "asset-ready"
-	handleResultFn   = "handleResult"
-	commandPkg       = "agent"
-	startFn          = "Start"
-	stopFn           = "Stop"
-	workers          = 2
+	wasmStartupTopic         = "asset-ready"
+	handleResultFn           = "handleResult"
+	commandPkg               = "agent"
+	startFn                  = "Start"
+	stopFn                   = "Stop"
+	workers                  = 2
+	storageTypeIndexedDB     = "indexedDB"
+	storageTypeSDS           = "sds"
+	invalidStorageTypeErrMsg = "%s is not a valid storage type. " +
+		"Valid storage types: " + storageTypeSDS + ", " + storageTypeIndexedDB
 )
 
 // TODO Signal JS when WASM is loaded and ready.
@@ -79,10 +92,12 @@ type agentStartOpts struct {
 	OutboundTransport    []string `json:"outbound-transport"`
 	TransportReturnRoute string   `json:"transport-return-route"`
 	LogLevel             string   `json:"log-level"`
-	DBNamespace          string   `json:"db-namespace"`
+	StorageType          string   `json:"storageType"`
+	IndexedDBNamespace   string   `json:"indexedDB-namespace"`
+	SDSServerURL         string   `json:"sdsServerURL"`
+	SDSVaultID           string   `json:"sdsVaultID"`
 	BlocDomain           string   `json:"blocDomain"`
 	TrustblocResolver    string   `json:"trustbloc-resolver"`
-	SDSServerURL         string   `json:"sdsServerURL"`
 }
 
 // main registers the 'handleMsg' function in the JS context's global scope to receive commands.
@@ -304,8 +319,7 @@ func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
 }
 
 func getAgentHandlers(ctx *context.Provider, opts *agentStartOpts) ([]commandHandler, error) {
-	handlers, err := agentctrl.GetCommandHandlers(ctx, agentctrl.WithBlocDomain(opts.BlocDomain),
-		agentctrl.WithSDSServerURL(opts.SDSServerURL))
+	handlers, err := agentctrl.GetCommandHandlers(ctx, agentctrl.WithBlocDomain(opts.BlocDomain))
 	if err != nil {
 		return nil, err
 	}
@@ -496,9 +510,9 @@ func agentOpts(opts *agentStartOpts) ([]aries.Option, error) {
 		options = append(options, aries.WithTransportReturnRoute(opts.TransportReturnRoute))
 	}
 
-	store, err := jsindexeddb.NewProvider(opts.DBNamespace)
+	store, err := createStore(opts)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create storage provider: %w", err)
 	}
 
 	VDRs, err := createVDRs(opts.HTTPResolvers, opts.BlocDomain, opts.TrustblocResolver)
@@ -529,6 +543,56 @@ func agentOpts(opts *agentStartOpts) ([]aries.Option, error) {
 	}
 
 	return options, nil
+}
+
+func createStore(opts *agentStartOpts) (storage.Provider, error) {
+	switch opts.StorageType {
+	case storageTypeSDS:
+		store, err := createEDVProvider(opts.SDSServerURL, opts.SDSVaultID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create EDV provider: %w", err)
+		}
+
+		return store, nil
+	case storageTypeIndexedDB:
+		store, err := jsindexeddb.NewProvider(opts.IndexedDBNamespace)
+		if err != nil {
+			return nil, err
+		}
+
+		return store, nil
+	default:
+		return nil, fmt.Errorf(invalidStorageTypeErrMsg, opts.StorageType)
+	}
+}
+
+// TODO (#43): Use a persistent key instead of creating a new one every time this starts.
+
+// TODO (#44): Use the KMS from the Aries framework for the EDV provider. Right now this isn't possible since
+//  the KMS in the Aries framework uses the provider passed in via WithStorageProvider for KMS storage.
+//  An EDV server can't use itself for KMS storage as this causes a chicken and egg problem.
+//  aries-framework-go will need to be updated to allow a different provider for just the KMS to resolve this.
+
+// TODO (#45): Use the Aries Crypto object instantiated in the framework for the EDV provider instead
+//  of creating a new one here. This will require some sort of change to aries-framework-go, since the
+//  Aries Crypto object isn't available until the framework has been initialized.
+func createEDVProvider(edvServerURL, vaultID string) (storage.Provider, error) {
+	macCrypto, err := newMACCrypto()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new MAC Crypto for EDV REST provider: %w", err)
+	}
+
+	edvRESTProvider, err := edv.NewRESTProvider(edvServerURL, vaultID, macCrypto)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new EDV REST provider: %w", err)
+	}
+
+	encryptedFormatter, err := createEncryptedFormatter()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new encrypted formatter: %w", err)
+	}
+
+	return storage.NewFormattedProvider(edvRESTProvider, encryptedFormatter), nil
 }
 
 func setLogLevel(logLevel string) error {
@@ -584,4 +648,62 @@ func postInitMsg() {
 	}
 
 	js.Global().Call(handleResultFn, string(out))
+}
+
+func newMACCrypto() (*edv.MACCrypto, error) {
+	kh, err := keyset.NewHandle(mac.HMACSHA256Tag256KeyTemplate())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new HMAC key handle: %w", err)
+	}
+
+	crypto, err := tinkcrypto.New()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new tink crypto: %w", err)
+	}
+
+	return edv.NewMACCrypto(kh, crypto), nil
+}
+
+func createEncryptedFormatter() (*edv.EncryptedFormatter, error) {
+	encrypter, decrypter, err := createEncrypterAndDecrypter()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create encrypter and decrypter: %w", err)
+	}
+
+	return edv.NewEncryptedFormatter(encrypter, decrypter), nil
+}
+
+func createEncrypterAndDecrypter() (*jose.JWEEncrypt, *jose.JWEDecrypt, error) {
+	keyHandle, err := keyset.NewHandle(ecdhes.ECDHES256KWAES256GCMKeyTemplate())
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create new ECDHES key handle: %w", err)
+	}
+
+	pubKH, err := keyHandle.Public()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get public key handle from ECDHES key handle: %w", err)
+	}
+
+	buf := new(bytes.Buffer)
+	pubKeyWriter := keyio.NewWriter(buf)
+
+	err = pubKH.WriteWithNoSecrets(pubKeyWriter)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to write keyset: %w", err)
+	}
+
+	ecPubKey := new(composite.PublicKey)
+
+	err = json.Unmarshal(buf.Bytes(), ecPubKey)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to unmarshal bytes to a public key: %w", err)
+	}
+
+	encrypter, err := jose.NewJWEEncrypt(jose.A256GCM, "EDVEncryptedDocument", "", nil,
+		[]*composite.PublicKey{ecPubKey})
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create a new JWE encrypter: %w", err)
+	}
+
+	return encrypter, jose.NewJWEDecrypt(nil, keyHandle), nil
 }

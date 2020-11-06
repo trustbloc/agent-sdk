@@ -24,7 +24,6 @@ import (
 	didclient "github.com/trustbloc/trustbloc-did-method/pkg/did"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
-	"github.com/trustbloc/agent-sdk/pkg/controller/command/sdscomm"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/cmdutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/logutil"
 )
@@ -38,7 +37,6 @@ const (
 	CreateTrustBlocDIDCommandMethod = "CreateTrustBlocDID"
 	// CreatePeerDIDCommandMethod command method.
 	CreatePeerDIDCommandMethod = "CreatePeerDID"
-	saveDIDCommandMethod       = "SaveDID"
 	// log constants.
 	successString = "success"
 
@@ -53,8 +51,6 @@ const (
 	CreateDIDErrorCode
 
 	// errors.
-	errDecodeDIDDocDataErrMsg    = "failure while decoding DID data"
-	errStoreDIDDocErrMsg         = "failure while storing DID document in SDS"
 	errInvalidRouterConnectionID = "invalid router connection ID"
 	errMissingDIDCommServiceType = "did document missing '%s' service type"
 	errFailedToRegisterDIDRecKey = "failed to register did doc recipient key : %w"
@@ -77,7 +73,7 @@ type mediatorClient interface {
 }
 
 // New returns new DID Exchange controller command instance.
-func New(domain string, sdsComm *sdscomm.SDSComm, p Provider) (*Command, error) {
+func New(domain string, p Provider) (*Command, error) {
 	client := didclient.New()
 
 	mClient, err := mediator.New(p)
@@ -100,7 +96,6 @@ func New(domain string, sdsComm *sdscomm.SDSComm, p Provider) (*Command, error) 
 	return &Command{
 		didBlocClient:  client,
 		domain:         domain,
-		sdsComm:        sdsComm,
 		vdrRegistry:    p.VDRegistry(),
 		mediatorClient: mClient,
 		mediatorSvc:    mediatorSvc,
@@ -111,7 +106,6 @@ func New(domain string, sdsComm *sdscomm.SDSComm, p Provider) (*Command, error) 
 type Command struct {
 	didBlocClient  didBlocClient
 	domain         string
-	sdsComm        *sdscomm.SDSComm
 	vdrRegistry    vdr.Registry
 	mediatorClient mediatorClient
 	mediatorSvc    mediatorservice.ProtocolService
@@ -122,7 +116,6 @@ func (c *Command) GetHandlers() []command.Handler {
 	return []command.Handler{
 		cmdutil.NewCommandHandler(CommandName, CreateTrustBlocDIDCommandMethod, c.CreateTrustBlocDID),
 		cmdutil.NewCommandHandler(CommandName, CreatePeerDIDCommandMethod, c.CreatePeerDID),
-		cmdutil.NewCommandHandler(CommandName, saveDIDCommandMethod, c.SaveDID),
 	}
 }
 
@@ -281,35 +274,6 @@ func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //n
 	}, logger)
 
 	logutil.LogDebug(logger, CommandName, CreateTrustBlocDIDCommandMethod, successString)
-
-	return nil
-}
-
-// SaveDID saves the DID to the DID store.
-func (c *Command) SaveDID(_ io.Writer, req io.Reader) command.Error {
-	didDataToStore := sdscomm.SaveDIDDocToSDSRequest{}
-
-	err := json.NewDecoder(req).Decode(&didDataToStore)
-	if err != nil {
-		logutil.LogError(logger, CommandName, saveDIDCommandMethod,
-			fmt.Sprintf("%s: %s", errDecodeDIDDocDataErrMsg, err.Error()))
-
-		return command.NewValidationError(InvalidRequestErrorCode,
-			fmt.Errorf("%s: %w", errDecodeDIDDocDataErrMsg, err))
-	}
-
-	return c.saveDID(&didDataToStore)
-}
-
-func (c *Command) saveDID(didDataToStore *sdscomm.SaveDIDDocToSDSRequest) command.Error {
-	err := c.sdsComm.StoreDIDDocument(didDataToStore)
-	if err != nil {
-		logutil.LogError(logger, CommandName, saveDIDCommandMethod,
-			fmt.Sprintf("%s: %s", errStoreDIDDocErrMsg, err.Error()))
-
-		return command.NewValidationError(InvalidRequestErrorCode,
-			fmt.Errorf("%s: %w", errStoreDIDDocErrMsg, err))
-	}
 
 	return nil
 }
