@@ -39,6 +39,7 @@ import (
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/api"
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/config"
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/notifier"
+	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/storage"
 	sdkcontroller "github.com/trustbloc/agent-sdk/pkg/controller"
 	sdkcommand "github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
@@ -118,7 +119,11 @@ func prepareFrameworkOptions(opts *config.Options) ([]aries.Option, error) { // 
 		options = append(options, aries.WithTransportReturnRoute(opts.TransportReturnRoute))
 	}
 
-	options = append(options, aries.WithStoreProvider(mem.NewProvider()))
+	if opts.Storage != nil {
+		options = append(options, aries.WithStoreProvider(storage.New(opts.Storage)))
+	} else {
+		options = append(options, aries.WithStoreProvider(mem.NewProvider()))
+	}
 
 	VDRs, err := createVDRs(opts.HTTPResolvers, opts.TrustblocDomain, opts.TrustblocResolver)
 	if err != nil {
