@@ -14,11 +14,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	mediatorsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
@@ -26,24 +24,21 @@ import (
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
 	mockvdr "github.com/hyperledger/aries-framework-go/pkg/mock/vdr"
 	"github.com/stretchr/testify/require"
-	"github.com/trustbloc/edv/pkg/edvprovider/memedvprovider"
-	"github.com/trustbloc/edv/pkg/restapi"
 	didclient "github.com/trustbloc/trustbloc-did-method/pkg/did"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
-	"github.com/trustbloc/agent-sdk/pkg/controller/command/sdscomm"
 )
 
 func TestNew(t *testing.T) {
 	t.Run("test success", func(t *testing.T) {
-		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		c, err := New("domain", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		require.NotNil(t, c.GetHandlers())
 	})
 
 	t.Run("test no coordination service error", func(t *testing.T) {
-		c, err := New("domain", &sdscomm.SDSComm{}, &mockprotocol.MockProvider{
+		c, err := New("domain", &mockprotocol.MockProvider{
 			ServiceErr: fmt.Errorf("sample-error"),
 		})
 		require.Error(t, err)
@@ -52,7 +47,7 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("test invalid coordination service error", func(t *testing.T) {
-		c, err := New("domain", &sdscomm.SDSComm{}, &mockprotocol.MockProvider{
+		c, err := New("domain", &mockprotocol.MockProvider{
 			ServiceMap: map[string]interface{}{
 				mediatorsvc.Coordination: "xyz",
 			},
@@ -65,7 +60,7 @@ func TestNew(t *testing.T) {
 
 func TestCommand_CreateBlocDID(t *testing.T) {
 	t.Run("test error from request", func(t *testing.T) {
-		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		c, err := New("domain", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -80,7 +75,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 	})
 
 	t.Run("bad didDoc", func(t *testing.T) {
-		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		c, err := New("domain", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -102,7 +97,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 	})
 
 	t.Run("test error from create did", func(t *testing.T) {
-		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		c, err := New("domain", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -124,7 +119,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 	})
 
 	t.Run("test recovery key not supported", func(t *testing.T) {
-		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		c, err := New("domain", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -152,7 +147,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 	})
 
 	t.Run("test error from did base64 decode", func(t *testing.T) {
-		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		c, err := New("domain", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -175,7 +170,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		require.Contains(t, cmdErr.Error(), "illegal base64 data")
 	})
 
-	c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+	c, err := New("domain", getMockProvider())
 	require.NoError(t, err)
 	require.NotNil(t, c)
 
@@ -228,7 +223,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 func TestCommand_CreatePeerDID(t *testing.T) {
 	t.Run("test error from request", func(t *testing.T) {
-		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		c, err := New("domain", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -246,7 +241,7 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 	})
 
 	t.Run("success (registered route)", func(t *testing.T) {
-		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		c, err := New("domain", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -290,7 +285,7 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 	})
 
 	t.Run("success (default)", func(t *testing.T) {
-		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		c, err := New("domain", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -329,7 +324,7 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 	})
 
 	t.Run("test error while creating peer DID", func(t *testing.T) {
-		c, err := New("domain", &sdscomm.SDSComm{}, getMockProvider())
+		c, err := New("domain", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -400,46 +395,6 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 	})
 }
 
-func TestCommand_SaveDID(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		sdsSrv := newTestEDVServer(t)
-		defer sdsSrv.Close()
-
-		sampleDIDDocData := sdscomm.SaveDIDDocToSDSRequest{}
-
-		didDocDataBytes, err := json.Marshal(sampleDIDDocData)
-		require.NoError(t, err)
-
-		sdsComm := sdscomm.New(fmt.Sprintf("%s/encrypted-data-vaults", sdsSrv.URL))
-
-		cmd, err := New("", sdsComm, getMockProvider())
-		require.NoError(t, err)
-
-		cmdErr := cmd.SaveDID(nil, bytes.NewBuffer(didDocDataBytes))
-		require.NoError(t, cmdErr)
-	})
-	t.Run("Fail to unmarshal - invalid SaveDIDDocToSDSRequest", func(t *testing.T) {
-		cmd, err := New("", sdscomm.New("SomeURL"), getMockProvider())
-		require.NoError(t, err)
-		cmdErr := cmd.SaveDID(nil, bytes.NewBuffer([]byte("")))
-		require.Contains(t, cmdErr.Error(), errDecodeDIDDocDataErrMsg)
-	})
-	t.Run("Fail to save DID document - bad SDS server URL", func(t *testing.T) {
-		cmd, err := New("", sdscomm.New("BadURL"), getMockProvider())
-		require.NoError(t, err)
-
-		sampleDIDDocData := sdscomm.SaveDIDDocToSDSRequest{}
-
-		didDocDataBytes, err := json.Marshal(sampleDIDDocData)
-		require.NoError(t, err)
-
-		cmdErr := cmd.SaveDID(nil, bytes.NewBuffer(didDocDataBytes))
-		require.Contains(t, cmdErr.Error(), `failure while storing DID document in SDS: failure while `+
-			`ensuring that the user's DID vault exists: unexpected error during the "create vault" call `+
-			`to SDS: failed to send POST request:`)
-	})
-}
-
 type mockDIDClient struct {
 	createDIDValue *did.Doc
 	createDIDErr   error
@@ -467,21 +422,6 @@ func (c *mockMediatorClient) Register(connectionID string) error {
 // GetConfig gets the router config.
 func (c *mockMediatorClient) GetConfig(connID string) (*mediatorsvc.Config, error) {
 	return c.GetConfigFunc(connID)
-}
-
-func newTestEDVServer(t *testing.T) *httptest.Server {
-	edvService, err := restapi.New(memedvprovider.NewProvider())
-	require.NoError(t, err)
-
-	handlers := edvService.GetOperations()
-	router := mux.NewRouter()
-	router.UseEncodedPath()
-
-	for _, handler := range handlers {
-		router.HandleFunc(handler.Path(), handler.Handle()).Methods(handler.Method())
-	}
-
-	return httptest.NewServer(router)
 }
 
 func getMockProvider() Provider {

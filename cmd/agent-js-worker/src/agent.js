@@ -1084,26 +1084,6 @@ const Agent = function(opts) {
                 return invoke(aw, pending, this.pkgname, "SaveDID", req, "timeout while saving did")
             },
         },
-        /**
-         * CredentialClient methods
-         */
-        credentialclient: {
-            pkgname: "credentialclient",
-
-            saveCredential: async function (req) {
-                return invoke(aw, pending, this.pkgname, "SaveCredential", req, "timeout while saving credential")
-            },
-        },
-        /**
-         * PresentationClient methods
-         */
-        presentationclient: {
-            pkgname: "presentationclient",
-
-            savePresentation: async function (req) {
-                return invoke(aw, pending, this.pkgname, "SavePresentation", req, "timeout while saving presentation")
-            },
-        },
     }
 
     // start aries worker

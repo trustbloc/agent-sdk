@@ -12,7 +12,6 @@ import (
 	"net/http"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
-	"github.com/trustbloc/agent-sdk/pkg/controller/command/sdscomm"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/cmdutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/rest"
 )
@@ -31,8 +30,8 @@ type Operation struct {
 }
 
 // New returns new DID client rest instance.
-func New(ctx didclient.Provider, domain string, sdsComm *sdscomm.SDSComm) (*Operation, error) {
-	client, err := didclient.New(domain, sdsComm, ctx)
+func New(ctx didclient.Provider, domain string) (*Operation, error) {
+	client, err := didclient.New(domain, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize did-client command: %w", err)
 	}

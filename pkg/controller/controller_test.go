@@ -52,8 +52,7 @@ func TestGetCommandHandlers(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, ctx)
 
-		handlers, err := controller.GetCommandHandlers(ctx, controller.WithBlocDomain("domain"),
-			controller.WithSDSServerURL("sampleSDS"))
+		handlers, err := controller.GetCommandHandlers(ctx, controller.WithBlocDomain("domain"))
 		require.NoError(t, err)
 		require.NotEmpty(t, handlers)
 	})
