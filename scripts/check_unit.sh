@@ -18,7 +18,7 @@ if [ -f profile.out ]; then
 fi
 }
 
-# Running edge-store unit tests
+# Running agent-sdk unit tests
 PKGS=`go list github.com/trustbloc/agent-sdk/... 2> /dev/null`
 go test $PKGS -count=1 -race -coverprofile=profile.out -covermode=atomic -timeout=10m
 amend_coverage_file
@@ -27,6 +27,7 @@ amend_coverage_file
 cd cmd/agent-mobile
 PKGS=`go list github.com/trustbloc/cmd/agent-mobile/... 2> /dev/null`
 go test $PKGS -count=1 -race -coverprofile=profile.out -covermode=atomic -timeout=10m
+amend_coverage_file
 cd "$pwd"
 
 # Running agent rest unit tests
