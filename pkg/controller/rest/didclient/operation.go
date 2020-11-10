@@ -56,12 +56,24 @@ func (c *Operation) registerHandler() {
 	}
 }
 
-// CreateTrustBlocDID creates a new trust bloc DID.
+// CreateTrustBlocDID swagger:route POST /didclient/create-trustbloc-did didclient createTrustBlocDID
+//
+// Creates a new trust bloc DID.
+//
+// Responses:
+//    default: genericError
+//    200: createDIDResp
 func (c *Operation) CreateTrustBlocDID(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.CreateTrustBlocDID, rw, req.Body)
 }
 
-// CreatePeerDID creates a new peer DID.
+// CreatePeerDID swagger:route POST /didclient/create-peer-did didclient createPeerDID
+//
+// Creates a new peer DID.
+//
+// Responses:
+//    default: genericError
+//    200: createDIDResp
 func (c *Operation) CreatePeerDID(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.CreatePeerDID, rw, req.Body)
 }

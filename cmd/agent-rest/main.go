@@ -4,7 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package aries-agent-rest (Aries Agent REST Server) of aries-framework-go.
+// Package agent-rest (Agent SDK REST Server) of trustbloc/agent-sdk.
 //
 //
 // Terms Of Service:
@@ -33,13 +33,13 @@ import (
 // This is an application which starts Aries agent controller API on given port.
 func main() {
 	rootCmd := &cobra.Command{
-		Use: "aries-agent-rest",
+		Use: "agent-rest",
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)
 		},
 	}
 
-	logger := log.New("aries-framework/agent-rest")
+	logger := log.New("agent-sdk/agent-rest")
 
 	startCmd, err := startcmd.Cmd(&startcmd.HTTPServer{})
 	if err != nil {
