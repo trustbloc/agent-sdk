@@ -32,3 +32,6 @@ coverage.txt
 node_modules
 /dist
 build
+
+deployments/keys
+deployments/demo/openapi/specs

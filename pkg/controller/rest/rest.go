@@ -17,7 +17,7 @@ import (
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 )
 
-var logger = log.New("aries-framework/rest")
+var logger = log.New("agent-sdk/rest")
 
 // Handler http handler for each controller API endpoint.
 type Handler interface {

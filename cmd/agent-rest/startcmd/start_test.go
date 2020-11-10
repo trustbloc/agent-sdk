@@ -376,9 +376,7 @@ func TestStartCmdWithoutWebhookURL(t *testing.T) {
 	}
 	startCmd.SetArgs(args)
 
-	err = startCmd.Execute()
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "webhook-url not set")
+	require.NoError(t, startCmd.Execute())
 }
 
 func TestStartCmdWithLogLevel(t *testing.T) {
@@ -891,6 +889,11 @@ func TestCreateVDRs(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, test.expected, len(res))
 	}
+}
+
+func TestCmd_getUserSetVars(t *testing.T) {
+	_, err := getUserSetVars(&cobra.Command{}, "unknown", "unknown", false)
+	require.EqualError(t, err, " unknown not set. It must be set via either command line or environment variable")
 }
 
 func waitForServerToStart(t *testing.T, host, inboundHost string) {

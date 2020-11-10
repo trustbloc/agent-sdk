@@ -203,7 +203,7 @@ const (
 
 var (
 	errMissingHost = errors.New("host not provided")
-	logger         = log.New("aries-framework/agent-rest")
+	logger         = log.New("agent-sdk/agent-rest")
 )
 
 type agentParameters struct {
@@ -323,7 +323,7 @@ func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo, g
 				return err
 			}
 
-			webhookURLs, err := getUserSetVars(cmd, agentWebhookFlagName, agentWebhookEnvKey, autoAccept)
+			webhookURLs, err := getUserSetVars(cmd, agentWebhookFlagName, agentWebhookEnvKey, true)
 			if err != nil {
 				return err
 			}

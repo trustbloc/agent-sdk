@@ -6,6 +6,10 @@
 GOBIN_PATH             = $(abspath .)/build/bin
 ARIES_AGENT_REST_PATH=cmd/agent-rest
 ARIES_AGENT_MOBILE_PATH=cmd/agent-mobile
+PROJECT_ROOT = github.com/trustbloc/agent-sdk
+OPENAPI_SPEC_PATH=build/rest/openapi/spec
+OPENAPI_DOCKER_IMG=quay.io/goswagger/swagger
+OPENAPI_DOCKER_IMG_VERSION=v0.23.0
 
 # Namespace for the agent images
 DOCKER_OUTPUT_NS   ?= docker.pkg.github.com
@@ -68,12 +72,45 @@ depend:
 	@mkdir -p ./build/bin
 	GO111MODULE=off GOBIN=$(GOBIN_PATH) go get github.com/agnivade/wasmbrowsertest
 
-.PHONY: clean
-clean: clean-build
+.PHONY: generate-openapi-spec
+generate-openapi-spec: clean
+	@echo "Generating and validating controller API specifications using Open API"
+	@mkdir -p build/rest/openapi/spec
+	@SPEC_LOC=${OPENAPI_SPEC_PATH}  \
+	DOCKER_IMAGE=$(OPENAPI_DOCKER_IMG) DOCKER_IMAGE_VERSION=$(OPENAPI_DOCKER_IMG_VERSION)  \
+	scripts/generate-openapi-spec.sh
 
-.PHONY: clean-build
-clean-build:
+.PHONY: generate-openapi-demo-specs
+generate-openapi-demo-specs: clean generate-openapi-spec agent-rest-docker
+	@echo "Generate demo agent rest controller API specifications using Open API"
+	@SPEC_PATH=${OPENAPI_SPEC_PATH} OPENAPI_DEMO_PATH=deployments/demo/openapi \
+    	DOCKER_IMAGE=$(OPENAPI_DOCKER_IMG) DOCKER_IMAGE_VERSION=$(OPENAPI_DOCKER_IMG_VERSION)  \
+    	scripts/generate-openapi-demo-specs.sh
+
+generate-test-keys: clean
+	@mkdir -p -p deployments/keys/tls
+	@docker run -i --rm \
+		-v $(abspath .):/opt/go/src/$(PROJECT_ROOT) \
+		--entrypoint "/opt/go/src/$(PROJECT_ROOT)/scripts/generate_test_keys.sh" \
+		frapsoft/openssl
+
+.PHONY: run-openapi-demo
+run-openapi-demo: generate-test-keys generate-openapi-demo-specs agent-rest-docker
+	@echo "Starting demo agent rest containers ..."
+	@DEMO_COMPOSE_PATH=deployments/demo/openapi SIDETREE_COMPOSE_PATH=deployments/sidetree-mock AGENT_REST_COMPOSE_PATH=deployments/agent-rest  \
+        scripts/run-openapi-demo.sh
+
+.PHONY: stop-openapi-demo
+stop-openapi-demo:
+	@echo "Stopping demo agent rest containers ..."
+	@DEMO_COMPOSE_PATH=deployments/demo/openapi SIDETREE_COMPOSE_PATH=deployments/sidetree-mock AGENT_REST_COMPOSE_PATH=deployments/agent-rest  \
+        DEMO_COMPOSE_OP=down scripts/run-openapi-demo.sh
+
+.PHONY: clean
+clean:
 	@rm -Rf ./build
 	@rm -Rf $(ARIES_AGENT_MOBILE_PATH)/build
 	@rm -Rf ./cmd/agent-js-worker/node_modules
 	@rm -Rf ./cmd/agent-js-worker/dist
+	@rm -Rf ./deployments/keys/tls
+	@rm -Rf ./deployments/demo/openapi/specs
