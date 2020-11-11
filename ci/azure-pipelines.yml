@@ -51,6 +51,27 @@ jobs:
       - checkout: self
       - script: make unit-test-wasm
         displayName: Run unit test wasm
+
+  - job: AgentRestAPTest
+    pool:
+      vmImage: ubuntu-18.04
+    timeoutInMinutes: 30
+    steps:
+      - template: azp-dependencies.yml
+      - checkout: self
+      - bash: |
+          function logout {
+            docker logout
+          }
+          trap logout EXIT
+          source ci/version_var.sh
+          echo $DOCKER_PASSWORD | docker login docker.pkg.github.com --username $DOCKER_USER --password-stdin
+          make rest-api-bdd
+        env:
+          DOCKER_PASSWORD: $(DOCKER_PASSWORD)
+          DOCKER_USER: $(DOCKER_USER)
+        displayName: Run agent REST API tests (docker)
+
   - job: Publish
     dependsOn:
       - Checks
