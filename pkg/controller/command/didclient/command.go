@@ -22,6 +22,8 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/trustbloc/edge-core/pkg/log"
 	didclient "github.com/trustbloc/trustbloc-did-method/pkg/did"
+	"github.com/trustbloc/trustbloc-did-method/pkg/did/doc"
+	"github.com/trustbloc/trustbloc-did-method/pkg/did/option/create"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/cmdutil"
@@ -63,7 +65,7 @@ type Provider interface {
 }
 
 type didBlocClient interface {
-	CreateDID(domain string, opts ...didclient.CreateDIDOption) (*did.Doc, error)
+	CreateDID(domain string, opts ...create.Option) (*did.Doc, error)
 }
 
 // mediatorClient is client interface for mediator.
@@ -130,7 +132,7 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 		return command.NewValidationError(InvalidRequestErrorCode, err)
 	}
 
-	var opts []didclient.CreateDIDOption
+	var opts []create.Option
 
 	for _, v := range request.PublicKeys {
 		value, decodeErr := base64.RawURLEncoding.DecodeString(v.Value)
@@ -148,7 +150,7 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 				return command.NewExecuteError(CreateDIDErrorCode, recoverKeyErr)
 			}
 
-			opts = append(opts, didclient.WithRecoveryPublicKey(k))
+			opts = append(opts, create.WithRecoveryPublicKey(k))
 
 			continue
 		}
@@ -161,12 +163,12 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 				return command.NewExecuteError(CreateDIDErrorCode, updateKeyErr)
 			}
 
-			opts = append(opts, didclient.WithUpdatePublicKey(k))
+			opts = append(opts, create.WithUpdatePublicKey(k))
 
 			continue
 		}
 
-		opts = append(opts, didclient.WithPublicKey(&didclient.PublicKey{
+		opts = append(opts, create.WithPublicKey(&doc.PublicKey{
 			ID: v.ID, Type: v.Type, Encoding: v.Encoding,
 			KeyType: v.KeyType, Purposes: v.Purposes, Value: value,
 		}))
@@ -197,9 +199,9 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 
 func getKey(keyType string, value []byte) (interface{}, error) {
 	switch keyType {
-	case didclient.Ed25519KeyType:
+	case doc.Ed25519KeyType:
 		return ed25519.PublicKey(value), nil
-	case didclient.P256KeyType:
+	case doc.P256KeyType:
 		x, y := elliptic.Unmarshal(elliptic.P256(), value)
 
 		return &ecdsa.PublicKey{X: x, Y: y, Curve: elliptic.P256()}, nil

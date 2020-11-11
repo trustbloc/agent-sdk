@@ -24,9 +24,9 @@ import (
 	"github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb"
 	ariesctrl "github.com/hyperledger/aries-framework-go/pkg/controller"
 	controllercmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
+	cryptoapi "github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto"
-	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto/primitive/composite"
-	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto/primitive/composite/ecdhes"
+	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto/primitive/composite/ecdh"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto/primitive/composite/keyio"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/messaging/msghandler"
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
@@ -673,8 +673,9 @@ func createEncryptedFormatter() (*edv.EncryptedFormatter, error) {
 	return edv.NewEncryptedFormatter(encrypter, decrypter), nil
 }
 
+//nolint: unparam
 func createEncrypterAndDecrypter() (*jose.JWEEncrypt, *jose.JWEDecrypt, error) {
-	keyHandle, err := keyset.NewHandle(ecdhes.ECDHES256KWAES256GCMKeyTemplate())
+	keyHandle, err := keyset.NewHandle(ecdh.ECDH256KWAES256GCMKeyTemplate())
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create new ECDHES key handle: %w", err)
 	}
@@ -692,18 +693,24 @@ func createEncrypterAndDecrypter() (*jose.JWEEncrypt, *jose.JWEDecrypt, error) {
 		return nil, nil, fmt.Errorf("failed to write keyset: %w", err)
 	}
 
-	ecPubKey := new(composite.PublicKey)
+	ecPubKey := new(cryptoapi.PublicKey)
+
+	// TODO how to get kid
+	// ecPubKey.KID = kid
 
 	err = json.Unmarshal(buf.Bytes(), ecPubKey)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to unmarshal bytes to a public key: %w", err)
 	}
 
-	encrypter, err := jose.NewJWEEncrypt(jose.A256GCM, "EDVEncryptedDocument", "", nil,
-		[]*composite.PublicKey{ecPubKey})
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create a new JWE encrypter: %w", err)
-	}
+	// TODO how to get crypto
+	// encrypter, err := jose.NewJWEEncrypt(jose.A256GCM, "EDVEncryptedDocument", "", nil,
+	//	[]*cryptoapi.PublicKey{ecPubKey})
+	// if err != nil {
+	//	return nil, nil, fmt.Errorf("failed to create a new JWE encrypter: %w", err)
+	// }
 
-	return encrypter, jose.NewJWEDecrypt(nil, keyHandle), nil
+	// TODO how to get crypto and KeyManager
+	// return encrypter,jose.NewJWEDecrypt(nil, keyHandle), nil
+	return nil, nil, nil
 }

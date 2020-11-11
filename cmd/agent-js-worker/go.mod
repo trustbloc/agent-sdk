@@ -13,8 +13,8 @@ require (
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/google/tink/go v1.5.0
 	github.com/google/uuid v1.1.2
-	github.com/hyperledger/aries-framework-go v0.1.5-0.20201104222705-e8a7705f7be3
-	github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201104222705-e8a7705f7be3
+	github.com/hyperledger/aries-framework-go v0.1.5-0.20201110161050-249e1c428734
+	github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201110161050-249e1c428734
 	github.com/jinzhu/copier v0.0.0-20201025035756-632e723a6687 // indirect
 	github.com/kilic/bls12-381 v0.0.0-20201022102231-585cb842ccd9 // indirect
 	github.com/mitchellh/mapstructure v1.3.3
@@ -25,7 +25,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/trustbloc/agent-sdk v0.0.0
 	github.com/trustbloc/edge-core v0.1.5-0.20200916124536-c32454a16108
-	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201104140931-a5c42ef6b769
+	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201110175950-f47afa606cda
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897 // indirect
 	golang.org/x/sys v0.0.0-20201028094953-708e7fb298ac // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
@@ -33,6 +33,5 @@ require (
 
 replace (
 	github.com/kilic/bls12-381 => github.com/trustbloc/bls12-381 v0.0.0-20201104214312-31de2a204df8
-	github.com/phoreproject/bls => github.com/trustbloc/bls v0.0.0-20201023141329-a1e218beb89e
 	github.com/trustbloc/agent-sdk => ../../
 )
