@@ -19,8 +19,8 @@ services:
     volumes:
       - ../keys/tls:/etc/sidetree/tls
     networks:
-      - agent-sdk-rest-net
+      - agent_sdk_net
 
 networks:
-  agent-sdk-rest-net:
+  agent_sdk_net:
     external: true

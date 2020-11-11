@@ -105,4 +105,4 @@ services:
 
 networks:
   agent_sdk_net:
-    driver: bridge
+    external: true
