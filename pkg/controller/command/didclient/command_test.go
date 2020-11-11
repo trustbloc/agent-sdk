@@ -24,7 +24,8 @@ import (
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
 	mockvdr "github.com/hyperledger/aries-framework-go/pkg/mock/vdr"
 	"github.com/stretchr/testify/require"
-	didclient "github.com/trustbloc/trustbloc-did-method/pkg/did"
+	"github.com/trustbloc/trustbloc-did-method/pkg/did/doc"
+	"github.com/trustbloc/trustbloc-did-method/pkg/did/option/create"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 )
@@ -82,12 +83,12 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		jwk := &jose.JWK{}
 		jwk.Key = ed25519.PublicKey{}
 
-		v, err := did.NewPublicKeyFromJWK("id", "type", "c", jwk)
+		v, err := did.NewVerificationMethodFromJWK("id", "type", "c", jwk)
 		require.NoError(t, err)
 
 		jwk.Key = make(chan struct{})
 
-		c.didBlocClient = &mockDIDClient{createDIDValue: &did.Doc{PublicKey: []did.PublicKey{*v}}}
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.Doc{VerificationMethod: []did.VerificationMethod{*v}}}
 
 		var b bytes.Buffer
 		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBufferString("{}"))
@@ -190,12 +191,12 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		// ED key
 		r, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
 			{
-				KeyType:  didclient.Ed25519KeyType,
+				KeyType:  doc.Ed25519KeyType,
 				Value:    base64.RawURLEncoding.EncodeToString(pubKey),
 				Recovery: true,
 			},
 			{
-				KeyType: didclient.P256KeyType,
+				KeyType: doc.P256KeyType,
 				Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
 				Update:  true,
 			},
@@ -400,7 +401,7 @@ type mockDIDClient struct {
 	createDIDErr   error
 }
 
-func (m *mockDIDClient) CreateDID(domain string, opts ...didclient.CreateDIDOption) (*did.Doc, error) {
+func (m *mockDIDClient) CreateDID(domain string, opts ...create.Option) (*did.Doc, error) {
 	return m.createDIDValue, m.createDIDErr
 }
 
