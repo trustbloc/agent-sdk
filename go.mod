@@ -13,6 +13,6 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/trustbloc/edge-core v0.1.5-0.20200916124536-c32454a16108
-	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201110175950-f47afa606cda
+	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201111193349-e4142ee60300
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )

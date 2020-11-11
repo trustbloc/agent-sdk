@@ -22,7 +22,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/trustbloc/agent-sdk v0.0.0-00010101000000-000000000000
-	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201110175950-f47afa606cda
+	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201111193349-e4142ee60300
 	golang.org/x/net v0.0.0-20201027133719-8eef5233e2a1 // indirect
 )
 
