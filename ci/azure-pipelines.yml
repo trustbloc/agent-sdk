@@ -72,6 +72,30 @@ jobs:
           DOCKER_USER: $(DOCKER_USER)
         displayName: Run agent REST API tests (docker)
 
+  - job: AgentJSTest
+    pool:
+      vmImage: ubuntu-18.04
+    timeoutInMinutes: 30
+    steps:
+      - template: azp-dependencies.yml
+      - checkout: self
+      - bash: |
+          function logout {
+            docker logout
+          }
+          trap logout EXIT
+          source ci/version_var.sh
+          echo $DOCKER_PASSWORD | docker login docker.pkg.github.com --username $DOCKER_USER --password-stdin
+          echo '//npm.pkg.github.com/:_authToken=${DOCKER_PASSWORD}' > ~/.npmrc
+          echo '@hyperledger:registry=https://npm.pkg.github.com' >> ~/.npmrc
+          echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
+          export npm_config_prefix=~/.npm-prefix
+          make aries-js-bdd
+        env:
+          DOCKER_PASSWORD: $(DOCKER_PASSWORD)
+          DOCKER_USER: $(DOCKER_USER)
+        displayName: Run agent JS tests (npm)
+
   - job: Publish
     dependsOn:
       - Checks
