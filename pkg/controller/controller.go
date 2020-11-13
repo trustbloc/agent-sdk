@@ -14,8 +14,10 @@ import (
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	didclientcmd "github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
+	mediatorclientcmd "github.com/trustbloc/agent-sdk/pkg/controller/command/mediatorclient"
 	"github.com/trustbloc/agent-sdk/pkg/controller/rest"
 	"github.com/trustbloc/agent-sdk/pkg/controller/rest/didclient"
+	"github.com/trustbloc/agent-sdk/pkg/controller/rest/mediatorclient"
 )
 
 type allOpts struct {
@@ -33,7 +35,7 @@ func WithBlocDomain(blocDomain string) Opt {
 }
 
 // GetCommandHandlers returns all command handlers provided by controller.
-func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, error) { //nolint: interfacer
+func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, error) {
 	cmdOpts := &allOpts{}
 	// Apply options
 	for _, opt := range opts {
@@ -46,14 +48,21 @@ func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, 
 		return nil, fmt.Errorf("failed to initialize DID client: %w", err)
 	}
 
+	// mediator client REST operation
+	mediatorClientCmd, err := mediatorclientcmd.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	var allHandlers []command.Handler
 	allHandlers = append(allHandlers, didClientCmd.GetHandlers()...)
+	allHandlers = append(allHandlers, mediatorClientCmd.GetHandlers()...)
 
 	return allHandlers, nil
 }
 
 // GetRESTHandlers returns all REST handlers provided by controller.
-func GetRESTHandlers(ctx *context.Provider, opts ...Opt) ([]rest.Handler, error) { //nolint: interfacer
+func GetRESTHandlers(ctx *context.Provider, opts ...Opt) ([]rest.Handler, error) {
 	restOpts := &allOpts{}
 	// Apply options
 	for _, opt := range opts {
@@ -66,9 +75,16 @@ func GetRESTHandlers(ctx *context.Provider, opts ...Opt) ([]rest.Handler, error)
 		return nil, err
 	}
 
+	// mediator client REST operation
+	mediatorClientOp, err := mediatorclient.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	// creat handlers from all operations
 	var allHandlers []rest.Handler
 	allHandlers = append(allHandlers, didClientOp.GetRESTHandlers()...)
+	allHandlers = append(allHandlers, mediatorClientOp.GetRESTHandlers()...)
 
 	return allHandlers, nil
 }

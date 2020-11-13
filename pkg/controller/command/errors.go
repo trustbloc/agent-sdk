@@ -31,6 +31,9 @@ type Group int32
 const (
 	// DIDClient error group for DID client command errors.
 	DIDClient Group = 1000
+
+	// MediatorClient error group for mediator client command errors.
+	MediatorClient Group = 2000
 )
 
 // Error is the  interface for representing an command error condition, with the nil value representing no error.

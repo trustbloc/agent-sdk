@@ -1084,6 +1084,25 @@ const Agent = function(opts) {
                 return invoke(aw, pending, this.pkgname, "SaveDID", req, "timeout while saving did")
             },
         },
+
+        /**
+         * Mediator client features
+         *
+         */
+        mediatorclient: {
+            pkgname: "mediatorclient",
+
+            /**
+             * connects an agent with the router.
+             *
+             * @param req - json document containing invitation and label
+             * @returns {Promise<Object>}
+             */
+            connect: async function (req) {
+                return invoke(aw, pending, this.pkgname, "Connect", req, "timeout while connecting to router")
+            },
+
+        },
     }
 
     // start aries worker
