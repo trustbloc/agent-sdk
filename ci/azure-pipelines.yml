@@ -101,6 +101,8 @@ jobs:
       - Checks
       - UnitTest
       - UnitTestWasm
+      - AgentJSTest
+      - AgentRestAPTest
     condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
     pool:
       vmImage: ubuntu-18.04
