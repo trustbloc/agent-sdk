@@ -25,7 +25,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/trustbloc/agent-sdk v0.0.0
 	github.com/trustbloc/edge-core v0.1.5-0.20200916124536-c32454a16108
-	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201111193349-e4142ee60300
+	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201113081448-0e789546b4d7
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897 // indirect
 	golang.org/x/sys v0.0.0-20201028094953-708e7fb298ac // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
