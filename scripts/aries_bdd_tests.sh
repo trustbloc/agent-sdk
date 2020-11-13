@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
+set -e
 
 echo "Copying aries feature file..."
 pwd=$(pwd)
@@ -13,12 +14,17 @@ cd ./build/aries-framework-go || exit
 
 git checkout ${ARIES_FRAMEWORK_COMMIT}
 
-sed -i '' -e "1,/AGENT_REST_IMAGE.*/s/AGENT_REST_IMAGE.*/AGENT_REST_IMAGE=docker.pkg.github.com\/trustbloc\/agent-sdk\/agent-sdk-rest/" test/bdd/fixtures/agent-rest/.env
-sed -i '' -e "s/aries-agent-rest /agent-rest /" test/bdd/fixtures/agent-rest/docker-compose.yml
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  sed -i '' -e "1,/AGENT_REST_IMAGE.*/s/AGENT_REST_IMAGE.*/AGENT_REST_IMAGE=docker.pkg.github.com\/trustbloc\/agent-sdk\/agent-sdk-rest/" test/bdd/fixtures/agent-rest/.env
+  sed -i '' -e "s/aries-agent-rest /agent-rest /" test/bdd/fixtures/agent-rest/docker-compose.yml
+else
+  sed -i -e "1,/AGENT_REST_IMAGE.*/s/AGENT_REST_IMAGE.*/AGENT_REST_IMAGE=docker.pkg.github.com\/trustbloc\/agent-sdk\/agent-sdk-rest/" test/bdd/fixtures/agent-rest/.env
+  sed -i -e "s/aries-agent-rest /agent-rest /" test/bdd/fixtures/agent-rest/docker-compose.yml
+fi
 
-make clean generate-test-keys sample-webhook-docker sidetree-cli bdd-test-go
+make clean generate-test-keys sample-webhook-docker sidetree-cli
 
-go test -count=1 -v -cover . -p 1 -timeout=20m -race
+cd test/bdd
+go test -count=1 -v -cover . -p 1 -timeout=20m -race -run controller
 
-rm -rf aries-framework-go
 cd $pwd || exit

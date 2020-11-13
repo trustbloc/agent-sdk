@@ -1118,7 +1118,7 @@ const Agent = function(opts) {
 
     // return promise which waits for worker to load and aries to start.
     return new Promise((resolve, reject) => {
-        const timer = setTimeout(_ => reject(new Error("timeout waiting for agent to initialize")), 10000)
+        const timer = setTimeout(_ => reject(new Error("timeout waiting for agent to initialize")), 15000)
         notifications.set("asset-ready", new Map().set("asset", async (result) => {
             clearTimeout(timer)
             invoke(aw, pending, "agent", "Start", opts, "timeout while starting agent").then(
