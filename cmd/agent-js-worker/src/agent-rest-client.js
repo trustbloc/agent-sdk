@@ -399,6 +399,12 @@ const pkgs = {
             path: "/didclient/create-peer-did",
             method: "POST",
         }
+    },
+    mediatorclient: {
+        Connect: {
+            path: "/mediatorclient/connect",
+            method: "POST",
+        }
     }
 }
 
