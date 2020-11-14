@@ -752,9 +752,8 @@ func startAgent(parameters *agentParameters) error {
 			parameters.host, err)
 	}
 
-	sdkHandlers, err := sdkcontroller.GetRESTHandlers(ctx,
-		sdkcontroller.WithBlocDomain(parameters.trustblocDomain),
-	)
+	sdkHandlers, err := sdkcontroller.GetRESTHandlers(ctx, sdkcontroller.WithBlocDomain(parameters.trustblocDomain),
+		sdkcontroller.WithMessageHandler(parameters.msgHandler))
 	if err != nil {
 		return fmt.Errorf("failed to start sdk agent rest on port [%s], failed to get rest service api:  %w",
 			parameters.host, err)

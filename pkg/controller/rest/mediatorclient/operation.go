@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"net/http"
 
+	ariescmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
+
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/mediatorclient"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/cmdutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/rest"
@@ -29,8 +31,8 @@ type Operation struct {
 }
 
 // New returns new mediator client rest instance.
-func New(ctx mediatorclient.Provider) (*Operation, error) {
-	client, err := mediatorclient.New(ctx)
+func New(ctx mediatorclient.Provider, msgHandler ariescmd.MessageHandler) (*Operation, error) {
+	client, err := mediatorclient.New(ctx, msgHandler)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize mediator-client command: %w", err)
 	}

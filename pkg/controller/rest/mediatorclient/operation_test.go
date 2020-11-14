@@ -16,6 +16,7 @@ import (
 	didexchangesvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/didexchange"
 	mediatorsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	outofbandsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/outofband"
+	mockmsghandler "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/msghandler"
 	mockdidexchange "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/didexchange"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
 	mockprotocol "github.com/hyperledger/aries-framework-go/pkg/mock/provider"
@@ -29,7 +30,7 @@ import (
 
 func TestNew(t *testing.T) {
 	t.Run("test success", func(t *testing.T) {
-		c, err := New(newMockProvider(nil))
+		c, err := New(newMockProvider(nil), mockmsghandler.NewMockMsgServiceProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		require.NotEmpty(t, c.GetRESTHandlers())
@@ -37,7 +38,7 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("test failure while creating mediator client", func(t *testing.T) {
-		c, err := New(&mockprotocol.Provider{})
+		c, err := New(&mockprotocol.Provider{}, mockmsghandler.NewMockMsgServiceProvider())
 		require.Error(t, err)
 		require.Nil(t, c)
 		require.Contains(t, err.Error(), "failed to create mediator client")
@@ -84,7 +85,7 @@ func TestOperation_Connect(t *testing.T) {
 			},
 		})
 
-		cmd, err := New(prov)
+		cmd, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
 		require.NoError(t, err)
 		require.NotNil(t, cmd)
 
@@ -113,7 +114,7 @@ func TestOperation_Connect(t *testing.T) {
 			},
 		})
 
-		cmd, err := New(prov)
+		cmd, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
 		require.NoError(t, err)
 		require.NotNil(t, cmd)
 

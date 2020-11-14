@@ -12,9 +12,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hyperledger/aries-framework-go/pkg/didcomm/common/service"
 	didexchangesvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/didexchange"
 	mediatorsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	outofbandsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/outofband"
+	mockmsghandler "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/msghandler"
 	mockdidexchange "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/didexchange"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
 	mockprotocol "github.com/hyperledger/aries-framework-go/pkg/mock/provider"
@@ -27,7 +29,7 @@ import (
 
 func TestNew(t *testing.T) {
 	t.Run("test success", func(t *testing.T) {
-		c, err := New(newMockProvider(nil))
+		c, err := New(newMockProvider(nil), mockmsghandler.NewMockMsgServiceProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		require.NotEmpty(t, c.GetHandlers())
@@ -35,7 +37,7 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("test failure while creating mediator client", func(t *testing.T) {
-		c, err := New(&mockprotocol.Provider{})
+		c, err := New(&mockprotocol.Provider{}, mockmsghandler.NewMockMsgServiceProvider())
 		require.Error(t, err)
 		require.Nil(t, c)
 		require.Contains(t, err.Error(), "failed to create mediator client")
@@ -46,7 +48,7 @@ func TestNew(t *testing.T) {
 			ServiceMap: map[string]interface{}{
 				mediatorsvc.Coordination: &mockroute.MockMediatorSvc{},
 			},
-		})
+		}, mockmsghandler.NewMockMsgServiceProvider())
 		require.Error(t, err)
 		require.Nil(t, c)
 		require.Contains(t, err.Error(), "failed to create did-exchange client")
@@ -60,7 +62,7 @@ func TestNew(t *testing.T) {
 			},
 			StorageProviderValue:              mockstorage.NewMockStoreProvider(),
 			ProtocolStateStorageProviderValue: mockstorage.NewMockStoreProvider(),
-		})
+		}, mockmsghandler.NewMockMsgServiceProvider())
 		require.Error(t, err)
 		require.Nil(t, c)
 		require.Contains(t, err.Error(), "failed to create out-of-band client")
@@ -89,7 +91,26 @@ func TestCommand_Connect(t *testing.T) {
         	"protocols": ["https://didcomm.org/didexchange/1.0"]
     	},
 		"mylabel": "sample-agent-label"
-	}`
+		}`
+		sampleInvitation2 = `{
+    	"invitation": {
+        	"@id": "3ae3d2cb-83bf-429f-93ea-0802f92ecf42",
+        	"@type": "https://didcomm.org/oob-invitation/1.0/invitation",
+        	"label": "hub-router",
+        	"service": [{
+            	"ID": "1d03b636-ab0d-4a4e-904b-cdc70265c6bc",
+            	"Type": "did-communication",
+            	"Priority": 0,
+            	"RecipientKeys": ["36umoSWgaY4pBpwGUX9UNXBmpo1iDSdLsiKDs4XPXK4Q"],
+            	"RoutingKeys": null,
+            	"ServiceEndpoint": "wss://hub.router.agent.example.com:10072",
+            	"Properties": null
+        	}],
+        	"protocols": ["https://didcomm.org/didexchange/1.0"]
+    	},
+		"mylabel": "sample-agent-label",
+		"stateCompleteMessageType": "https://trustbloc.dev/didexchange/1.0/state-complete"
+		}`
 		sampleErr = "sample-error"
 	)
 
@@ -107,7 +128,7 @@ func TestCommand_Connect(t *testing.T) {
 			},
 		})
 
-		c, err := New(prov)
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -124,10 +145,57 @@ func TestCommand_Connect(t *testing.T) {
 		require.Equal(t, resp.RouterEndpoint, sampleRouterEndpoint)
 	})
 
+	t.Run("test successful connect with state complete notification", func(t *testing.T) {
+		prov := newMockProvider(map[string]interface{}{
+			mediatorsvc.Coordination: &mockroute.MockMediatorSvc{
+				RouterEndpoint: sampleRouterEndpoint,
+				RoutingKeys:    []string{sampleRoutingKeys},
+			},
+			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{ConnID: sampleConnID},
+			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
+				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ string, _ []string) (s string, e error) {
+					return sampleConnID, nil
+				},
+			},
+		})
+
+		mockMsgRegistrar := mockmsghandler.NewMockMsgServiceProvider()
+
+		go func() {
+			for {
+				if len(mockMsgRegistrar.Services()) > 0 {
+					_, e := mockMsgRegistrar.Services()[0].HandleInbound(&service.DIDCommMsgMap{}, "", "")
+					require.NoError(t, e)
+
+					break
+				}
+			}
+		}()
+
+		c, err := New(prov, mockMsgRegistrar)
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		// reduce timeout
+		c.didExchTimeout = 10 * time.Millisecond
+
+		var b bytes.Buffer
+		cmdErr := c.Connect(&b, bytes.NewBufferString(sampleInvitation2))
+		require.NoError(t, cmdErr)
+
+		resp := &ConnectionResponse{}
+		err = json.NewDecoder(&b).Decode(&resp)
+		require.NoError(t, err)
+
+		require.Equal(t, resp.ConnectionID, sampleConnID)
+		require.Equal(t, resp.RoutingKeys, []string{sampleRoutingKeys})
+		require.Equal(t, resp.RouterEndpoint, sampleRouterEndpoint)
+	})
+
 	t.Run("test failure due to incorrect request", func(t *testing.T) {
 		prov := newMockProvider(nil)
 
-		c, err := New(prov)
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -142,7 +210,7 @@ func TestCommand_Connect(t *testing.T) {
 	t.Run("test failure due to missing invitation", func(t *testing.T) {
 		prov := newMockProvider(nil)
 
-		c, err := New(prov)
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -163,7 +231,7 @@ func TestCommand_Connect(t *testing.T) {
 			outofbandsvc.Name: &sdkmockprotocol.MockOobService{},
 		})
 
-		c, err := New(prov)
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -186,7 +254,7 @@ func TestCommand_Connect(t *testing.T) {
 			},
 		})
 
-		c, err := New(prov)
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -213,7 +281,7 @@ func TestCommand_Connect(t *testing.T) {
 			},
 		})
 
-		c, err := New(prov)
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -236,7 +304,7 @@ func TestCommand_Connect(t *testing.T) {
 			},
 		})
 
-		c, err := New(prov)
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -265,7 +333,7 @@ func TestCommand_Connect(t *testing.T) {
 			},
 		})
 
-		c, err := New(prov)
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -276,6 +344,59 @@ func TestCommand_Connect(t *testing.T) {
 		cmdErr := c.Connect(&b, bytes.NewBufferString(sampleInvitation))
 		require.Error(t, cmdErr)
 		require.Contains(t, cmdErr.Error(), "time out waiting for did exchange state 'completed'")
+		require.Equal(t, cmdErr.Type(), command.ExecuteError)
+		require.Equal(t, cmdErr.Code(), ConnectMediatorError)
+	})
+
+	t.Run("test failure messenger registration error", func(t *testing.T) {
+		prov := newMockProvider(map[string]interface{}{
+			mediatorsvc.Coordination:   &mockroute.MockMediatorSvc{},
+			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
+			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+		})
+
+		c, err := New(prov, &mockmsghandler.MockMsgSvcProvider{
+			RegisterErr: fmt.Errorf(sampleErr),
+		})
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		// reduce timeout
+		c.didExchTimeout = 10 * time.Millisecond
+
+		var b bytes.Buffer
+		cmdErr := c.Connect(&b, bytes.NewBufferString(sampleInvitation2))
+		require.Error(t, cmdErr)
+		require.Contains(t, cmdErr.Error(), sampleErr)
+		require.Equal(t, cmdErr.Type(), command.ExecuteError)
+		require.Equal(t, cmdErr.Code(), ConnectMediatorError)
+	})
+
+	t.Run("test failure waiting for state complete notification", func(t *testing.T) {
+		prov := newMockProvider(map[string]interface{}{
+			mediatorsvc.Coordination: &mockroute.MockMediatorSvc{
+				RouterEndpoint: sampleRouterEndpoint,
+				RoutingKeys:    []string{sampleRoutingKeys},
+			},
+			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{ConnID: sampleConnID},
+			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
+				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ string, _ []string) (s string, e error) {
+					return sampleConnID, nil
+				},
+			},
+		})
+
+		c, err := New(prov, &mockmsghandler.MockMsgSvcProvider{UnregisterErr: fmt.Errorf(sampleErr)})
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		// reduce timeout
+		c.didExchTimeout = 10 * time.Millisecond
+
+		var b bytes.Buffer
+		cmdErr := c.Connect(&b, bytes.NewBufferString(sampleInvitation2))
+		require.Error(t, cmdErr)
+		require.Contains(t, cmdErr.Error(), "timeout waiting for state completed message from mediator")
 		require.Equal(t, cmdErr.Type(), command.ExecuteError)
 		require.Equal(t, cmdErr.Code(), ConnectMediatorError)
 	})
