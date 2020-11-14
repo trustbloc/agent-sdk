@@ -15,6 +15,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/client/didexchange"
 	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/client/outofband"
+	ariescmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/common/service"
 	didexchangeSvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/didexchange"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
@@ -24,6 +25,7 @@ import (
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/cmdutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/logutil"
+	"github.com/trustbloc/agent-sdk/pkg/controller/internal/msghandler"
 )
 
 var logger = log.New("agent-sdk-mediatorclient")
@@ -49,6 +51,9 @@ const (
 	// log constants.
 	successString = "success"
 
+	// messaging & notifications.
+	stateCompleteTopic = "state-complete-topic"
+
 	// timeout constants.
 	didExchangeTimeOut = 20 * time.Second
 )
@@ -68,10 +73,11 @@ type Command struct {
 	outOfBand      *outofband.Client
 	mediator       *mediator.Client
 	didExchTimeout time.Duration
+	msgHandler     ariescmd.MessageHandler
 }
 
 // New returns new mediator client controller command instance.
-func New(p Provider) (*Command, error) {
+func New(p Provider, msgHandler ariescmd.MessageHandler) (*Command, error) {
 	mediatorClient, err := mediator.New(p)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create mediator client : %w", err)
@@ -92,6 +98,7 @@ func New(p Provider) (*Command, error) {
 		outOfBand:      outOfBandClient,
 		mediator:       mediatorClient,
 		didExchTimeout: didExchangeTimeOut,
+		msgHandler:     msgHandler,
 	}, nil
 }
 
@@ -103,7 +110,7 @@ func (c *Command) GetHandlers() []command.Handler {
 }
 
 // Connect connects agent to given router endpoint.
-func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:funlen
+func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:funlen, gocyclo
 	var request ConnectionRequest
 
 	err := json.NewDecoder(req).Decode(&request)
@@ -128,6 +135,27 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:
 		return command.NewExecuteError(ConnectMediatorError, err)
 	}
 
+	var notificationCh chan msghandler.NotificationPayload
+
+	if request.StateCompleteMessageType != "" {
+		notificationCh = make(chan msghandler.NotificationPayload)
+
+		err = c.msgHandler.Register(msghandler.NewMessageService(stateCompleteTopic, request.StateCompleteMessageType,
+			nil, msghandler.NewNotifier(notificationCh)))
+		if err != nil {
+			logutil.LogError(logger, CommandName, Connect, err.Error())
+
+			return command.NewExecuteError(ConnectMediatorError, err)
+		}
+
+		defer func() {
+			e := c.msgHandler.Unregister(stateCompleteTopic)
+			if e != nil {
+				logger.Warnf("Failed to unregister state completion notifier: %w", e)
+			}
+		}()
+	}
+
 	connID, err := c.outOfBand.AcceptInvitation(request.Invitation, request.MyLabel)
 	if err != nil {
 		logutil.LogError(logger, CommandName, Connect, err.Error())
@@ -142,7 +170,12 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:
 		return command.NewExecuteError(ConnectMediatorError, err)
 	}
 
-	// TODO Wait for did exchange completed message or retry before register [#56]
+	err = c.waitForStateCompletedNotification(notificationCh)
+	if err != nil {
+		logutil.LogError(logger, CommandName, Connect, err.Error())
+
+		return command.NewExecuteError(ConnectMediatorError, err)
+	}
 
 	err = c.mediator.Register(connID)
 	if err != nil {
@@ -207,4 +240,19 @@ func (c *Command) waitForStateCompleted(didStateMsgs chan service.StateMsg, conn
 	case <-time.After(c.didExchTimeout):
 		return fmt.Errorf("time out waiting for did exchange state 'completed'")
 	}
+}
+
+func (c *Command) waitForStateCompletedNotification(notificationCh chan msghandler.NotificationPayload) error {
+	if notificationCh == nil {
+		return nil
+	}
+
+	select {
+	case <-notificationCh:
+		// TODO correlate connection ID
+	case <-time.After(c.didExchTimeout):
+		return fmt.Errorf("timeout waiting for state completed message from mediator")
+	}
+
+	return nil
 }

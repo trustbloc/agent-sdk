@@ -10,6 +10,7 @@ package controller
 import (
 	"fmt"
 
+	ariescmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
@@ -22,6 +23,7 @@ import (
 
 type allOpts struct {
 	blocDomain string
+	msgHandler ariescmd.MessageHandler
 }
 
 // Opt represents a controller option.
@@ -31,6 +33,13 @@ type Opt func(opts *allOpts)
 func WithBlocDomain(blocDomain string) Opt {
 	return func(opts *allOpts) {
 		opts.blocDomain = blocDomain
+	}
+}
+
+// WithMessageHandler is an option allowing for the message handler to be set.
+func WithMessageHandler(handler ariescmd.MessageHandler) Opt {
+	return func(opts *allOpts) {
+		opts.msgHandler = handler
 	}
 }
 
@@ -49,7 +58,7 @@ func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, 
 	}
 
 	// mediator client REST operation
-	mediatorClientCmd, err := mediatorclientcmd.New(ctx)
+	mediatorClientCmd, err := mediatorclientcmd.New(ctx, cmdOpts.msgHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +84,9 @@ func GetRESTHandlers(ctx *context.Provider, opts ...Opt) ([]rest.Handler, error)
 		return nil, err
 	}
 
+	fmt.Println(">> restOpts.msgHandler", restOpts.msgHandler)
 	// mediator client REST operation
-	mediatorClientOp, err := mediatorclient.New(ctx)
+	mediatorClientOp, err := mediatorclient.New(ctx, restOpts.msgHandler)
 	if err != nil {
 		return nil, err
 	}
