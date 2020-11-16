@@ -21,7 +21,9 @@ DNS.1 = localhost
 DNS.2 = alice.agent.sdk.example.com
 DNS.3 = bob.agent.sdk.example.com
 DNS.4 = carl.agent.sdk.example.com
-DNS.5 = carl.router.agent.sdk.example.com" >> "$tmp"
+DNS.5 = carl.router.agent.sdk.example.com
+DNS.6 = dave.agent.sdk.example.com
+DNS.7 = dave.router.agent.sdk.example.com" >> "$tmp"
 
 #create CA
 openssl ecparam -name prime256v1 -genkey -noout -out deployments/keys/tls/ec-cakey.pem
