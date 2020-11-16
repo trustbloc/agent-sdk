@@ -59,6 +59,32 @@ services:
     networks:
       - agent-sdk-rest-net
 
+  dave.sdk.openapi.demo.com:
+    container_name: dave.sdk.openapi.demo.com
+    image: swaggerapi/swagger-ui
+    environment:
+      - SWAGGER_JSON=/specs/openapi-${DAVE_API_HOST}.yml
+      - BASE_URL=/openapi
+    ports:
+      - 10069:8080
+    volumes:
+      - ./specs:/specs
+    networks:
+      - agent-sdk-rest-net
+
+  dave.router.sdk.openapi.demo.com:
+    container_name: dave.router.sdk.openapi.demo.com
+    image: swaggerapi/swagger-ui
+    environment:
+      - SWAGGER_JSON=/specs/openapi-${DAVE_ROUTER_API_HOST}.yml
+      - BASE_URL=/openapi
+    ports:
+      - 10079:8080
+    volumes:
+      - ./specs:/specs
+    networks:
+      - agent-sdk-rest-net
+
 networks:
   agent-sdk-rest-net:
     external: true
