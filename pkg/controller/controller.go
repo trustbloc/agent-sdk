@@ -84,7 +84,6 @@ func GetRESTHandlers(ctx *context.Provider, opts ...Opt) ([]rest.Handler, error)
 		return nil, err
 	}
 
-	fmt.Println(">> restOpts.msgHandler", restOpts.msgHandler)
 	// mediator client REST operation
 	mediatorClientOp, err := mediatorclient.New(ctx, restOpts.msgHandler)
 	if err != nil {

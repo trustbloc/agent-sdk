@@ -10,12 +10,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"time"
 
 	"github.com/hyperledger/aries-framework-go/pkg/client/didexchange"
 	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/client/outofband"
 	ariescmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
+	mediatorcmd "github.com/hyperledger/aries-framework-go/pkg/controller/command/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/common/service"
 	didexchangeSvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/didexchange"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
@@ -33,9 +35,12 @@ var logger = log.New("agent-sdk-mediatorclient")
 const (
 	// CommandName package command name.
 	CommandName = "mediatorclient"
-
 	// Connect command name.
 	Connect = "Connect"
+	// ReconnectAll command name.
+	ReconnectAll = "ReconnectAll"
+	// CreateInvitation command name.
+	CreateInvitation = "CreateInvitation"
 )
 
 const (
@@ -44,9 +49,14 @@ const (
 
 	// ConnectMediatorError is typically a code for mediator connect errors.
 	ConnectMediatorError
+	// ReconnectAllError is typically a code for mediator reconnectAll errors.
+	ReconnectAllError
+	// CreateInvitationError is typically a code for mediator create invitation command errors.
+	CreateInvitationError
 
 	// errors.
 	errInvalidConnectionRequest = "invitation missing in connection request"
+	errNoConnectionFound        = "no connection found to create invitation"
 
 	// log constants.
 	successString = "success"
@@ -74,6 +84,7 @@ type Command struct {
 	mediator       *mediator.Client
 	didExchTimeout time.Duration
 	msgHandler     ariescmd.MessageHandler
+	registry       *command.Registry
 }
 
 // New returns new mediator client controller command instance.
@@ -102,10 +113,18 @@ func New(p Provider, msgHandler ariescmd.MessageHandler) (*Command, error) {
 	}, nil
 }
 
+// SetCommandRegistry sets commands registry to this command hanler which can be used to call external
+// commands.
+func (c *Command) SetCommandRegistry(registry *command.Registry) {
+	c.registry = registry
+}
+
 // GetHandlers returns list of all commands supported by this controller command.
 func (c *Command) GetHandlers() []command.Handler {
 	return []command.Handler{
 		cmdutil.NewCommandHandler(CommandName, Connect, c.Connect),
+		cmdutil.NewCommandHandler(CommandName, ReconnectAll, c.ReconnectAll),
+		cmdutil.NewCommandHandler(CommandName, CreateInvitation, c.CreateInvitation),
 	}
 }
 
@@ -198,6 +217,76 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:
 	}, logger)
 
 	logutil.LogDebug(logger, CommandName, Connect, successString)
+
+	return nil
+}
+
+// ReconnectAll performs reconnection on all available mediator connections.
+// This command is useful in re-establishing lost connections (ex: lost websocket connection).
+func (c *Command) ReconnectAll(rw io.Writer, req io.Reader) command.Error {
+	connections, err := c.mediator.GetConnections()
+	if err != nil {
+		logutil.LogError(logger, CommandName, ReconnectAll, err.Error())
+
+		return command.NewExecuteError(ReconnectAllError, err)
+	}
+
+	for _, connection := range connections {
+		err := c.registry.Execute(mediatorcmd.CommandName,
+			mediatorcmd.ReconnectCommandMethod,
+			&mediatorcmd.RegisterRoute{ConnectionID: connection}, nil)
+		if err != nil {
+			logutil.LogError(logger, CommandName, ReconnectAll, err.Error())
+
+			return command.NewExecuteError(ReconnectAllError, err)
+		}
+	}
+
+	command.WriteNillableResponse(rw, nil, logger)
+
+	logutil.LogDebug(logger, CommandName, ReconnectAll, successString)
+
+	return nil
+}
+
+// CreateInvitation creates out-of-band invitation from one of the mediator connections.
+func (c *Command) CreateInvitation(rw io.Writer, req io.Reader) command.Error {
+	connections, err := c.mediator.GetConnections()
+	if err != nil {
+		logutil.LogError(logger, CommandName, CreateInvitation, err.Error())
+
+		return command.NewExecuteError(CreateInvitationError, err)
+	}
+
+	if len(connections) == 0 {
+		logutil.LogError(logger, CommandName, CreateInvitation, errNoConnectionFound)
+
+		return command.NewExecuteError(CreateInvitationError, fmt.Errorf(errNoConnectionFound))
+	}
+
+	var request CreateInvitationRequest
+
+	err = json.NewDecoder(req).Decode(&request)
+	if err != nil {
+		logutil.LogError(logger, CommandName, CreateInvitation, err.Error())
+
+		return command.NewValidationError(InvalidRequestErrorCode, err)
+	}
+
+	invitation, err := c.outOfBand.CreateInvitation(request.Protocols,
+		outofband.WithGoal(request.Goal, request.GoalCode),
+		outofband.WithLabel(request.Label),
+		outofband.WithServices(request.Service...),
+		outofband.WithRouterConnections(connections[rand.Intn(len(connections))])) //nolint: gosec
+	if err != nil {
+		logutil.LogError(logger, CommandName, CreateInvitation, err.Error())
+
+		return command.NewValidationError(InvalidRequestErrorCode, err)
+	}
+
+	command.WriteNillableResponse(rw, &CreateInvitationResponse{Invitation: invitation}, logger)
+
+	logutil.LogDebug(logger, CommandName, CreateInvitation, successString)
 
 	return nil
 }

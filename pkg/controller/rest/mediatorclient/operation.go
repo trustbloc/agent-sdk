@@ -20,8 +20,10 @@ import (
 
 // constants for endpoints of mediator client.
 const (
-	OperationID = "/mediatorclient"
-	ConnectPath = OperationID + "/connect"
+	OperationID          = "/mediatorclient"
+	ConnectPath          = OperationID + "/connect"
+	ReconnectAllPath     = OperationID + "/reconnect-all"
+	CreateInvitationPath = OperationID + "/create-invitation"
 )
 
 // Operation is controller REST service controller for mediator Client.
@@ -53,10 +55,12 @@ func (c *Operation) registerHandler() {
 	// Add more protocol endpoints here to expose them as controller API endpoints
 	c.handlers = []rest.Handler{
 		cmdutil.NewHTTPHandler(ConnectPath, http.MethodPost, c.Connect),
+		cmdutil.NewHTTPHandler(ReconnectAllPath, http.MethodGet, c.ReconnectAll),
+		cmdutil.NewHTTPHandler(CreateInvitationPath, http.MethodPost, c.CreateInvitation),
 	}
 }
 
-// Connect swagger:route POST /mediatorclient/connect mediatorclient connectionRequest
+// Connect swagger:route POST /mediatorclient/connect mediatorclient connect
 //
 // Connects to mediator.
 //
@@ -65,4 +69,25 @@ func (c *Operation) registerHandler() {
 //    200: connectionResponse
 func (c *Operation) Connect(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.Connect, rw, req.Body)
+}
+
+// ReconnectAll swagger:route GET /mediatorclient/reconnect-all mediatorclient reconnectAll
+//
+// Re-establishes network connections for all mediator connections.
+//
+// Responses:
+//    default: genericError
+func (c *Operation) ReconnectAll(rw http.ResponseWriter, req *http.Request) {
+	rest.Execute(c.command.ReconnectAll, rw, req.Body)
+}
+
+// CreateInvitation swagger:route POST /mediatorclient/create-invitation mediatorclient createMediatorInvitation
+//
+// Creates out-of-band invitation through mediator.
+//
+// Responses:
+//    default: genericError
+//    200: createInvitationResponse
+func (c *Operation) CreateInvitation(rw http.ResponseWriter, req *http.Request) {
+	rest.Execute(c.command.CreateInvitation, rw, req.Body)
 }

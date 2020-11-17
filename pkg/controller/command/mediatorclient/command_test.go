@@ -9,9 +9,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"testing"
 	"time"
 
+	mediatorcmd "github.com/hyperledger/aries-framework-go/pkg/controller/command/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/common/service"
 	didexchangesvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/didexchange"
 	mediatorsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
@@ -19,13 +21,17 @@ import (
 	mockmsghandler "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/msghandler"
 	mockdidexchange "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/didexchange"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
+	mockkms "github.com/hyperledger/aries-framework-go/pkg/mock/kms"
 	mockprotocol "github.com/hyperledger/aries-framework-go/pkg/mock/provider"
 	mockstorage "github.com/hyperledger/aries-framework-go/pkg/mock/storage"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
+	"github.com/trustbloc/agent-sdk/pkg/controller/internal/cmdutil"
 	sdkmockprotocol "github.com/trustbloc/agent-sdk/pkg/controller/internal/mocks/protocol"
 )
+
+const sampleErr = "sample-error"
 
 func TestNew(t *testing.T) {
 	t.Run("test success", func(t *testing.T) {
@@ -33,7 +39,7 @@ func TestNew(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		require.NotEmpty(t, c.GetHandlers())
-		require.Len(t, c.GetHandlers(), 1)
+		require.Len(t, c.GetHandlers(), 3)
 	})
 
 	t.Run("test failure while creating mediator client", func(t *testing.T) {
@@ -111,7 +117,6 @@ func TestCommand_Connect(t *testing.T) {
 		"mylabel": "sample-agent-label",
 		"stateCompleteMessageType": "https://trustbloc.dev/didexchange/1.0/state-complete"
 		}`
-		sampleErr = "sample-error"
 	)
 
 	t.Run("test successful connect", func(t *testing.T) {
@@ -402,6 +407,185 @@ func TestCommand_Connect(t *testing.T) {
 	})
 }
 
+func TestCommand_ReconnectAll(t *testing.T) {
+	t.Run("test with empty connections", func(t *testing.T) {
+		c, err := New(newMockProvider(nil), mockmsghandler.NewMockMsgServiceProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		var b bytes.Buffer
+		cmdErr := c.ReconnectAll(&b, bytes.NewBufferString(""))
+		require.NoError(t, cmdErr)
+	})
+
+	t.Run("test failure while getting connections", func(t *testing.T) {
+		prov := newMockProvider(map[string]interface{}{
+			mediatorsvc.Coordination: &mockroute.MockMediatorSvc{
+				GetConnectionsErr: fmt.Errorf(sampleErr),
+			},
+			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
+			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+		})
+
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		var b bytes.Buffer
+		cmdErr := c.ReconnectAll(&b, bytes.NewBufferString(""))
+		require.Error(t, cmdErr)
+		require.Contains(t, cmdErr.Error(), sampleErr)
+	})
+
+	t.Run("test success with active connections", func(t *testing.T) {
+		prov := newMockProvider(map[string]interface{}{
+			mediatorsvc.Coordination: &mockroute.MockMediatorSvc{
+				Connections: []string{"sample-connection"},
+			},
+			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
+			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+		})
+
+		registry := command.NewRegistry([]command.Handler{cmdutil.NewCommandHandler(
+			mediatorcmd.CommandName,
+			mediatorcmd.ReconnectCommandMethod,
+			func(rw io.Writer, req io.Reader) command.Error {
+				return nil
+			},
+		)})
+
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		c.SetCommandRegistry(registry)
+
+		var b bytes.Buffer
+		cmdErr := c.ReconnectAll(&b, bytes.NewBufferString(""))
+		require.NoError(t, cmdErr)
+	})
+
+	t.Run("test failure due to mediator command errors", func(t *testing.T) {
+		prov := newMockProvider(map[string]interface{}{
+			mediatorsvc.Coordination: &mockroute.MockMediatorSvc{
+				Connections: []string{"sample-connection"},
+			},
+			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
+			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+		})
+
+		registry := command.NewRegistry([]command.Handler{cmdutil.NewCommandHandler(
+			mediatorcmd.CommandName,
+			mediatorcmd.ReconnectCommandMethod,
+			func(rw io.Writer, req io.Reader) command.Error {
+				return command.NewExecuteError(9999, fmt.Errorf(sampleErr))
+			},
+		)})
+
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		c.SetCommandRegistry(registry)
+
+		var b bytes.Buffer
+		cmdErr := c.ReconnectAll(&b, bytes.NewBufferString(""))
+		require.Error(t, cmdErr)
+		require.Contains(t, cmdErr.Error(), "failed to execute command")
+		require.Contains(t, cmdErr.Error(), sampleErr)
+	})
+}
+
+func TestCommand_CreateInvitation(t *testing.T) {
+	t.Run("test with empty connections", func(t *testing.T) {
+		c, err := New(newMockProvider(nil), mockmsghandler.NewMockMsgServiceProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		var b bytes.Buffer
+		cmdErr := c.CreateInvitation(&b, bytes.NewBufferString(""))
+		require.Error(t, cmdErr)
+		require.Contains(t, cmdErr.Error(), "no connection found to create invitation")
+	})
+
+	t.Run("test failure while getting connections", func(t *testing.T) {
+		prov := newMockProvider(map[string]interface{}{
+			mediatorsvc.Coordination: &mockroute.MockMediatorSvc{
+				GetConnectionsErr: fmt.Errorf(sampleErr),
+			},
+			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
+			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+		})
+
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		var b bytes.Buffer
+		cmdErr := c.CreateInvitation(&b, bytes.NewBufferString(""))
+		require.Error(t, cmdErr)
+		require.Contains(t, cmdErr.Error(), sampleErr)
+	})
+
+	t.Run("test failure due to invalid request", func(t *testing.T) {
+		prov := newMockProvider(map[string]interface{}{
+			mediatorsvc.Coordination: &mockroute.MockMediatorSvc{
+				Connections: []string{"sample-connection"},
+			},
+			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
+			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+		})
+
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		var b bytes.Buffer
+		cmdErr := c.CreateInvitation(&b, bytes.NewBufferString("="))
+		require.Error(t, cmdErr)
+		require.Contains(t, cmdErr.Error(), "invalid character")
+	})
+
+	t.Run("test success", func(t *testing.T) {
+		prov := newMockProvider(map[string]interface{}{
+			mediatorsvc.Coordination: &mockroute.MockMediatorSvc{
+				Connections: []string{"sample-connection"},
+			},
+			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
+			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+		})
+
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		var b bytes.Buffer
+		cmdErr := c.CreateInvitation(&b, bytes.NewBufferString("{}"))
+		require.NoError(t, cmdErr)
+	})
+
+	t.Run("test failure while saving invitation", func(t *testing.T) {
+		prov := newMockProvider(map[string]interface{}{
+			mediatorsvc.Coordination: &mockroute.MockMediatorSvc{
+				Connections: []string{"sample-connection"},
+			},
+			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
+			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
+				SaveInvitationErr: fmt.Errorf(sampleErr),
+			},
+		})
+
+		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		var b bytes.Buffer
+		cmdErr := c.CreateInvitation(&b, bytes.NewBufferString("{}"))
+		require.Error(t, cmdErr)
+		require.Contains(t, cmdErr.Error(), sampleErr)
+	})
+}
+
 func newMockProvider(serviceMap map[string]interface{}) *mockprotocol.Provider {
 	if serviceMap == nil {
 		serviceMap = map[string]interface{}{
@@ -415,5 +599,6 @@ func newMockProvider(serviceMap map[string]interface{}) *mockprotocol.Provider {
 		ServiceMap:                        serviceMap,
 		StorageProviderValue:              mockstorage.NewMockStoreProvider(),
 		ProtocolStateStorageProviderValue: mockstorage.NewMockStoreProvider(),
+		KMSValue:                          &mockkms.KeyManager{},
 	}
 }
