@@ -21,7 +21,7 @@ ALPINE_VER ?= 3.12
 GO_VER ?= 1.15
 
 .PHONY: all
-all: clean checks unit-test unit-test-wasm agent-rest agent-rest-docker
+all: clean checks unit-test unit-test-wasm agent-rest agent-rest-docker bdd-test
 
 .PHONY: checks
 checks: license lint
@@ -37,6 +37,9 @@ lint:
 .PHONY: unit-test
 unit-test:
 	@scripts/check_unit.sh
+
+.PHONY: bdd-test
+bdd-test: aries-js-bdd rest-api-bdd
 
 .PHONY: unit-test-wasm
 unit-test-wasm: export GOBIN=$(GOBIN_PATH)
