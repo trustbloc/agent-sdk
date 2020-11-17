@@ -8,6 +8,17 @@
 
 # agent-sdk
 
+## Bindings
+- [REST](docs/rest/README.md)
+  - [Run OpenAPI Demo](docs/rest/openapi_demo.md)
+  - Get the Docker image from [GitHub Packages](https://github.com/trustbloc-cicd/snapshot/packages/476417)
+- [JavaScript](cmd/agent-js-worker/README.md)
+  - Get it from [GitHub Packages](https://github.com/trustbloc-cicd/snapshot/packages/465924)
+- [Mobile](cmd/agent-mobile/README.md)
+
+## Testing
+- [Build](docs/test/build.md)
+
 ## Contributing
 Thank you for your interest in contributing. Please see our
 [community contribution guidelines](https://github.com/trustbloc/community/blob/master/CONTRIBUTING.md) for more information.
