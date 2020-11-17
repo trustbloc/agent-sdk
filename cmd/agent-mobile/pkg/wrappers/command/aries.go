@@ -108,7 +108,7 @@ func NewAries(opts *config.Options) (*Aries, error) {
 	return a, nil
 }
 
-// TODO (#48): Add support for SDS.
+// TODO (#48): Add support for EDV storage.
 func prepareFrameworkOptions(opts *config.Options) ([]aries.Option, error) { // nolint: gocyclo
 	msgHandler := msghandler.NewRegistrar()
 
