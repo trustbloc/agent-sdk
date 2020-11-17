@@ -35,3 +35,24 @@ type ConnectionResponse struct {
 	RouterEndpoint string   `json:"routerEndpoint"`
 	RoutingKeys    []string `json:"routingKeys"`
 }
+
+// CreateInvitationRequest model
+//
+// This is used for creating an invitation using mediator
+//
+type CreateInvitationRequest struct {
+	Label     string        `json:"label"`
+	Goal      string        `json:"goal"`
+	GoalCode  string        `json:"goal_code"`
+	Service   []interface{} `json:"service"`
+	Protocols []string      `json:"protocols"`
+}
+
+// CreateInvitationResponse model
+//
+// Response for creating invitation through mediator
+//
+type CreateInvitationResponse struct {
+	// Invitation is out-of-band invitation from mediator.
+	Invitation *outofband.Invitation `json:"invitation"`
+}

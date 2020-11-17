@@ -14,7 +14,7 @@ import (
 //
 // Request for connecting agent to given mediator with invitation provided.
 //
-// swagger:parameters connectionRequest
+// swagger:parameters connect
 type connectionRequest struct { // nolint: unused,deadcode
 	// Params for connecting to mediator.
 	//
@@ -31,4 +31,27 @@ type connectionRequest struct { // nolint: unused,deadcode
 type connectionResponse struct {
 	// in: body
 	Response mediatorclient.ConnectionResponse
+}
+
+// createInvitationRequest model
+//
+// Request for creating out-of-band invitation through mediator client.
+//
+// swagger:parameters createMediatorInvitation
+type createInvitationRequest struct { // nolint: unused,deadcode
+	// Params for creating invitation.
+	//
+	// in: body
+	// required: true
+	Request mediatorclient.CreateInvitationRequest
+}
+
+// createInvitationResponse model
+//
+//  Response of creating out-of-band invitation through mediator client.
+//
+// swagger:response createInvitationResponse
+type createInvitationResponse struct { // nolint: unused,deadcode
+	// in: body
+	Response mediatorclient.CreateInvitationResponse
 }

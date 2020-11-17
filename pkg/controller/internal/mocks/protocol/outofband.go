@@ -13,6 +13,7 @@ import (
 // MockOobService is a mock of OobService interface.
 type MockOobService struct {
 	AcceptInvitationHandle func(*outofband.Invitation, string, []string) (string, error)
+	SaveInvitationErr      error
 }
 
 // AcceptInvitation mock implementation.
@@ -56,6 +57,10 @@ func (m *MockOobService) RegisterMsgEvent(arg0 chan<- service.StateMsg) error {
 
 // SaveInvitation mock implementation.
 func (m *MockOobService) SaveInvitation(arg0 *outofband.Invitation) error {
+	if m.SaveInvitationErr != nil {
+		return m.SaveInvitationErr
+	}
+
 	return nil
 }
 
