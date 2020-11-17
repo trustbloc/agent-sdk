@@ -10,7 +10,9 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,14 +21,13 @@ import (
 	"time"
 
 	"github.com/google/tink/go/keyset"
-	"github.com/google/tink/go/mac"
+	"github.com/google/tink/go/subtle/random"
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb"
 	ariesctrl "github.com/hyperledger/aries-framework-go/pkg/controller"
 	controllercmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	cryptoapi "github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto"
-	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto/primitive/composite/ecdh"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto/primitive/composite/keyio"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/messaging/msghandler"
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
@@ -35,8 +36,13 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
+	"github.com/hyperledger/aries-framework-go/pkg/kms"
+	"github.com/hyperledger/aries-framework-go/pkg/kms/localkms"
+	"github.com/hyperledger/aries-framework-go/pkg/secretlock"
+	"github.com/hyperledger/aries-framework-go/pkg/secretlock/local"
 	"github.com/hyperledger/aries-framework-go/pkg/storage"
 	"github.com/hyperledger/aries-framework-go/pkg/storage/edv"
+	"github.com/hyperledger/aries-framework-go/pkg/storage/formattedstore"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/mitchellh/mapstructure"
 	"github.com/trustbloc/edge-core/pkg/log"
@@ -55,9 +61,16 @@ const (
 	stopFn                   = "Stop"
 	workers                  = 2
 	storageTypeIndexedDB     = "indexedDB"
-	storageTypeSDS           = "sds"
-	invalidStorageTypeErrMsg = "%s is not a valid storage type. " +
-		"Valid storage types: " + storageTypeSDS + ", " + storageTypeIndexedDB
+	storageTypeEDV           = "edv"
+	validStorageTypesMsg     = "Valid storage types: " + storageTypeEDV + ", " + storageTypeIndexedDB
+	blankStorageTypeErrMsg   = "no storage type specified. " + validStorageTypesMsg
+	invalidStorageTypeErrMsg = "%s is not a valid storage type. " + validStorageTypesMsg
+	hmacKeyIDDBKeyName       = "hmackeyid"
+	keyIDStoreName           = "keyid"
+	ecdhesKeyIDDBKeyName     = "ecdheskeyid"
+	masterKeyStoreName       = "MasterKey"
+	masterKeyDBKeyName       = masterKeyStoreName
+	masterKeyNumBytes        = 32
 )
 
 // TODO Signal JS when WASM is loaded and ready.
@@ -94,10 +107,23 @@ type agentStartOpts struct {
 	LogLevel             string   `json:"log-level"`
 	StorageType          string   `json:"storageType"`
 	IndexedDBNamespace   string   `json:"indexedDB-namespace"`
-	SDSServerURL         string   `json:"sdsServerURL"`
-	SDSVaultID           string   `json:"sdsVaultID"`
+	EDVServerURL         string   `json:"edvServerURL"`
+	EDVVaultID           string   `json:"edvVaultID"`
 	BlocDomain           string   `json:"blocDomain"`
 	TrustblocResolver    string   `json:"trustbloc-resolver"`
+}
+
+type kmsProvider struct {
+	storageProvider   storage.Provider
+	secretLockService secretlock.Service
+}
+
+func (k kmsProvider) StorageProvider() storage.Provider {
+	return k.storageProvider
+}
+
+func (k kmsProvider) SecretLock() secretlock.Service {
+	return k.secretLockService
 }
 
 // main registers the 'handleMsg' function in the JS context's global scope to receive commands.
@@ -500,22 +526,24 @@ func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) (
 	return VDRs, nil
 }
 
-func agentOpts(opts *agentStartOpts) ([]aries.Option, error) {
+func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 	msgHandler := msghandler.NewRegistrar()
 
 	var options []aries.Option
 	options = append(options, aries.WithMessageServiceProvider(msgHandler))
 
-	if opts.TransportReturnRoute != "" {
-		options = append(options, aries.WithTransportReturnRoute(opts.TransportReturnRoute))
+	if startOpts.TransportReturnRoute != "" {
+		options = append(options, aries.WithTransportReturnRoute(startOpts.TransportReturnRoute))
 	}
 
-	store, err := createStore(opts)
+	var err error
+
+	options, err = addStorageOptions(startOpts, options)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create storage provider: %w", err)
+		return nil, fmt.Errorf("unexpected failure while adding storage and KMS options (as needed): %w", err)
 	}
 
-	VDRs, err := createVDRs(opts.HTTPResolvers, opts.BlocDomain, opts.TrustblocResolver)
+	VDRs, err := createVDRs(startOpts.HTTPResolvers, startOpts.BlocDomain, startOpts.TrustblocResolver)
 	if err != nil {
 		return nil, err
 	}
@@ -524,9 +552,7 @@ func agentOpts(opts *agentStartOpts) ([]aries.Option, error) {
 		options = append(options, aries.WithVDR(VDRs[i]))
 	}
 
-	options = append(options, aries.WithStoreProvider(store))
-
-	for _, transport := range opts.OutboundTransport {
+	for _, transport := range startOpts.OutboundTransport {
 		switch transport {
 		case "http":
 			outbound, err := arieshttp.NewOutbound(arieshttp.WithOutboundHTTPClient(&http.Client{}))
@@ -545,41 +571,155 @@ func agentOpts(opts *agentStartOpts) ([]aries.Option, error) {
 	return options, nil
 }
 
-func createStore(opts *agentStartOpts) (storage.Provider, error) {
-	switch opts.StorageType {
-	case storageTypeSDS:
-		store, err := createEDVProvider(opts.SDSServerURL, opts.SDSVaultID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create EDV provider: %w", err)
-		}
-
-		return store, nil
-	case storageTypeIndexedDB:
-		store, err := jsindexeddb.NewProvider(opts.IndexedDBNamespace)
-		if err != nil {
-			return nil, err
-		}
-
-		return store, nil
-	default:
-		return nil, fmt.Errorf(invalidStorageTypeErrMsg, opts.StorageType)
+func addStorageOptions(startOpts *agentStartOpts,
+	allAriesOptions []aries.Option) ([]aries.Option, error) {
+	store, ariesKMS, err := createStorageAndKMSIfNeeded(startOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create storage and/or KMS: %w", err)
 	}
+
+	if ariesKMS != nil {
+		allAriesOptions = append(allAriesOptions,
+			aries.WithKMS(func(ctx kms.Provider) (kms.KeyManager, error) {
+				return ariesKMS, nil
+			}))
+	}
+
+	allAriesOptions = append(allAriesOptions, aries.WithStoreProvider(store))
+
+	return allAriesOptions, nil
 }
 
-// TODO (#43): Use a persistent key instead of creating a new one every time this starts.
+func createStorageAndKMSIfNeeded(opts *agentStartOpts) (storage.Provider, kms.KeyManager, error) {
+	if opts.StorageType == "" {
+		return nil, nil, errors.New(blankStorageTypeErrMsg)
+	}
 
-// TODO (#44): Use the KMS from the Aries framework for the EDV provider. Right now this isn't possible since
-//  the KMS in the Aries framework uses the provider passed in via WithStorageProvider for KMS storage.
-//  An EDV server can't use itself for KMS storage as this causes a chicken and egg problem.
-//  aries-framework-go will need to be updated to allow a different provider for just the KMS to resolve this.
+	var store storage.Provider
 
-// TODO (#45): Use the Aries Crypto object instantiated in the framework for the EDV provider instead
-//  of creating a new one here. This will require some sort of change to aries-framework-go, since the
-//  Aries Crypto object isn't available until the framework has been initialized.
-func createEDVProvider(edvServerURL, vaultID string) (storage.Provider, error) {
-	macCrypto, err := newMACCrypto()
+	var ariesKMS kms.KeyManager
+
+	switch opts.StorageType {
+	case storageTypeEDV:
+		var err error
+
+		store, ariesKMS, err = createEDVProviderAndKMS(opts.EDVServerURL, opts.EDVVaultID, opts.IndexedDBNamespace)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create EDV provider and KMS: %w", err)
+		}
+
+	case storageTypeIndexedDB:
+		var err error
+
+		store, err = jsindexeddb.NewProvider(opts.IndexedDBNamespace)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create JSIndexedDB provider: %w", err)
+		}
+	default:
+		return nil, nil, fmt.Errorf(invalidStorageTypeErrMsg, opts.StorageType)
+	}
+
+	return store, ariesKMS, nil
+}
+
+// TODO (#67) Use remote KMS for EDV storage operations.
+func createEDVProviderAndKMS(edvServerURL, edvVaultID, indexedDBNamespace string) (storage.Provider,
+	*localkms.LocalKMS, error) {
+	indexedDBKMSProvider, err := jsindexeddb.NewProvider(indexedDBNamespace)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create new MAC Crypto for EDV REST provider: %w", err)
+		return nil, nil, fmt.Errorf("failed to create IndexedDB provider for KMS: %w", err)
+	}
+
+	masterKeyReader, err := prepareMasterKeyReader(indexedDBKMSProvider)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to prepare master key reader: %w", err)
+	}
+
+	secretLockService, err := local.NewService(masterKeyReader, nil)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create secret lock service: %w", err)
+	}
+
+	kmsProv := kmsProvider{
+		storageProvider:   indexedDBKMSProvider,
+		secretLockService: secretLockService,
+	}
+
+	localKMS, err := localkms.New("local-lock://agentSDK", &kmsProv)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create local KMS: %w", err)
+	}
+
+	edvProvider, err := createEDVProvider(edvServerURL, edvVaultID, indexedDBKMSProvider, localKMS)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create EDV provider: %w", err)
+	}
+
+	return edvProvider, localKMS, nil
+}
+
+// prepareMasterKeyReader prepares a master key reader for secret lock usage.
+func prepareMasterKeyReader(kmsSecretsStoreProvider storage.Provider) (*bytes.Reader, error) {
+	masterKeyStore, err := kmsSecretsStoreProvider.OpenStore(masterKeyStoreName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create master key store: %w", err)
+	}
+
+	masterKey, err := masterKeyStore.Get(masterKeyDBKeyName)
+	if err != nil {
+		if errors.Is(err, storage.ErrDataNotFound) {
+			logger.Infof("No existing master key under store %s with ID %s was found.",
+				masterKeyStoreName, masterKeyDBKeyName)
+
+			masterKeyRaw := random.GetRandomBytes(uint32(masterKeyNumBytes))
+			masterKey = []byte(base64.URLEncoding.EncodeToString(masterKeyRaw))
+
+			putErr := masterKeyStore.Put(masterKeyDBKeyName, masterKey)
+			if putErr != nil {
+				return nil, fmt.Errorf("failed to put newly created master key into master key store: %w", putErr)
+			}
+
+			logger.Infof("Created a new master key under store %s with ID %s.", masterKeyStoreName, masterKeyDBKeyName)
+
+			return bytes.NewReader(masterKey), nil
+		}
+
+		return nil, fmt.Errorf("failed to get master key from master key store: %w", err)
+	}
+
+	logger.Infof("Found an existing master key under store %s with ID %s", masterKeyStoreName, masterKeyDBKeyName)
+
+	return bytes.NewReader(masterKey), nil
+}
+
+// TODO (#45): Use the Aries Crypto object instantiated in the framework instead of creating a new one here. This will
+//  require some sort of change to aries-framework-go, since the Aries Crypto object isn't available until the
+//  framework has been initialized.
+func createEDVProvider(edvServerURL, vaultID string, kmsStorageProvider storage.Provider,
+	keyManager kms.KeyManager) (storage.Provider, error) {
+	crypto, err := tinkcrypto.New()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new tink crypto: %w", err)
+	}
+
+	edvRESTProvider, err := prepareEDVRESTProvider(edvServerURL, vaultID, kmsStorageProvider, keyManager, crypto)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare EDV REST provider: %w", err)
+	}
+
+	formattedProvider, err := prepareFormattedProvider(kmsStorageProvider, keyManager, crypto, edvRESTProvider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare formatted provider: %w", err)
+	}
+
+	return formattedProvider, nil
+}
+
+func prepareEDVRESTProvider(edvServerURL, vaultID string, kmsStorageProvider storage.Provider,
+	keyManager kms.KeyManager, crypto cryptoapi.Crypto) (*edv.RESTProvider, error) {
+	macCrypto, err := prepareMACCrypto(kmsStorageProvider, keyManager, crypto)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare MAC crypto: %w", err)
 	}
 
 	edvRESTProvider, err := edv.NewRESTProvider(edvServerURL, vaultID, macCrypto)
@@ -587,12 +727,119 @@ func createEDVProvider(edvServerURL, vaultID string) (storage.Provider, error) {
 		return nil, fmt.Errorf("failed to create new EDV REST provider: %w", err)
 	}
 
-	encryptedFormatter, err := createEncryptedFormatter()
+	return edvRESTProvider, nil
+}
+
+func prepareFormattedProvider(kmsStorageProvider storage.Provider, keyManager kms.KeyManager, crypto cryptoapi.Crypto,
+	provider storage.Provider) (*formattedstore.FormattedProvider, error) {
+	jweEncrypter, err := prepareJWEEncrypter(kmsStorageProvider, keyManager, crypto)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create new encrypted formatter: %w", err)
+		return nil, fmt.Errorf("failed to prepare JWE encrypter: %w", err)
 	}
 
-	return storage.NewFormattedProvider(edvRESTProvider, encryptedFormatter), nil
+	jweDecrypter := jose.NewJWEDecrypt(nil, crypto, keyManager)
+
+	encryptedFormatter := edv.NewEncryptedFormatter(jweEncrypter, jweDecrypter)
+
+	return formattedstore.NewFormattedProvider(provider, encryptedFormatter, false), nil
+}
+
+func prepareMACCrypto(kmsStorageProvider storage.Provider, keyManager kms.KeyManager,
+	crypto cryptoapi.Crypto) (*edv.MACCrypto, error) {
+	_, macKeyHandle, err := prepareKeyHandle(kmsStorageProvider, keyManager, hmacKeyIDDBKeyName, kms.HMACSHA256Tag256Type)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare MAC key handle: %w", err)
+	}
+
+	return edv.NewMACCrypto(macKeyHandle, crypto), nil
+}
+
+func prepareJWEEncrypter(kmsStorageProvider storage.Provider, keyManager kms.KeyManager,
+	crypto cryptoapi.Crypto) (*jose.JWEEncrypt, error) {
+	jweCryptoKID, jweCryptoKeyHandle, err := prepareKeyHandle(kmsStorageProvider, keyManager,
+		ecdhesKeyIDDBKeyName, kms.ECDH256KWAES256GCMType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare key handle for JWE crypto operations: %w", err)
+	}
+
+	pubKH, err := jweCryptoKeyHandle.Public()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get public key handle from JWE crypto private key handle: %w", err)
+	}
+
+	buf := new(bytes.Buffer)
+	pubKeyWriter := keyio.NewWriter(buf)
+
+	err = pubKH.WriteWithNoSecrets(pubKeyWriter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to write JWE public key to bytes: %w", err)
+	}
+
+	ecPubKey := new(cryptoapi.PublicKey)
+
+	ecPubKey.KID = jweCryptoKID
+
+	err = json.Unmarshal(buf.Bytes(), ecPubKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JWE public key bytes to an EC public key object: %w", err)
+	}
+
+	jweEncrypter, err := jose.NewJWEEncrypt(jose.A256GCM, jose.DIDCommEncType, "", nil,
+		[]*cryptoapi.PublicKey{ecPubKey}, crypto)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create JWE encrypter: %w", err)
+	}
+
+	return jweEncrypter, nil
+}
+
+func prepareKeyHandle(storeProvider storage.Provider, keyManager kms.KeyManager,
+	keyIDDBKeyName string, keyType kms.KeyType) (string, *keyset.Handle, error) {
+	keyIDStore, err := storeProvider.OpenStore(keyIDStoreName)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to open key ID store: %w", err)
+	}
+
+	keyIDBytes, err := keyIDStore.Get(keyIDDBKeyName)
+	if errors.Is(err, storage.ErrDataNotFound) {
+		logger.Infof("No key handle ID was found in store %s with store DB key ID %s.", keyIDStoreName, keyIDDBKeyName)
+
+		keyID, keyHandleUntyped, createErr := keyManager.Create(keyType)
+		if createErr != nil {
+			return "", nil, fmt.Errorf("failed to create new key: %w", createErr)
+		}
+
+		kh, ok := keyHandleUntyped.(*keyset.Handle)
+		if !ok {
+			return "", nil, errors.New("unable to assert newly created key handle as a key set handle pointer")
+		}
+
+		err = keyIDStore.Put(keyIDDBKeyName, []byte(keyID))
+		if err != nil {
+			return "", nil, fmt.Errorf("failed to put newly created key ID into key ID store: %w", err)
+		}
+
+		logger.Infof("Created new key handle and stored the key handle ID %s in store %s with store DB key ID %s.",
+			keyID, keyIDStoreName, keyIDDBKeyName)
+
+		return keyID, kh, nil
+	} else if err != nil {
+		return "", nil, fmt.Errorf("failed to key key ID bytes from key ID store: %w", err)
+	}
+
+	logger.Infof("Found existing key handle ID under store %s with store DB key ID %s.", keyIDStoreName, keyIDDBKeyName)
+
+	keyHandleUntyped, getErr := keyManager.Get(string(keyIDBytes))
+	if getErr != nil {
+		return "", nil, fmt.Errorf("failed to get key handle from key manager: %w", getErr)
+	}
+
+	kh, ok := keyHandleUntyped.(*keyset.Handle)
+	if !ok {
+		return "", nil, errors.New("unable to assert key handle as a key set handle pointer")
+	}
+
+	return "", kh, nil
 }
 
 func setLogLevel(logLevel string) error {
@@ -648,69 +895,4 @@ func postInitMsg() {
 	}
 
 	js.Global().Call(handleResultFn, string(out))
-}
-
-func newMACCrypto() (*edv.MACCrypto, error) {
-	kh, err := keyset.NewHandle(mac.HMACSHA256Tag256KeyTemplate())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create new HMAC key handle: %w", err)
-	}
-
-	crypto, err := tinkcrypto.New()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create new tink crypto: %w", err)
-	}
-
-	return edv.NewMACCrypto(kh, crypto), nil
-}
-
-func createEncryptedFormatter() (*edv.EncryptedFormatter, error) {
-	encrypter, decrypter, err := createEncrypterAndDecrypter()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create encrypter and decrypter: %w", err)
-	}
-
-	return edv.NewEncryptedFormatter(encrypter, decrypter), nil
-}
-
-//nolint: unparam
-func createEncrypterAndDecrypter() (*jose.JWEEncrypt, *jose.JWEDecrypt, error) {
-	keyHandle, err := keyset.NewHandle(ecdh.ECDH256KWAES256GCMKeyTemplate())
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create new ECDHES key handle: %w", err)
-	}
-
-	pubKH, err := keyHandle.Public()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get public key handle from ECDHES key handle: %w", err)
-	}
-
-	buf := new(bytes.Buffer)
-	pubKeyWriter := keyio.NewWriter(buf)
-
-	err = pubKH.WriteWithNoSecrets(pubKeyWriter)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to write keyset: %w", err)
-	}
-
-	ecPubKey := new(cryptoapi.PublicKey)
-
-	// TODO how to get kid
-	// ecPubKey.KID = kid
-
-	err = json.Unmarshal(buf.Bytes(), ecPubKey)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to unmarshal bytes to a public key: %w", err)
-	}
-
-	// TODO how to get crypto
-	// encrypter, err := jose.NewJWEEncrypt(jose.A256GCM, "EDVEncryptedDocument", "", nil,
-	//	[]*cryptoapi.PublicKey{ecPubKey})
-	// if err != nil {
-	//	return nil, nil, fmt.Errorf("failed to create a new JWE encrypter: %w", err)
-	// }
-
-	// TODO how to get crypto and KeyManager
-	// return encrypter,jose.NewJWEDecrypt(nil, keyHandle), nil
-	return nil, nil, nil
 }

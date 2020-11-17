@@ -123,12 +123,12 @@ const (
 		" Alternatively, this can be set with the following environment variable (in CSV format): " +
 		agentTrustblocDomainEnvKey
 
-	// trustbloc domain url flag.
-	agentSdsServerURLFlagName  = "sds-server-url"
-	agentSdsServerURLEnvKey    = "ARIESD_SDS_SERVER_URL"
-	agentSdsServerURLFlagUsage = "SDS server URL." +
+	// EDV server URL flag.
+	agentEDVServerURLFlagName  = "edv-server-url"
+	agentEDVServerURLEnvKey    = "ARIESD_EDV_SERVER_URL"
+	agentEDVServerURLFlagUsage = "EDV server URL." +
 		" Alternatively, this can be set with the following environment variable (in CSV format): " +
-		agentSdsServerURLEnvKey
+		agentEDVServerURLEnvKey
 
 	// trustbloc resolver url flag.
 	agentTrustblocResolverFlagName  = "trustbloc-resolver"
@@ -212,7 +212,7 @@ type agentParameters struct {
 	tlsCertFile, tlsKeyFile                        string
 	token                                          string
 	trustblocDomain                                string
-	sdsServerURL                                   string
+	edvServerURL                                   string
 	trustblocResolver                              string
 	webhookURLs, httpResolvers, outboundTransports []string
 	inboundHostInternals, inboundHostExternals     []string
@@ -228,7 +228,7 @@ type dbParam struct {
 	timeout uint64
 }
 
-// TODO (#47): Add support for SDS.
+// TODO (#47): Add support for EDV storage.
 // nolint:gochecknoglobals
 var supportedStorageProviders = map[string]func(url, prefix string) (storage.Provider, error){
 	databaseTypeMemOption: func(_, _ string) (storage.Provider, error) { // nolint:unparam
@@ -338,7 +338,7 @@ func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo, g
 				return err
 			}
 
-			sdsServerURL, err := getUserSetVar(cmd, agentSdsServerURLFlagName, agentSdsServerURLEnvKey, true)
+			edvServerURL, err := getUserSetVar(cmd, agentEDVServerURLFlagName, agentEDVServerURLEnvKey, true)
 			if err != nil {
 				return err
 			}
@@ -381,7 +381,7 @@ func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo, g
 				webhookURLs:          webhookURLs,
 				httpResolvers:        httpResolvers,
 				trustblocDomain:      trustblocDomain,
-				sdsServerURL:         sdsServerURL,
+				edvServerURL:         edvServerURL,
 				trustblocResolver:    trustblocResolver,
 				outboundTransports:   outboundTransports,
 				autoAccept:           autoAccept,
@@ -486,8 +486,8 @@ func createFlags(startCmd *cobra.Command) { // nolint: funlen
 		agentTrustblocDomainFlagUsage)
 
 	// sds server url flag
-	startCmd.Flags().StringP(agentSdsServerURLFlagName, "", "",
-		agentSdsServerURLFlagUsage)
+	startCmd.Flags().StringP(agentEDVServerURLFlagName, "", "",
+		agentEDVServerURLFlagUsage)
 
 	// trustbloc resolver url flag
 	startCmd.Flags().StringP(agentTrustblocResolverFlagName, "", "", agentTrustblocResolverFlagUsage)

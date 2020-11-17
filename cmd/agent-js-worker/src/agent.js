@@ -1073,16 +1073,6 @@ const Agent = function(opts) {
             createPeerDID: async function (req) {
                 return invoke(aw, pending, this.pkgname, "CreatePeerDID", req, "timeout while creating did")
             },
-
-            /**
-             * saves given DID to underlying SDS storage
-             *
-             * @param req
-             * @returns {Promise<*>}
-             */
-            saveDID: async function (req) {
-                return invoke(aw, pending, this.pkgname, "SaveDID", req, "timeout while saving did")
-            },
         },
 
         /**
