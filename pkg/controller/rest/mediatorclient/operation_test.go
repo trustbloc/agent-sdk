@@ -20,11 +20,11 @@ import (
 	mockdidexchange "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/didexchange"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
 	mockkms "github.com/hyperledger/aries-framework-go/pkg/mock/kms"
-	mockprotocol "github.com/hyperledger/aries-framework-go/pkg/mock/provider"
 	mockstorage "github.com/hyperledger/aries-framework-go/pkg/mock/storage"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/mediatorclient"
+	"github.com/trustbloc/agent-sdk/pkg/controller/internal/mocks"
 	sdkmockprotocol "github.com/trustbloc/agent-sdk/pkg/controller/internal/mocks/protocol"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/testutil"
 )
@@ -33,15 +33,15 @@ const sampleErr = "sample-error"
 
 func TestNew(t *testing.T) {
 	t.Run("test success", func(t *testing.T) {
-		c, err := New(newMockProvider(nil), mockmsghandler.NewMockMsgServiceProvider())
+		c, err := New(newMockProvider(nil), mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		require.NotEmpty(t, c.GetRESTHandlers())
-		require.Len(t, c.GetRESTHandlers(), 3)
+		require.Len(t, c.GetRESTHandlers(), 2)
 	})
 
 	t.Run("test failure while creating mediator client", func(t *testing.T) {
-		c, err := New(&mockprotocol.Provider{}, mockmsghandler.NewMockMsgServiceProvider())
+		c, err := New(sdkmockprotocol.NewMockProvider(), mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
 		require.Error(t, err)
 		require.Nil(t, c)
 		require.Contains(t, err.Error(), "failed to create mediator client")
@@ -87,7 +87,7 @@ func TestOperation_Connect(t *testing.T) {
 			},
 		})
 
-		cmd, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
+		cmd, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
 		require.NoError(t, err)
 		require.NotNil(t, cmd)
 
@@ -116,7 +116,7 @@ func TestOperation_Connect(t *testing.T) {
 			},
 		})
 
-		cmd, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
+		cmd, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
 		require.NoError(t, err)
 		require.NotNil(t, cmd)
 
@@ -131,42 +131,6 @@ func TestOperation_Connect(t *testing.T) {
 	})
 }
 
-func TestOperation_ReconnectAll(t *testing.T) {
-	t.Run("test success", func(t *testing.T) {
-		cmd, err := New(newMockProvider(nil), mockmsghandler.NewMockMsgServiceProvider())
-		require.NoError(t, err)
-		require.NotNil(t, cmd)
-
-		handler := testutil.LookupHandler(t, cmd, ReconnectAllPath)
-
-		_, err = testutil.GetSuccessResponseFromHandler(handler, bytes.NewBufferString(""), handler.Path())
-		require.NoError(t, err)
-	})
-
-	t.Run("test failure", func(t *testing.T) {
-		prov := newMockProvider(map[string]interface{}{
-			mediatorsvc.Coordination: &mockroute.MockMediatorSvc{
-				GetConnectionsErr: fmt.Errorf(sampleErr),
-			},
-			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
-			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
-		})
-
-		cmd, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
-		require.NoError(t, err)
-		require.NotNil(t, cmd)
-
-		handler := testutil.LookupHandler(t, cmd, ReconnectAllPath)
-
-		buf, code, err := testutil.SendRequestToHandler(handler, bytes.NewBufferString(""), handler.Path())
-		require.NoError(t, err)
-		require.NotEmpty(t, buf)
-
-		require.Equal(t, http.StatusInternalServerError, code)
-		testutil.VerifyError(t, mediatorclient.ReconnectAllError, sampleErr, buf.Bytes())
-	})
-}
-
 func TestOperation_CreateInvitation(t *testing.T) {
 	t.Run("test success", func(t *testing.T) {
 		prov := newMockProvider(map[string]interface{}{
@@ -177,7 +141,7 @@ func TestOperation_CreateInvitation(t *testing.T) {
 			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
 		})
 
-		cmd, err := New(prov, mockmsghandler.NewMockMsgServiceProvider())
+		cmd, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
 		require.NoError(t, err)
 		require.NotNil(t, cmd)
 
@@ -188,7 +152,7 @@ func TestOperation_CreateInvitation(t *testing.T) {
 	})
 
 	t.Run("test failure", func(t *testing.T) {
-		cmd, err := New(newMockProvider(nil), mockmsghandler.NewMockMsgServiceProvider())
+		cmd, err := New(newMockProvider(nil), mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
 		require.NoError(t, err)
 		require.NotNil(t, cmd)
 
@@ -204,7 +168,7 @@ func TestOperation_CreateInvitation(t *testing.T) {
 	})
 }
 
-func newMockProvider(serviceMap map[string]interface{}) *mockprotocol.Provider {
+func newMockProvider(serviceMap map[string]interface{}) *sdkmockprotocol.MockProvider {
 	if serviceMap == nil {
 		serviceMap = map[string]interface{}{
 			mediatorsvc.Coordination:   &mockroute.MockMediatorSvc{},
@@ -213,10 +177,12 @@ func newMockProvider(serviceMap map[string]interface{}) *mockprotocol.Provider {
 		}
 	}
 
-	return &mockprotocol.Provider{
-		ServiceMap:                        serviceMap,
-		StorageProviderValue:              mockstorage.NewMockStoreProvider(),
-		ProtocolStateStorageProviderValue: mockstorage.NewMockStoreProvider(),
-		KMSValue:                          &mockkms.KeyManager{},
-	}
+	prov := sdkmockprotocol.NewMockProvider()
+
+	prov.ServiceMap = serviceMap
+	prov.StoreProvider = mockstorage.NewMockStoreProvider()
+	prov.ProtocolStateStoreProvider = mockstorage.NewMockStoreProvider()
+	prov.CustomKMS = &mockkms.KeyManager{}
+
+	return prov
 }
