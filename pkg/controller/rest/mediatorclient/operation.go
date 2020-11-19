@@ -22,7 +22,6 @@ import (
 const (
 	OperationID          = "/mediatorclient"
 	ConnectPath          = OperationID + "/connect"
-	ReconnectAllPath     = OperationID + "/reconnect-all"
 	CreateInvitationPath = OperationID + "/create-invitation"
 )
 
@@ -33,8 +32,9 @@ type Operation struct {
 }
 
 // New returns new mediator client rest instance.
-func New(ctx mediatorclient.Provider, msgHandler ariescmd.MessageHandler) (*Operation, error) {
-	client, err := mediatorclient.New(ctx, msgHandler)
+func New(ctx mediatorclient.Provider, msgHandler ariescmd.MessageHandler,
+	notifier ariescmd.Notifier) (*Operation, error) {
+	client, err := mediatorclient.New(ctx, msgHandler, notifier)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize mediator-client command: %w", err)
 	}
@@ -55,7 +55,6 @@ func (c *Operation) registerHandler() {
 	// Add more protocol endpoints here to expose them as controller API endpoints
 	c.handlers = []rest.Handler{
 		cmdutil.NewHTTPHandler(ConnectPath, http.MethodPost, c.Connect),
-		cmdutil.NewHTTPHandler(ReconnectAllPath, http.MethodGet, c.ReconnectAll),
 		cmdutil.NewHTTPHandler(CreateInvitationPath, http.MethodPost, c.CreateInvitation),
 	}
 }
@@ -69,16 +68,6 @@ func (c *Operation) registerHandler() {
 //    200: connectionResponse
 func (c *Operation) Connect(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.Connect, rw, req.Body)
-}
-
-// ReconnectAll swagger:route GET /mediatorclient/reconnect-all mediatorclient reconnectAll
-//
-// Re-establishes network connections for all mediator connections.
-//
-// Responses:
-//    default: genericError
-func (c *Operation) ReconnectAll(rw http.ResponseWriter, req *http.Request) {
-	rest.Execute(c.command.ReconnectAll, rw, req.Body)
 }
 
 // CreateInvitation swagger:route POST /mediatorclient/create-invitation mediatorclient createMediatorInvitation

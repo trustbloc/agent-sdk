@@ -12,9 +12,11 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/defaults"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
+	mockmsghandler "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/msghandler"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller"
+	"github.com/trustbloc/agent-sdk/pkg/controller/internal/mocks"
 )
 
 func TestGetCommandHandlers(t *testing.T) {
@@ -53,6 +55,12 @@ func TestGetCommandHandlers(t *testing.T) {
 		require.NotNil(t, ctx)
 
 		handlers, err := controller.GetCommandHandlers(ctx, controller.WithBlocDomain("domain"))
+		require.NoError(t, err)
+		require.NotEmpty(t, handlers)
+
+		handlers, err = controller.GetCommandHandlers(ctx, controller.WithBlocDomain("domain"), controller.WithMessageHandler(
+			mockmsghandler.NewMockMsgServiceProvider()), controller.WithNotifier(mocks.NewMockNotifier()),
+			controller.WithWebhookURLs("sample-wh-url"))
 		require.NoError(t, err)
 		require.NotEmpty(t, handlers)
 	})

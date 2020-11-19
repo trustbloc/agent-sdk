@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	ariescmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
+	"github.com/hyperledger/aries-framework-go/pkg/controller/webnotifier"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
@@ -21,9 +22,13 @@ import (
 	"github.com/trustbloc/agent-sdk/pkg/controller/rest/mediatorclient"
 )
 
+const wsPath = "/ws"
+
 type allOpts struct {
-	blocDomain string
-	msgHandler ariescmd.MessageHandler
+	blocDomain  string
+	msgHandler  ariescmd.MessageHandler
+	notifier    ariescmd.Notifier
+	webhookURLs []string
 }
 
 // Opt represents a controller option.
@@ -43,12 +48,31 @@ func WithMessageHandler(handler ariescmd.MessageHandler) Opt {
 	}
 }
 
+// WithWebhookURLs is an option for setting up a webhook dispatcher which will notify clients of events.
+func WithWebhookURLs(webhookURLs ...string) Opt {
+	return func(opts *allOpts) {
+		opts.webhookURLs = webhookURLs
+	}
+}
+
+// WithNotifier is an option for setting up a notifier which will notify clients of events.
+func WithNotifier(notifier ariescmd.Notifier) Opt {
+	return func(opts *allOpts) {
+		opts.notifier = notifier
+	}
+}
+
 // GetCommandHandlers returns all command handlers provided by controller.
-func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, error) {
+func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, error) { //nolint:interfacer
 	cmdOpts := &allOpts{}
 	// Apply options
 	for _, opt := range opts {
 		opt(cmdOpts)
+	}
+
+	notifier := cmdOpts.notifier
+	if notifier == nil {
+		notifier = webnotifier.New(wsPath, cmdOpts.webhookURLs)
 	}
 
 	// did client command operation
@@ -58,7 +82,7 @@ func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, 
 	}
 
 	// mediator client REST operation
-	mediatorClientCmd, err := mediatorclientcmd.New(ctx, cmdOpts.msgHandler)
+	mediatorClientCmd, err := mediatorclientcmd.New(ctx, cmdOpts.msgHandler, notifier)
 	if err != nil {
 		return nil, err
 	}
@@ -71,11 +95,16 @@ func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, 
 }
 
 // GetRESTHandlers returns all REST handlers provided by controller.
-func GetRESTHandlers(ctx *context.Provider, opts ...Opt) ([]rest.Handler, error) {
+func GetRESTHandlers(ctx *context.Provider, opts ...Opt) ([]rest.Handler, error) { //nolint:interfacer
 	restOpts := &allOpts{}
 	// Apply options
 	for _, opt := range opts {
 		opt(restOpts)
+	}
+
+	notifier := restOpts.notifier
+	if notifier == nil {
+		notifier = webnotifier.New(wsPath, restOpts.webhookURLs)
 	}
 
 	// DID Client REST operation
@@ -85,7 +114,7 @@ func GetRESTHandlers(ctx *context.Provider, opts ...Opt) ([]rest.Handler, error)
 	}
 
 	// mediator client REST operation
-	mediatorClientOp, err := mediatorclient.New(ctx, restOpts.msgHandler)
+	mediatorClientOp, err := mediatorclient.New(ctx, restOpts.msgHandler, notifier)
 	if err != nil {
 		return nil, err
 	}

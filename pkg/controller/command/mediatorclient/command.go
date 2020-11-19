@@ -15,11 +15,12 @@ import (
 
 	"github.com/hyperledger/aries-framework-go/pkg/client/didexchange"
 	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
+	"github.com/hyperledger/aries-framework-go/pkg/client/messaging"
 	"github.com/hyperledger/aries-framework-go/pkg/client/outofband"
 	ariescmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
-	mediatorcmd "github.com/hyperledger/aries-framework-go/pkg/controller/command/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/common/service"
 	didexchangeSvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/didexchange"
+	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/hyperledger/aries-framework-go/pkg/storage"
 	"github.com/trustbloc/edge-core/pkg/log"
@@ -37,8 +38,6 @@ const (
 	CommandName = "mediatorclient"
 	// Connect command name.
 	Connect = "Connect"
-	// ReconnectAll command name.
-	ReconnectAll = "ReconnectAll"
 	// CreateInvitation command name.
 	CreateInvitation = "CreateInvitation"
 )
@@ -49,8 +48,6 @@ const (
 
 	// ConnectMediatorError is typically a code for mediator connect errors.
 	ConnectMediatorError
-	// ReconnectAllError is typically a code for mediator reconnectAll errors.
-	ReconnectAllError
 	// CreateInvitationError is typically a code for mediator create invitation command errors.
 	CreateInvitationError
 
@@ -75,6 +72,8 @@ type Provider interface {
 	ServiceEndpoint() string
 	StorageProvider() storage.Provider
 	ProtocolStateStorageProvider() storage.Provider
+	VDRegistry() vdr.Registry
+	Messenger() service.Messenger
 }
 
 // Command is controller command for mediator client.
@@ -82,16 +81,22 @@ type Command struct {
 	didExchange    *didexchange.Client
 	outOfBand      *outofband.Client
 	mediator       *mediator.Client
+	messenger      *messaging.Client
 	didExchTimeout time.Duration
 	msgHandler     ariescmd.MessageHandler
 	registry       *command.Registry
 }
 
 // New returns new mediator client controller command instance.
-func New(p Provider, msgHandler ariescmd.MessageHandler) (*Command, error) {
+func New(p Provider, msgHandler ariescmd.MessageHandler, notifier ariescmd.Notifier) (*Command, error) {
 	mediatorClient, err := mediator.New(p)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create mediator client : %w", err)
+	}
+
+	messengerClient, err := messaging.New(p, msgHandler, notifier)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create messenger client : %w", err)
 	}
 
 	didExchangeClient, err := didexchange.New(p)
@@ -108,6 +113,7 @@ func New(p Provider, msgHandler ariescmd.MessageHandler) (*Command, error) {
 		didExchange:    didExchangeClient,
 		outOfBand:      outOfBandClient,
 		mediator:       mediatorClient,
+		messenger:      messengerClient,
 		didExchTimeout: didExchangeTimeOut,
 		msgHandler:     msgHandler,
 	}, nil
@@ -123,7 +129,6 @@ func (c *Command) SetCommandRegistry(registry *command.Registry) {
 func (c *Command) GetHandlers() []command.Handler {
 	return []command.Handler{
 		cmdutil.NewCommandHandler(CommandName, Connect, c.Connect),
-		cmdutil.NewCommandHandler(CommandName, ReconnectAll, c.ReconnectAll),
 		cmdutil.NewCommandHandler(CommandName, CreateInvitation, c.CreateInvitation),
 	}
 }
@@ -154,13 +159,13 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:
 		return command.NewExecuteError(ConnectMediatorError, err)
 	}
 
-	var notificationCh chan msghandler.NotificationPayload
+	var notificationCh chan messaging.NotificationPayload
 
 	if request.StateCompleteMessageType != "" {
-		notificationCh = make(chan msghandler.NotificationPayload)
+		notificationCh = make(chan messaging.NotificationPayload)
 
 		err = c.msgHandler.Register(msghandler.NewMessageService(stateCompleteTopic, request.StateCompleteMessageType,
-			nil, msghandler.NewNotifier(notificationCh)))
+			nil, messaging.NewNotifier(notificationCh, nil)))
 		if err != nil {
 			logutil.LogError(logger, CommandName, Connect, err.Error())
 
@@ -217,34 +222,6 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:
 	}, logger)
 
 	logutil.LogDebug(logger, CommandName, Connect, successString)
-
-	return nil
-}
-
-// ReconnectAll performs reconnection on all available mediator connections.
-// This command is useful in re-establishing lost connections (ex: lost websocket connection).
-func (c *Command) ReconnectAll(rw io.Writer, req io.Reader) command.Error {
-	connections, err := c.mediator.GetConnections()
-	if err != nil {
-		logutil.LogError(logger, CommandName, ReconnectAll, err.Error())
-
-		return command.NewExecuteError(ReconnectAllError, err)
-	}
-
-	for _, connection := range connections {
-		err := c.registry.Execute(mediatorcmd.CommandName,
-			mediatorcmd.ReconnectCommandMethod,
-			&mediatorcmd.RegisterRoute{ConnectionID: connection}, nil)
-		if err != nil {
-			logutil.LogError(logger, CommandName, ReconnectAll, err.Error())
-
-			return command.NewExecuteError(ReconnectAllError, err)
-		}
-	}
-
-	command.WriteNillableResponse(rw, nil, logger)
-
-	logutil.LogDebug(logger, CommandName, ReconnectAll, successString)
 
 	return nil
 }
@@ -331,7 +308,7 @@ func (c *Command) waitForStateCompleted(didStateMsgs chan service.StateMsg, conn
 	}
 }
 
-func (c *Command) waitForStateCompletedNotification(notificationCh chan msghandler.NotificationPayload) error {
+func (c *Command) waitForStateCompletedNotification(notificationCh chan messaging.NotificationPayload) error {
 	if notificationCh == nil {
 		return nil
 	}
