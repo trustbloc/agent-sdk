@@ -261,8 +261,10 @@ github.com/hyperledger/aries-framework-go v0.1.5-0.20201110161050-249e1c428734 h
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201110161050-249e1c428734/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201118151415-d7623b88ae7e h1:UniznQusx/5/zP1nnBd8NTABE9vct6CTLJvbN0iQD1g=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201118151415-d7623b88ae7e/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
-github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201118151415-d7623b88ae7e h1:FN9gPr1lCE212iDZG+m0oJ9zdC0bLcZZLTy8flfzJC4=
-github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201118151415-d7623b88ae7e/go.mod h1:5Dwe/5rCyxqxAeygrilmJ4VpwwrFQlBOvLXvgPEhsdA=
+github.com/hyperledger/aries-framework-go v0.1.5-0.20201119071131-ededf965050a h1:fd1MPQ6jx9JRAGrPzTWERqH5Mge/SVfHFz29Oc+5pRM=
+github.com/hyperledger/aries-framework-go v0.1.5-0.20201119071131-ededf965050a/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
+github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201119071131-ededf965050a h1:Wl3hUrthpdo8SxMJergSxabG/yIvzU+ipKU9sTfHL6w=
+github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201119071131-ededf965050a/go.mod h1:5Dwe/5rCyxqxAeygrilmJ4VpwwrFQlBOvLXvgPEhsdA=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/jessevdk/go-flags v0.0.0-20141203071132-1679536dcc89/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
