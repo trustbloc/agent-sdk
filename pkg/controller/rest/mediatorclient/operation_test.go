@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sync"
 	"testing"
 
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/common/service"
@@ -21,7 +20,6 @@ import (
 	mockmsghandler "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/msghandler"
 	mockdidexchange "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/didexchange"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
-	mocksvc "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/service"
 	mockkms "github.com/hyperledger/aries-framework-go/pkg/mock/kms"
 	mockstorage "github.com/hyperledger/aries-framework-go/pkg/mock/storage"
 	"github.com/hyperledger/aries-framework-go/pkg/store/connection"
@@ -248,8 +246,8 @@ func TestOperation_SendCreateConnectionRequest(t *testing.T) {
 		prov.StoreProvider = mockstorage.NewCustomMockStoreProvider(mockStore)
 
 		registrar := mockmsghandler.NewMockMsgServiceProvider()
+		mockmsgr := sdkmockprotocol.NewMockMessenger()
 
-		mockmsgr := &mockMessenger{MockMessenger: &mocksvc.MockMessenger{}, lastID: ""}
 		prov.CustomMessenger = mockmsgr
 
 		go func() {
@@ -274,7 +272,7 @@ func TestOperation_SendCreateConnectionRequest(t *testing.T) {
 
 		request := createConnectionRequest{
 			Request: mediatorclient.CreateConnectionRequest{
-				Payload: json.RawMessage([]byte(fmt.Sprintf(`{"didDoc": %s}`, sampleDIDDoc))),
+				DIDDocument: json.RawMessage([]byte(sampleDIDDoc)),
 			},
 		}
 
@@ -319,28 +317,4 @@ func newMockProvider(serviceMap map[string]interface{}) *sdkmockprotocol.MockPro
 	prov.CustomKMS = &mockkms.KeyManager{}
 
 	return prov
-}
-
-type mockMessenger struct {
-	*mocksvc.MockMessenger
-	lastID string
-	lock   sync.RWMutex
-}
-
-// Send mock messenger Send.
-func (m *mockMessenger) Send(msg service.DIDCommMsgMap, myDID, theirDID string) error {
-	m.lock.Lock()
-	defer m.lock.Unlock()
-
-	m.lastID = msg.ID()
-
-	return nil
-}
-
-// GetLastID returns ID of the last message received.
-func (m *mockMessenger) GetLastID() string {
-	m.lock.RLock()
-	defer m.lock.RUnlock()
-
-	return m.lastID
 }

@@ -417,6 +417,16 @@ const pkgs = {
             path: "/mediatorclient/create-invitation",
             method: "POST",
         }
+    },
+    blindedrouting: {
+        SendDIDDocRequest: {
+            path: "/blindedrouting/send-diddoc-request",
+            method: "POST",
+        },
+        SendRegisterRouteRequest: {
+            path: "/blindedrouting/send-router-registration",
+            method: "POST",
+        }
     }
 }
 

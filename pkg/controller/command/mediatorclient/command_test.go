@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"sync"
 	"testing"
 	"time"
 
@@ -20,7 +19,6 @@ import (
 	mockmsghandler "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/msghandler"
 	mockdidexchange "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/didexchange"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
-	mockservice "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/service"
 	mockkms "github.com/hyperledger/aries-framework-go/pkg/mock/kms"
 	mockstorage "github.com/hyperledger/aries-framework-go/pkg/mock/storage"
 	"github.com/hyperledger/aries-framework-go/pkg/store/connection"
@@ -580,14 +578,14 @@ func TestCommand_SendCreateConnectionRequest(t *testing.T) {
 		prov.StoreProvider = mockstorage.NewCustomMockStoreProvider(mockStore)
 
 		registrar := mockmsghandler.NewMockMsgServiceProvider()
+		mockMessenger := sdkmockprotocol.NewMockMessenger()
 
-		mockmsgr := &mockMessenger{MockMessenger: &mockservice.MockMessenger{}, lastID: ""}
-		prov.CustomMessenger = mockmsgr
+		prov.CustomMessenger = mockMessenger
 
 		go func() {
 			for {
-				if len(registrar.Services()) > 0 && mockmsgr.GetLastID() != "" { //nolint:gocritc
-					replyMsg, e := service.ParseDIDCommMsgMap([]byte(fmt.Sprintf(replyMsgStr, mockmsgr.GetLastID())))
+				if len(registrar.Services()) > 0 && mockMessenger.GetLastID() != "" { //nolint:gocritc
+					replyMsg, e := service.ParseDIDCommMsgMap([]byte(fmt.Sprintf(replyMsgStr, mockMessenger.GetLastID())))
 					require.NoError(t, e)
 
 					_, e = registrar.Services()[0].HandleInbound(replyMsg, "sampleDID", "sampleTheirDID")
@@ -603,7 +601,7 @@ func TestCommand_SendCreateConnectionRequest(t *testing.T) {
 		require.NotNil(t, c)
 
 		request := CreateConnectionRequest{
-			Payload: json.RawMessage([]byte(fmt.Sprintf(`{"didDoc": %s}`, sampleDIDDoc))),
+			DIDDocument: json.RawMessage([]byte(sampleDIDDoc)),
 		}
 
 		rqstBytes, err := json.Marshal(request)
@@ -620,7 +618,7 @@ func TestCommand_SendCreateConnectionRequest(t *testing.T) {
 		require.NotNil(t, c)
 
 		request := CreateConnectionRequest{
-			Payload: json.RawMessage([]byte(fmt.Sprintf(`{"didDoc": %s}`, sampleDIDDoc))),
+			DIDDocument: json.RawMessage([]byte(sampleDIDDoc)),
 		}
 
 		rqstBytes, err := json.Marshal(request)
@@ -647,7 +645,7 @@ func TestCommand_SendCreateConnectionRequest(t *testing.T) {
 		require.NotNil(t, c)
 
 		request := CreateConnectionRequest{
-			Payload: json.RawMessage([]byte(fmt.Sprintf(`{"didDoc": %s}`, sampleDIDDoc))),
+			DIDDocument: json.RawMessage([]byte(sampleDIDDoc)),
 		}
 
 		rqstBytes, err := json.Marshal(request)
@@ -674,7 +672,7 @@ func TestCommand_SendCreateConnectionRequest(t *testing.T) {
 		require.NotNil(t, c)
 
 		request := CreateConnectionRequest{
-			Payload: json.RawMessage([]byte(fmt.Sprintf(`{"didDoc": %s}`, sampleDIDDoc))),
+			DIDDocument: json.RawMessage([]byte(sampleDIDDoc)),
 		}
 
 		rqstBytes, err := json.Marshal(request)
@@ -723,28 +721,4 @@ func newMockProvider(serviceMap map[string]interface{}) *sdkmockprotocol.MockPro
 	prov.CustomKMS = &mockkms.KeyManager{}
 
 	return prov
-}
-
-type mockMessenger struct {
-	*mockservice.MockMessenger
-	lastID string
-	lock   sync.RWMutex
-}
-
-// Send mock messenger Send.
-func (m *mockMessenger) Send(msg service.DIDCommMsgMap, myDID, theirDID string) error {
-	m.lock.Lock()
-	defer m.lock.Unlock()
-
-	m.lastID = msg.ID()
-
-	return nil
-}
-
-// GetLastID returns ID of the last message received.
-func (m *mockMessenger) GetLastID() string {
-	m.lock.RLock()
-	defer m.lock.RUnlock()
-
-	return m.lastID
 }

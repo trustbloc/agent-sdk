@@ -33,7 +33,7 @@ type ConnectionRequest struct {
 
 // ConnectionResponse contains response.
 type ConnectionResponse struct {
-	ConnectionID   string   `json:"connection_id"`
+	ConnectionID   string   `json:"connectionID"`
 	RouterEndpoint string   `json:"routerEndpoint"`
 	RoutingKeys    []string `json:"routingKeys"`
 }
@@ -64,7 +64,7 @@ type CreateInvitationResponse struct {
 // This is used for sending create connection request.
 //
 type CreateConnectionRequest struct {
-	Payload json.RawMessage `json:"payload"`
+	DIDDocument json.RawMessage `json:"didDoc"`
 }
 
 // CreateConnectionResponse model
