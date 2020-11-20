@@ -13,7 +13,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.0
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/gorilla/mux v1.7.4
-	github.com/hyperledger/aries-framework-go v0.1.5-0.20201119154056-e946c04dd957
+	github.com/hyperledger/aries-framework-go v0.1.5-0.20201120180639-8c0425a6ab6c
 	github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20201113155502-c4ba5d2c7c0a
 	github.com/hyperledger/aries-framework-go-ext/component/storage/mysql v0.0.0-20201113155502-c4ba5d2c7c0a
 	github.com/hyperledger/aries-framework-go/component/storage/leveldb v0.0.0-20201119071131-ededf965050a
