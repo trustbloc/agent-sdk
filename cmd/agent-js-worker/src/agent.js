@@ -1121,6 +1121,34 @@ const Agent = function(opts) {
             },
 
         },
+
+        /**
+         * Blinded routing features
+         *
+         */
+        blindedrouting: {
+            pkgname: "blindedrouting",
+
+            /**
+             * sendDIDDocRequest sends DID doc request over a connection.
+             *
+             * @param req - json document containing connection id.
+             * @returns {Promise<Object>}
+             */
+            sendDIDDocRequest: async function (req) {
+                return invoke(aw, pending, this.pkgname, "SendDIDDocRequest", req, "timeout while sending did doc request")
+            },
+
+            /**
+             * sendRegisterRouteRequest sends register route request as a response to reply from send DID doc request.
+             *
+             * @param req - json document containing message id and raw DID document.
+             * @returns {Promise<Object>}
+             */
+            sendRegisterRouteRequest: async function () {
+                return invoke(aw, pending, this.pkgname, "SendRegisterRouteRequest", req, "timeout while sending register route request")
+            },
+        },
     }
 
     // start aries worker

@@ -300,7 +300,9 @@ func (c *Command) SendCreateConnectionRequest(rw io.Writer, req io.Reader) comma
 	msgBytes, err := json.Marshal(map[string]interface{}{
 		"@id":   uuid.New().String(),
 		"@type": createConnRequestMsgType,
-		"data":  request.Payload,
+		"data": map[string]interface{}{
+			"didDoc": request.DIDDocument,
+		},
 	})
 	if err != nil {
 		logutil.LogError(logger, CommandName, SendCreateConnectionRequest, err.Error())
@@ -321,6 +323,8 @@ func (c *Command) SendCreateConnectionRequest(rw io.Writer, req io.Reader) comma
 	}
 
 	command.WriteNillableResponse(rw, &CreateConnectionResponse{res}, logger)
+
+	logutil.LogDebug(logger, CommandName, SendCreateConnectionRequest, successString)
 
 	return nil
 }

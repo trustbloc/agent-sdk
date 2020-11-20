@@ -83,7 +83,7 @@ func (c *Operation) CreateInvitation(rw http.ResponseWriter, req *http.Request) 
 	rest.Execute(c.command.CreateInvitation, rw, req.Body)
 }
 
-// SendCreateConnectionRequest for sending create connection request.
+// SendCreateConnectionRequest Sends create connection request to mediator.
 //
 // swagger:route POST /mediatorclient/send-connection-request mediatorclient createConnRequest
 //
