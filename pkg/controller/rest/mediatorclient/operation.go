@@ -20,9 +20,10 @@ import (
 
 // constants for endpoints of mediator client.
 const (
-	OperationID          = "/mediatorclient"
-	ConnectPath          = OperationID + "/connect"
-	CreateInvitationPath = OperationID + "/create-invitation"
+	OperationID                 = "/mediatorclient"
+	ConnectPath                 = OperationID + "/connect"
+	CreateInvitationPath        = OperationID + "/create-invitation"
+	SendCreateConnectionRequest = OperationID + "/send-connection-request"
 )
 
 // Operation is controller REST service controller for mediator Client.
@@ -56,6 +57,7 @@ func (c *Operation) registerHandler() {
 	c.handlers = []rest.Handler{
 		cmdutil.NewHTTPHandler(ConnectPath, http.MethodPost, c.Connect),
 		cmdutil.NewHTTPHandler(CreateInvitationPath, http.MethodPost, c.CreateInvitation),
+		cmdutil.NewHTTPHandler(SendCreateConnectionRequest, http.MethodPost, c.SendCreateConnectionRequest),
 	}
 }
 
@@ -79,4 +81,17 @@ func (c *Operation) Connect(rw http.ResponseWriter, req *http.Request) {
 //    200: createInvitationResponse
 func (c *Operation) CreateInvitation(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.CreateInvitation, rw, req.Body)
+}
+
+// SendCreateConnectionRequest for sending create connection request.
+//
+// swagger:route POST /mediatorclient/send-connection-request mediatorclient createConnRequest
+//
+// Sends create connection request to mediator.
+//
+// Responses:
+//    default: genericError
+//    200: createConnectionResponse
+func (c *Operation) SendCreateConnectionRequest(rw http.ResponseWriter, req *http.Request) {
+	rest.Execute(c.command.SendCreateConnectionRequest, rw, req.Body)
 }
