@@ -55,3 +55,26 @@ type createInvitationResponse struct { // nolint: unused,deadcode
 	// in: body
 	Response mediatorclient.CreateInvitationResponse
 }
+
+// createConnectionRequest model
+//
+// Request for sending create connection request through mediator client.
+//
+// swagger:parameters createConnRequest
+type createConnectionRequest struct {
+	// Params for creating invitation.
+	//
+	// in: body
+	// required: true
+	Request mediatorclient.CreateConnectionRequest
+}
+
+// createConnectionResponse model
+//
+//  Response of creating out-of-band invitation through mediator client.
+//
+// swagger:response createConnectionResponse
+type createConnectionResponse struct { // nolint: unused,deadcode
+	// in: body
+	Response mediatorclient.CreateConnectionResponse
+}

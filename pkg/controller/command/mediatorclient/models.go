@@ -6,6 +6,8 @@ SPDX-License-Identifier: Apache-2.0
 package mediatorclient
 
 import (
+	"encoding/json"
+
 	"github.com/hyperledger/aries-framework-go/pkg/client/outofband"
 )
 
@@ -38,7 +40,7 @@ type ConnectionResponse struct {
 
 // CreateInvitationRequest model
 //
-// This is used for creating an invitation using mediator
+// This is used for creating an invitation using mediator.
 //
 type CreateInvitationRequest struct {
 	Label     string        `json:"label"`
@@ -50,9 +52,25 @@ type CreateInvitationRequest struct {
 
 // CreateInvitationResponse model
 //
-// Response for creating invitation through mediator
+// Response for creating invitation through mediator.
 //
 type CreateInvitationResponse struct {
 	// Invitation is out-of-band invitation from mediator.
 	Invitation *outofband.Invitation `json:"invitation"`
+}
+
+// CreateConnectionRequest model
+//
+// This is used for sending create connection request.
+//
+type CreateConnectionRequest struct {
+	Payload json.RawMessage `json:"payload"`
+}
+
+// CreateConnectionResponse model
+//
+// This is used for getting create connection response.
+//
+type CreateConnectionResponse struct {
+	Payload json.RawMessage `json:"payload"`
 }

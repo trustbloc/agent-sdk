@@ -7,12 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package mediatorclient
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go/pkg/client/didexchange"
 	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/client/messaging"
@@ -40,6 +42,8 @@ const (
 	Connect = "Connect"
 	// CreateInvitation command name.
 	CreateInvitation = "CreateInvitation"
+	// SendCreateConnectionRequest command name.
+	SendCreateConnectionRequest = "SendCreateConnectionRequest"
 )
 
 const (
@@ -50,6 +54,8 @@ const (
 	ConnectMediatorError
 	// CreateInvitationError is typically a code for mediator create invitation command errors.
 	CreateInvitationError
+	// SendCreateConnectionRequestError is typically a code for mediator send create connection request command errors.
+	SendCreateConnectionRequestError
 
 	// errors.
 	errInvalidConnectionRequest = "invitation missing in connection request"
@@ -63,6 +69,11 @@ const (
 
 	// timeout constants.
 	didExchangeTimeOut = 20 * time.Second
+	sendMsgTimeOut     = 20 * time.Second
+
+	// message types.
+	createConnRequestMsgType  = "https://trustbloc.dev/blinded-routing/1.0/create-conn-req"
+	createConnResponseMsgType = "https://trustbloc.dev/blinded-routing/1.0/create-conn-resp"
 )
 
 // Provider describes dependencies for this command.
@@ -84,7 +95,6 @@ type Command struct {
 	messenger      *messaging.Client
 	didExchTimeout time.Duration
 	msgHandler     ariescmd.MessageHandler
-	registry       *command.Registry
 }
 
 // New returns new mediator client controller command instance.
@@ -119,17 +129,12 @@ func New(p Provider, msgHandler ariescmd.MessageHandler, notifier ariescmd.Notif
 	}, nil
 }
 
-// SetCommandRegistry sets commands registry to this command hanler which can be used to call external
-// commands.
-func (c *Command) SetCommandRegistry(registry *command.Registry) {
-	c.registry = registry
-}
-
 // GetHandlers returns list of all commands supported by this controller command.
 func (c *Command) GetHandlers() []command.Handler {
 	return []command.Handler{
 		cmdutil.NewCommandHandler(CommandName, Connect, c.Connect),
 		cmdutil.NewCommandHandler(CommandName, CreateInvitation, c.CreateInvitation),
+		cmdutil.NewCommandHandler(CommandName, SendCreateConnectionRequest, c.SendCreateConnectionRequest),
 	}
 }
 
@@ -264,6 +269,58 @@ func (c *Command) CreateInvitation(rw io.Writer, req io.Reader) command.Error {
 	command.WriteNillableResponse(rw, &CreateInvitationResponse{Invitation: invitation}, logger)
 
 	logutil.LogDebug(logger, CommandName, CreateInvitation, successString)
+
+	return nil
+}
+
+// SendCreateConnectionRequest sends create connection request to mediator.
+func (c *Command) SendCreateConnectionRequest(rw io.Writer, req io.Reader) command.Error {
+	connections, err := c.mediator.GetConnections()
+	if err != nil {
+		logutil.LogError(logger, CommandName, SendCreateConnectionRequest, err.Error())
+
+		return command.NewExecuteError(SendCreateConnectionRequestError, err)
+	}
+
+	if len(connections) == 0 {
+		logutil.LogError(logger, CommandName, SendCreateConnectionRequest, errNoConnectionFound)
+
+		return command.NewExecuteError(SendCreateConnectionRequestError, fmt.Errorf(errNoConnectionFound))
+	}
+
+	var request CreateConnectionRequest
+
+	err = json.NewDecoder(req).Decode(&request)
+	if err != nil {
+		logutil.LogError(logger, CommandName, SendCreateConnectionRequest, err.Error())
+
+		return command.NewValidationError(SendCreateConnectionRequestError, err)
+	}
+
+	msgBytes, err := json.Marshal(map[string]interface{}{
+		"@id":   uuid.New().String(),
+		"@type": createConnRequestMsgType,
+		"data":  request.Payload,
+	})
+	if err != nil {
+		logutil.LogError(logger, CommandName, SendCreateConnectionRequest, err.Error())
+
+		return command.NewValidationError(SendCreateConnectionRequestError, err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), sendMsgTimeOut)
+	defer cancel()
+
+	res, err := c.messenger.Send(json.RawMessage(msgBytes),
+		messaging.SendByConnectionID(connections[rand.Intn(len(connections))]), //nolint: gosec
+		messaging.WaitForResponse(ctx, createConnResponseMsgType))
+	if err != nil {
+		logutil.LogError(logger, CommandName, SendCreateConnectionRequest, err.Error())
+
+		return command.NewExecuteError(SendCreateConnectionRequestError, err)
+	}
+
+	command.WriteNillableResponse(rw, &CreateConnectionResponse{res}, logger)
 
 	return nil
 }
