@@ -30,8 +30,12 @@ import (
 	opvdr "github.com/hyperledger/aries-framework-go/pkg/controller/rest/vdr"
 	opverifiable "github.com/hyperledger/aries-framework-go/pkg/controller/rest/verifiable"
 
+	cmdblindedrouting "github.com/trustbloc/agent-sdk/pkg/controller/command/blindedrouting"
 	cmddidclient "github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
+	cmdmediatorclient "github.com/trustbloc/agent-sdk/pkg/controller/command/mediatorclient"
+	opblindedrouting "github.com/trustbloc/agent-sdk/pkg/controller/rest/blindedrouting"
 	opdidclient "github.com/trustbloc/agent-sdk/pkg/controller/rest/didclient"
+	opmediatorclient "github.com/trustbloc/agent-sdk/pkg/controller/rest/mediatorclient"
 )
 
 // endpoint describes the fields for making calls to external agents.
@@ -54,6 +58,8 @@ func getControllerEndpoints() map[string]map[string]*endpoint {
 	allEndpoints[opmessaging.MsgServiceOperationID] = getMessagingEndpoints()
 	allEndpoints[opoob.OperationID] = getOutOfBandEndpoints()
 	allEndpoints[opkms.KmsOperationID] = getKMSEndpoints()
+	allEndpoints[opmediatorclient.OperationID] = getMediatorClientEndpoints()
+	allEndpoints[opblindedrouting.OperationID] = getBlindedRoutingEndpoints()
 
 	return allEndpoints
 }
@@ -367,6 +373,10 @@ func getMediatorEndpoints() map[string]*endpoint { // nolint: dupl
 			Path:   opmediator.ReconnectPath,
 			Method: http.MethodPost,
 		},
+		cmdmediator.ReconnectAllCommandMethod: {
+			Path:   opmediator.ReconnectAllPath,
+			Method: http.MethodGet,
+		},
 		cmdmediator.StatusCommandMethod: {
 			Path:   opmediator.StatusPath,
 			Method: http.MethodPost,
@@ -378,7 +388,7 @@ func getMediatorEndpoints() map[string]*endpoint { // nolint: dupl
 	}
 }
 
-func getMessagingEndpoints() map[string]*endpoint { // nolint: dupl
+func getMessagingEndpoints() map[string]*endpoint {
 	return map[string]*endpoint{
 		cmdmessaging.RegisterMessageServiceCommandMethod: {
 			Path:   opmessaging.RegisterMsgService,
@@ -407,7 +417,7 @@ func getMessagingEndpoints() map[string]*endpoint { // nolint: dupl
 	}
 }
 
-func getOutOfBandEndpoints() map[string]*endpoint {
+func getOutOfBandEndpoints() map[string]*endpoint { // nolint: dupl
 	return map[string]*endpoint{
 		cmdoob.Actions: {
 			Path:   opoob.Actions,
@@ -448,6 +458,36 @@ func getKMSEndpoints() map[string]*endpoint {
 		},
 		cmdkms.ImportKeyCommandMethod: {
 			Path:   opkms.ImportKeyPath,
+			Method: http.MethodPost,
+		},
+	}
+}
+
+func getMediatorClientEndpoints() map[string]*endpoint {
+	return map[string]*endpoint{
+		cmdmediatorclient.Connect: {
+			Path:   opmediatorclient.ConnectPath,
+			Method: http.MethodPost,
+		},
+		cmdmediatorclient.CreateInvitation: {
+			Path:   opmediatorclient.CreateInvitationPath,
+			Method: http.MethodPost,
+		},
+		cmdmediatorclient.SendCreateConnectionRequest: {
+			Path:   opmediatorclient.SendCreateConnectionRequest,
+			Method: http.MethodPost,
+		},
+	}
+}
+
+func getBlindedRoutingEndpoints() map[string]*endpoint {
+	return map[string]*endpoint{
+		cmdblindedrouting.SendDIDDocRequest: {
+			Path:   opblindedrouting.SendDIDDocRequestPath,
+			Method: http.MethodPost,
+		},
+		cmdblindedrouting.SendRegisterRouteRequest: {
+			Path:   opblindedrouting.SendRegisterRouteRequest,
 			Method: http.MethodPost,
 		},
 	}

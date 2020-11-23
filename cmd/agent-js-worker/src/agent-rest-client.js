@@ -409,12 +409,12 @@ const pkgs = {
             path: "/mediatorclient/connect",
             method: "POST",
         },
-        ReconnectAll: {
-            path: "/mediatorclient/reconnect-all",
-            method: "GET",
-        },
         CreateInvitation: {
             path: "/mediatorclient/create-invitation",
+            method: "POST",
+        },
+        SendCreateConnectionRequest: {
+            path: "/mediatorclient/send-connection-request",
             method: "POST",
         }
     },

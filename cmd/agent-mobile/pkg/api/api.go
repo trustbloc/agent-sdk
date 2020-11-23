@@ -34,6 +34,9 @@ type AriesController interface {
 	// GetMediatorController returns an implementation of MediatorController
 	GetMediatorController() (MediatorController, error)
 
+	// GetMediatorClient returns an implementation of MediatorClient
+	GetMediatorClientController() (MediatorClient, error)
+
 	// GetMessagingController returns an implementation of MessagingController
 	GetMessagingController() (MessagingController, error)
 
@@ -42,6 +45,9 @@ type AriesController interface {
 
 	// GetKMSController returns an implementation of KMSController
 	GetKMSController() (KMSController, error)
+
+	// GetBlindedRoutingController returns an implementation of BlindedRoutingController
+	GetBlindedRoutingController() (BlindedRoutingController, error)
 
 	// RegisterHandler registers handler for handling notifications
 	RegisterHandler(h Handler, topics string) string
