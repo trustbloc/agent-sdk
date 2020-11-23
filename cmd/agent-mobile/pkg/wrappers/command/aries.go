@@ -42,7 +42,9 @@ import (
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/storage"
 	sdkcontroller "github.com/trustbloc/agent-sdk/pkg/controller"
 	sdkcommand "github.com/trustbloc/agent-sdk/pkg/controller/command"
+	"github.com/trustbloc/agent-sdk/pkg/controller/command/blindedrouting"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
+	"github.com/trustbloc/agent-sdk/pkg/controller/command/mediatorclient"
 )
 
 var logger = log.New("aries-agent-mobile/wrappers/command")
@@ -357,6 +359,26 @@ func (a *Aries) GetKMSController() (api.KMSController, error) {
 	}
 
 	return &KMS{handlers: handlers}, nil
+}
+
+// GetMediatorClientController returns a MediatorClient instance.
+func (a *Aries) GetMediatorClientController() (api.MediatorClient, error) {
+	handlers, ok := a.handlers[mediatorclient.CommandName]
+	if !ok {
+		return nil, fmt.Errorf("no handlers found for controller [%s]", mediatorclient.CommandName)
+	}
+
+	return &MediatorClient{handlers: handlers}, nil
+}
+
+// GetBlindedRoutingController returns a BlindedRoutingClient instance.
+func (a *Aries) GetBlindedRoutingController() (api.BlindedRoutingController, error) {
+	handlers, ok := a.handlers[blindedrouting.CommandName]
+	if !ok {
+		return nil, fmt.Errorf("no handlers found for controller [%s]", blindedrouting.CommandName)
+	}
+
+	return &BlindedRouting{handlers: handlers}, nil
 }
 
 func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) ([]ariesvdr.VDR, error) {

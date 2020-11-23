@@ -32,7 +32,9 @@ import (
 
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/api"
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/config"
+	"github.com/trustbloc/agent-sdk/pkg/controller/rest/blindedrouting"
 	"github.com/trustbloc/agent-sdk/pkg/controller/rest/didclient"
+	"github.com/trustbloc/agent-sdk/pkg/controller/rest/mediatorclient"
 )
 
 // Aries is an Aries implementation with endpoints to execute operations.
@@ -277,4 +279,24 @@ func (ar *Aries) GetKMSController() (api.KMSController, error) {
 	}
 
 	return &KMS{endpoints: endpoints, URL: ar.URL, Token: ar.Token, httpClient: &http.Client{}}, nil
+}
+
+// GetMediatorClientController returns a MediatorClient instance.
+func (ar *Aries) GetMediatorClientController() (api.MediatorClient, error) {
+	endpoints, ok := ar.endpoints[mediatorclient.OperationID]
+	if !ok {
+		return nil, fmt.Errorf("no endpoints found for controller [%s]", mediatorclient.OperationID)
+	}
+
+	return &MediatorClient{endpoints: endpoints, URL: ar.URL, Token: ar.Token, httpClient: &http.Client{}}, nil
+}
+
+// GetBlindedRoutingController returns a BlindedRoutingClient instance.
+func (ar *Aries) GetBlindedRoutingController() (api.BlindedRoutingController, error) {
+	endpoints, ok := ar.endpoints[blindedrouting.OperationID]
+	if !ok {
+		return nil, fmt.Errorf("no endpoints found for controller [%s]", blindedrouting.OperationID)
+	}
+
+	return &BlindedRouting{endpoints: endpoints, URL: ar.URL, Token: ar.Token, httpClient: &http.Client{}}, nil
 }

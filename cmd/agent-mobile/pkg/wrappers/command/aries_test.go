@@ -245,3 +245,29 @@ func TestAries_GetKMSController(t *testing.T) {
 		require.NotNil(t, controller)
 	})
 }
+
+func TestAries_GetMediatorClientController(t *testing.T) {
+	t.Run("it creates a controller", func(t *testing.T) {
+		opts := &config.Options{}
+		a, err := NewAries(opts)
+		require.NoError(t, err)
+		require.NotNil(t, a)
+
+		m, err := a.GetMediatorClientController()
+		require.NoError(t, err)
+		require.NotNil(t, m)
+	})
+}
+
+func TestAries_GetBlindedRoutingController(t *testing.T) {
+	t.Run("it creates a controller", func(t *testing.T) {
+		opts := &config.Options{}
+		a, err := NewAries(opts)
+		require.NoError(t, err)
+		require.NotNil(t, a)
+
+		m, err := a.GetBlindedRoutingController()
+		require.NoError(t, err)
+		require.NotNil(t, m)
+	})
+}

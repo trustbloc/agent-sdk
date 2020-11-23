@@ -1102,15 +1102,6 @@ const Agent = function(opts) {
             },
 
             /**
-             * reconnectAll re-establishes all mediator network connections.
-             *
-             * @returns {Promise<Object>}
-             */
-            reconnectAll: async function () {
-                return invoke(aw, pending, this.pkgname, "ReconnectAll", req, "timeout while reconnecting to mediator")
-            },
-
-            /**
              * createInvitation creates out-of-band invitation from one of the mediator connection.
              *
              * @param req - json document containing label, goal, goal code, service & protocols.
@@ -1118,6 +1109,16 @@ const Agent = function(opts) {
              */
             createInvitation: async function (req) {
                 return invoke(aw, pending, this.pkgname, "CreateInvitation", req, "timeout while creating invitation from mediator")
+            },
+
+            /**
+             * sendCreateConnectionRequest sends create connection request to mediator.
+             *
+             * @param req - json document containing raw DID Document.
+             * @returns {Promise<Object>}
+             */
+            sendCreateConnectionRequest: async function (req) {
+                return invoke(aw, pending, this.pkgname, "SendCreateConnectionRequest", req, "timeout while sending create connection request")
             },
 
         },

@@ -12,23 +12,23 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/controller/command"
 
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/models"
-	"github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
+	"github.com/trustbloc/agent-sdk/pkg/controller/command/blindedrouting"
 )
 
-// DIDClient contains necessary fields to support its operations.
-type DIDClient struct {
+// BlindedRouting contains necessary fields to support its operations.
+type BlindedRouting struct {
 	handlers map[string]command.Exec
 }
 
-// CreateTrustBlocDID creates a new trust bloc DID.
-func (de *DIDClient) CreateTrustBlocDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
-	args := didclient.CreateBlocDIDRequest{}
+// SendDIDDocRequest sends DID doc request over a connection.
+func (br *BlindedRouting) SendDIDDocRequest(request *models.RequestEnvelope) *models.ResponseEnvelope {
+	args := blindedrouting.DIDDocRequest{}
 
 	if err := json.Unmarshal(request.Payload, &args); err != nil {
 		return &models.ResponseEnvelope{Error: &models.CommandError{Message: err.Error()}}
 	}
 
-	response, cmdErr := exec(de.handlers[didclient.CreateTrustBlocDIDCommandMethod], args)
+	response, cmdErr := exec(br.handlers[blindedrouting.SendDIDDocRequest], args)
 	if cmdErr != nil {
 		return &models.ResponseEnvelope{Error: cmdErr}
 	}
@@ -36,15 +36,15 @@ func (de *DIDClient) CreateTrustBlocDID(request *models.RequestEnvelope) *models
 	return &models.ResponseEnvelope{Payload: response}
 }
 
-// CreatePeerDID creates a new peer DID.
-func (de *DIDClient) CreatePeerDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
-	args := didclient.CreatePeerDIDRequest{}
+// SendRegisterRouteRequest sends register route request as a response to reply from send DID doc request.
+func (br *BlindedRouting) SendRegisterRouteRequest(request *models.RequestEnvelope) *models.ResponseEnvelope {
+	args := blindedrouting.RegisterRouteRequest{}
 
 	if err := json.Unmarshal(request.Payload, &args); err != nil {
 		return &models.ResponseEnvelope{Error: &models.CommandError{Message: err.Error()}}
 	}
 
-	response, cmdErr := exec(de.handlers[didclient.CreatePeerDIDCommandMethod], args)
+	response, cmdErr := exec(br.handlers[blindedrouting.SendRegisterRouteRequest], args)
 	if cmdErr != nil {
 		return &models.ResponseEnvelope{Error: cmdErr}
 	}

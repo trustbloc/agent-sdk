@@ -266,6 +266,7 @@ github.com/hyperledger/aries-framework-go v0.1.5-0.20201119071131-ededf965050a/g
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201119154056-e946c04dd957/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201120180639-8c0425a6ab6c h1:kMOoCmU+Ir5ZuV9HU1/Smma9TcuDGGxGJ6fY6q2/fDA=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201120180639-8c0425a6ab6c/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
+github.com/hyperledger/aries-framework-go v0.1.5-0.20201123085011-2625d433b8fd/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
 github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201119071131-ededf965050a h1:Wl3hUrthpdo8SxMJergSxabG/yIvzU+ipKU9sTfHL6w=
 github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201119071131-ededf965050a/go.mod h1:5Dwe/5rCyxqxAeygrilmJ4VpwwrFQlBOvLXvgPEhsdA=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
