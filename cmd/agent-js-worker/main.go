@@ -284,7 +284,7 @@ func addAgentHandlers(pkgMap map[string]map[string]func(*command) *result) {
 			return newErrResult(c.ID, err.Error())
 		}
 
-		agentHandlers, err := getAgentHandlers(ctx, cOpts)
+		agentHandlers, err := getAgentHandlers(ctx, msgHandler, cOpts)
 		if err != nil {
 			return newErrResult(c.ID, err.Error())
 		}
@@ -344,8 +344,10 @@ func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
 	return hh, nil
 }
 
-func getAgentHandlers(ctx *context.Provider, opts *agentStartOpts) ([]commandHandler, error) {
-	handlers, err := agentctrl.GetCommandHandlers(ctx, agentctrl.WithBlocDomain(opts.BlocDomain))
+func getAgentHandlers(ctx *context.Provider,
+	r controllercmd.MessageHandler, opts *agentStartOpts) ([]commandHandler, error) {
+	handlers, err := agentctrl.GetCommandHandlers(ctx, agentctrl.WithBlocDomain(opts.BlocDomain),
+		agentctrl.WithMessageHandler(r), agentctrl.WithNotifier(&jsNotifier{}))
 	if err != nil {
 		return nil, err
 	}
