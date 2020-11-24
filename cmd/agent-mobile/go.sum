@@ -226,6 +226,7 @@ github.com/hyperledger/aries-framework-go v0.1.5-0.20201120180639-8c0425a6ab6c h
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201120180639-8c0425a6ab6c/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201123085011-2625d433b8fd h1:xoE9iE/ij9qR4LvAP/ubME2dz/7eB6CLhNvK/M1iGrI=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201123085011-2625d433b8fd/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
+github.com/hyperledger/aries-framework-go v0.1.5-0.20201124194436-a37f1c10fd4e/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/jessevdk/go-flags v0.0.0-20141203071132-1679536dcc89/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
