@@ -912,7 +912,7 @@ const Agent = function(opts) {
              * @returns {Promise<Object>}
              */
             reconnectAll: async function () {
-                return invoke(aw, pending, this.pkgname, "ReconnectAll", req, "timeout while reconnecting to mediator")
+                return invoke(aw, pending, this.pkgname, "ReconnectAll", {}, "timeout while reconnecting to mediator")
             },
         },
 
