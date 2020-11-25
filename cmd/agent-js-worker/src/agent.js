@@ -10,7 +10,8 @@ SPDX-License-Identifier: Apache-2.0
 const notifierWait = 10000
 
 // time out for command operations
-const commandTimeout = 20000
+// TODO (#84) Reduce this timeout value back to something reasonable once EDV storage speed is improved.
+const commandTimeout = 120000
 
 __webpack_public_path__ = "/agent-js-worker/"
 

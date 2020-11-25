@@ -220,7 +220,8 @@ func testHandlers() map[string]map[string]func(*command) *result {
 				return newErrResult(c.ID, "an error !!")
 			},
 			"timeout": func(c *command) *result {
-				const echoTimeout = 10 * time.Second
+				// TODO (#84) Reduce this timeout value back to something reasonable once EDV storage speed is improved.
+				const echoTimeout = 120 * time.Second
 
 				time.Sleep(echoTimeout)
 
@@ -848,7 +849,9 @@ func prepareKeyHandle(storeProvider storage.Provider, keyManager kms.KeyManager,
 
 	logger.Infof("Found existing key handle ID under store %s with store DB key ID %s.", keyIDStoreName, keyIDDBKeyName)
 
-	keyHandleUntyped, getErr := keyManager.Get(string(keyIDBytes))
+	keyID := string(keyIDBytes)
+
+	keyHandleUntyped, getErr := keyManager.Get(keyID)
 	if getErr != nil {
 		return "", nil, fmt.Errorf("failed to get key handle from key manager: %w", getErr)
 	}
@@ -858,7 +861,7 @@ func prepareKeyHandle(storeProvider storage.Provider, keyManager kms.KeyManager,
 		return "", nil, errors.New("unable to assert key handle as a key set handle pointer")
 	}
 
-	return "", kh, nil
+	return keyID, kh, nil
 }
 
 func setLogLevel(logLevel string) error {

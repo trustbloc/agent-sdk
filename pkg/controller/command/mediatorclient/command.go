@@ -68,8 +68,8 @@ const (
 	stateCompleteTopic = "state-complete-topic"
 
 	// timeout constants.
-	didExchangeTimeOut = 20 * time.Second
-	sendMsgTimeOut     = 20 * time.Second
+	didExchangeTimeOut = 120 * time.Second
+	sendMsgTimeOut     = 120 * time.Second
 
 	// message types.
 	createConnRequestMsgType  = "https://trustbloc.dev/blinded-routing/1.0/create-conn-req"
