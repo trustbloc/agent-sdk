@@ -48,6 +48,7 @@ import (
 	"github.com/trustbloc/edge-core/pkg/log"
 	"github.com/trustbloc/trustbloc-did-method/pkg/vdri/trustbloc"
 
+	"github.com/trustbloc/agent-sdk/pkg/auth/zcapld"
 	agentctrl "github.com/trustbloc/agent-sdk/pkg/controller"
 )
 
@@ -109,8 +110,10 @@ type agentStartOpts struct {
 	IndexedDBNamespace   string   `json:"indexedDB-namespace"`
 	EDVServerURL         string   `json:"edvServerURL"`
 	EDVVaultID           string   `json:"edvVaultID"`
+	EDVCapability        string   `json:"edvCapability,omitempty"`
 	BlocDomain           string   `json:"blocDomain"`
 	TrustblocResolver    string   `json:"trustbloc-resolver"`
+	AuthzKeyStoreURL     string   `json:"authzKeyStoreURL,omitempty"`
 }
 
 type kmsProvider struct {
@@ -605,7 +608,8 @@ func createStorageAndKMSIfNeeded(opts *agentStartOpts) (storage.Provider, kms.Ke
 	case storageTypeEDV:
 		var err error
 
-		store, ariesKMS, err = createEDVProviderAndKMS(opts.EDVServerURL, opts.EDVVaultID, opts.IndexedDBNamespace)
+		store, ariesKMS, err = createEDVProviderAndKMS(opts.EDVServerURL, opts.EDVVaultID, opts.IndexedDBNamespace,
+			[]byte(opts.EDVCapability), opts.AuthzKeyStoreURL)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create EDV provider and KMS: %w", err)
 		}
@@ -625,7 +629,8 @@ func createStorageAndKMSIfNeeded(opts *agentStartOpts) (storage.Provider, kms.Ke
 }
 
 // TODO (#67) Use remote KMS for EDV storage operations.
-func createEDVProviderAndKMS(edvServerURL, edvVaultID, indexedDBNamespace string) (storage.Provider,
+func createEDVProviderAndKMS(edvServerURL, edvVaultID, indexedDBNamespace string,
+	capability []byte, authzKeyStoreURL string) (storage.Provider,
 	*localkms.LocalKMS, error) {
 	indexedDBKMSProvider, err := jsindexeddb.NewProvider(indexedDBNamespace)
 	if err != nil {
@@ -652,7 +657,8 @@ func createEDVProviderAndKMS(edvServerURL, edvVaultID, indexedDBNamespace string
 		return nil, nil, fmt.Errorf("failed to create local KMS: %w", err)
 	}
 
-	edvProvider, err := createEDVProvider(edvServerURL, edvVaultID, indexedDBKMSProvider, localKMS)
+	edvProvider, err := createEDVProvider(edvServerURL, edvVaultID, capability, authzKeyStoreURL,
+		indexedDBKMSProvider, localKMS)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create EDV provider: %w", err)
 	}
@@ -697,14 +703,15 @@ func prepareMasterKeyReader(kmsSecretsStoreProvider storage.Provider) (*bytes.Re
 // TODO (#45): Use the Aries Crypto object instantiated in the framework instead of creating a new one here. This will
 //  require some sort of change to aries-framework-go, since the Aries Crypto object isn't available until the
 //  framework has been initialized.
-func createEDVProvider(edvServerURL, vaultID string, kmsStorageProvider storage.Provider,
-	keyManager kms.KeyManager) (storage.Provider, error) {
+func createEDVProvider(edvServerURL, vaultID string, capability []byte, authzKeyStoreURL string,
+	kmsStorageProvider storage.Provider, keyManager kms.KeyManager) (storage.Provider, error) {
 	crypto, err := tinkcrypto.New()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new tink crypto: %w", err)
 	}
 
-	edvRESTProvider, err := prepareEDVRESTProvider(edvServerURL, vaultID, kmsStorageProvider, keyManager, crypto)
+	edvRESTProvider, err := prepareEDVRESTProvider(edvServerURL, vaultID, capability, authzKeyStoreURL,
+		kmsStorageProvider, keyManager, crypto)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare EDV REST provider: %w", err)
 	}
@@ -717,14 +724,24 @@ func createEDVProvider(edvServerURL, vaultID string, kmsStorageProvider storage.
 	return formattedProvider, nil
 }
 
-func prepareEDVRESTProvider(edvServerURL, vaultID string, kmsStorageProvider storage.Provider,
-	keyManager kms.KeyManager, crypto cryptoapi.Crypto) (*edv.RESTProvider, error) {
+func prepareEDVRESTProvider(edvServerURL, vaultID string, capability []byte, authzKeyStoreURL string,
+	kmsStorageProvider storage.Provider, keyManager kms.KeyManager,
+	crypto cryptoapi.Crypto) (*edv.RESTProvider, error) {
 	macCrypto, err := prepareMACCrypto(kmsStorageProvider, keyManager, crypto)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare MAC crypto: %w", err)
 	}
 
-	edvRESTProvider, err := edv.NewRESTProvider(edvServerURL, vaultID, macCrypto)
+	zcapSVC := zcapld.New(authzKeyStoreURL)
+
+	edvRESTProvider, err := edv.NewRESTProvider(edvServerURL, vaultID, macCrypto,
+		edv.WithHeaders(func(req *http.Request) (*http.Header, error) {
+			if len(capability) != 0 {
+				return zcapSVC.SignHeader(req, capability)
+			}
+
+			return nil, nil
+		}))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new EDV REST provider: %w", err)
 	}
