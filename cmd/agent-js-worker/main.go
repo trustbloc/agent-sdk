@@ -29,6 +29,7 @@ import (
 	cryptoapi "github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto/primitive/composite/keyio"
+	webcrypto "github.com/hyperledger/aries-framework-go/pkg/crypto/webkms"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/messaging/msghandler"
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
@@ -38,6 +39,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/hyperledger/aries-framework-go/pkg/kms/localkms"
+	"github.com/hyperledger/aries-framework-go/pkg/kms/webkms"
 	"github.com/hyperledger/aries-framework-go/pkg/secretlock"
 	"github.com/hyperledger/aries-framework-go/pkg/secretlock/local"
 	"github.com/hyperledger/aries-framework-go/pkg/storage"
@@ -114,6 +116,9 @@ type agentStartOpts struct {
 	BlocDomain           string   `json:"blocDomain"`
 	TrustblocResolver    string   `json:"trustbloc-resolver"`
 	AuthzKeyStoreURL     string   `json:"authzKeyStoreURL,omitempty"`
+	MainKeyStoreURL      string   `json:"mainKeyStoreURL,omitempty"`
+	MainKIDURL           string   `json:"mainKIDURL,omitempty"`
+	UseRemoteKMS         bool     `json:"use-remote-kms"`
 }
 
 type kmsProvider struct {
@@ -541,6 +546,7 @@ func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 		options = append(options, aries.WithTransportReturnRoute(startOpts.TransportReturnRoute))
 	}
 
+	// indexedDBProvider used by localKMS only.
 	indexedDBProvider, err := createIndexedDBStorage(startOpts)
 	if err != nil {
 		return nil, fmt.Errorf("unexpected failure while creating IndexDB storage provider: %w", err)
@@ -551,7 +557,7 @@ func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 		cryptoImpl cryptoapi.Crypto
 	)
 
-	kmsImpl, cryptoImpl, options, err = createLocalKMSAndCrypto(indexedDBProvider, options)
+	kmsImpl, cryptoImpl, options, err = createKMSAndCrypto(startOpts, indexedDBProvider, options)
 	if err != nil {
 		return nil, fmt.Errorf("unexpected failure while creating LocalKMS and Crypto instance: %w", err)
 	}
@@ -640,6 +646,51 @@ func createEDVStorage(opts *agentStartOpts, indexedDBProvider *jsindexeddb.Provi
 	return store, nil
 }
 
+func createKMSAndCrypto(opts *agentStartOpts, indexedDBKMSProvider storage.Provider,
+	allAriesOptions []aries.Option) (kms.KeyManager, cryptoapi.Crypto, []aries.Option, error) {
+	if opts.UseRemoteKMS {
+		return createWebkms(opts, allAriesOptions)
+	}
+
+	return createLocalKMSAndCrypto(indexedDBKMSProvider, allAriesOptions)
+}
+
+// nolint: unparam // need to match the number of returns of createKMSAndCrypto() and createLocalKMSAndCrypto()
+func createWebkms(opts *agentStartOpts,
+	allAriesOptions []aries.Option) (*webkms.RemoteKMS, *webcrypto.RemoteCrypto, []aries.Option, error) {
+	zcapSVC := zcapld.New(opts.AuthzKeyStoreURL)
+
+	httpClient := &http.Client{}
+	capability := []byte(opts.EDVCapability)
+
+	wKMS := webkms.New(opts.MainKeyStoreURL, httpClient,
+		webkms.WithHeaders(func(req *http.Request) (*http.Header, error) {
+			if len(capability) != 0 {
+				return zcapSVC.SignHeader(req, capability)
+			}
+
+			return nil, nil
+		}))
+
+	allAriesOptions = append(allAriesOptions,
+		aries.WithKMS(func(ctx kms.Provider) (kms.KeyManager, error) {
+			return wKMS, nil
+		}))
+
+	wCrypto := webcrypto.New(opts.MainKeyStoreURL, httpClient,
+		webkms.WithHeaders(func(req *http.Request) (*http.Header, error) {
+			if len(capability) != 0 {
+				return zcapSVC.SignHeader(req, capability)
+			}
+
+			return nil, nil
+		}))
+
+	allAriesOptions = append(allAriesOptions, aries.WithCrypto(wCrypto))
+
+	return wKMS, wCrypto, allAriesOptions, nil
+}
+
 func createLocalKMSAndCrypto(indexedDBKMSProvider storage.Provider,
 	allAriesOptions []aries.Option) (*localkms.LocalKMS, *tinkcrypto.Crypto, []aries.Option, error) {
 	masterKeyReader, err := prepareMasterKeyReader(indexedDBKMSProvider)
@@ -725,14 +776,14 @@ func prepareMasterKeyReader(kmsSecretsStoreProvider storage.Provider) (*bytes.Re
 }
 
 func createEDVStorageProvider(edvServerURL, vaultID string, capability []byte, authzKeyStoreURL string,
-	kmsStorageProvider storage.Provider, keyManager kms.KeyManager, cr cryptoapi.Crypto) (storage.Provider, error) {
+	storageProvider storage.Provider, kmsImpl kms.KeyManager, cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
 	edvRESTProvider, err := prepareEDVRESTProvider(edvServerURL, vaultID, capability, authzKeyStoreURL,
-		kmsStorageProvider, keyManager, cr)
+		storageProvider, kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare EDV REST provider: %w", err)
 	}
 
-	formattedProvider, err := prepareFormattedProvider(kmsStorageProvider, keyManager, cr, edvRESTProvider)
+	formattedProvider, err := prepareFormattedProvider(storageProvider, kmsImpl, cryptoImpl, edvRESTProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare formatted provider: %w", err)
 	}
@@ -741,9 +792,9 @@ func createEDVStorageProvider(edvServerURL, vaultID string, capability []byte, a
 }
 
 func prepareEDVRESTProvider(edvServerURL, vaultID string, capability []byte, authzKeyStoreURL string,
-	kmsStorageProvider storage.Provider, keyManager kms.KeyManager,
-	crypto cryptoapi.Crypto) (*edv.RESTProvider, error) {
-	macCrypto, err := prepareMACCrypto(kmsStorageProvider, keyManager, crypto)
+	storageProvider storage.Provider, kmsImpl kms.KeyManager,
+	cryptoImpl cryptoapi.Crypto) (*edv.RESTProvider, error) {
+	macCrypto, err := prepareLocalMACCrypto(storageProvider, kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare MAC crypto: %w", err)
 	}
@@ -765,34 +816,36 @@ func prepareEDVRESTProvider(edvServerURL, vaultID string, capability []byte, aut
 	return edvRESTProvider, nil
 }
 
-func prepareFormattedProvider(kmsStorageProvider storage.Provider, keyManager kms.KeyManager, crypto cryptoapi.Crypto,
+func prepareFormattedProvider(kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager, cryptoImpl cryptoapi.Crypto,
 	provider storage.Provider) (*formattedstore.FormattedProvider, error) {
-	jweEncrypter, err := prepareJWEEncrypter(kmsStorageProvider, keyManager, crypto)
+	jweEncrypter, err := prepareLocalJWEEncrypter(kmsStorageProvider, kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare JWE encrypter: %w", err)
 	}
 
-	jweDecrypter := jose.NewJWEDecrypt(nil, crypto, keyManager)
+	jweDecrypter := jose.NewJWEDecrypt(nil, cryptoImpl, kmsImpl)
 
 	encryptedFormatter := edv.NewEncryptedFormatter(jweEncrypter, jweDecrypter)
 
 	return formattedstore.NewFormattedProvider(provider, encryptedFormatter, false), nil
 }
 
-func prepareMACCrypto(kmsStorageProvider storage.Provider, keyManager kms.KeyManager,
-	crypto cryptoapi.Crypto) (*edv.MACCrypto, error) {
-	_, macKeyHandle, err := prepareKeyHandle(kmsStorageProvider, keyManager, hmacKeyIDDBKeyName, kms.HMACSHA256Tag256Type)
+func prepareLocalMACCrypto(kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager,
+	cryptoImpl cryptoapi.Crypto) (*edv.MACCrypto, error) {
+	_, macKeyHandle, err := prepareLocalKeyHandle(kmsStorageProvider, kmsImpl, hmacKeyIDDBKeyName,
+		kms.HMACSHA256Tag256Type)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare MAC key handle: %w", err)
 	}
 
-	return edv.NewMACCrypto(macKeyHandle, crypto), nil
+	// TODO update aries-framework-go to process macKeyHandle as kidURL (of MAC key stored in remoteKMS)
+	return edv.NewMACCrypto(macKeyHandle, cryptoImpl), nil
 }
 
-func prepareJWEEncrypter(kmsStorageProvider storage.Provider, keyManager kms.KeyManager,
+func prepareLocalJWEEncrypter(kmsStorageProvider storage.Provider, keyManager kms.KeyManager,
 	crypto cryptoapi.Crypto) (*jose.JWEEncrypt, error) {
-	jweCryptoKID, jweCryptoKeyHandle, err := prepareKeyHandle(kmsStorageProvider, keyManager,
-		ecdhesKeyIDDBKeyName, kms.ECDH256KWAES256GCMType)
+	jweCryptoKID, jweCryptoKeyHandle, err := prepareLocalKeyHandle(kmsStorageProvider, keyManager, ecdhesKeyIDDBKeyName,
+		kms.ECDH256KWAES256GCMType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare key handle for JWE crypto operations: %w", err)
 	}
@@ -819,6 +872,7 @@ func prepareJWEEncrypter(kmsStorageProvider storage.Provider, keyManager kms.Key
 		return nil, fmt.Errorf("failed to unmarshal JWE public key bytes to an EC public key object: %w", err)
 	}
 
+	// TODO ensure jose.JWEEncrypter and jose.JWEDecrypter work with keys as kidURL for webkms (not just *keyset.Handle)
 	jweEncrypter, err := jose.NewJWEEncrypt(jose.A256GCM, jose.DIDCommEncType, "", nil,
 		[]*cryptoapi.PublicKey{ecPubKey}, crypto)
 	if err != nil {
@@ -828,7 +882,7 @@ func prepareJWEEncrypter(kmsStorageProvider storage.Provider, keyManager kms.Key
 	return jweEncrypter, nil
 }
 
-func prepareKeyHandle(storeProvider storage.Provider, keyManager kms.KeyManager,
+func prepareLocalKeyHandle(storeProvider storage.Provider, keyManager kms.KeyManager,
 	keyIDDBKeyName string, keyType kms.KeyType) (string, *keyset.Handle, error) {
 	keyIDStore, err := storeProvider.OpenStore(keyIDStoreName)
 	if err != nil {
