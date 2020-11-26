@@ -542,11 +542,24 @@ func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 		options = append(options, aries.WithTransportReturnRoute(startOpts.TransportReturnRoute))
 	}
 
-	var err error
-
-	options, err = addStorageOptions(startOpts, options)
+	indexedDBProvider, err := createIndexedDBStorage(startOpts)
 	if err != nil {
-		return nil, fmt.Errorf("unexpected failure while adding storage and KMS options (as needed): %w", err)
+		return nil, fmt.Errorf("unexpected failure while creating IndexDB storage provider: %w", err)
+	}
+
+	var (
+		kmsImpl    kms.KeyManager
+		cryptoImpl cryptoapi.Crypto
+	)
+
+	kmsImpl, cryptoImpl, options, err = createLocalKMSAndCrypto(indexedDBProvider, options)
+	if err != nil {
+		return nil, fmt.Errorf("unexpected failure while creating LocalKMS and Crypto instance: %w", err)
+	}
+
+	options, err = addStorageOptions(startOpts, indexedDBProvider, kmsImpl, cryptoImpl, options)
+	if err != nil {
+		return nil, fmt.Errorf("unexpected failure while adding storage: %w", err)
 	}
 
 	VDRs, err := createVDRs(startOpts.HTTPResolvers, startOpts.BlocDomain, startOpts.TrustblocResolver)
@@ -558,6 +571,10 @@ func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 		options = append(options, aries.WithVDR(VDRs[i]))
 	}
 
+	return addOutboundTransports(startOpts, options)
+}
+
+func addOutboundTransports(startOpts *agentStartOpts, options []aries.Option) ([]aries.Option, error) {
 	for _, transport := range startOpts.OutboundTransport {
 		switch transport {
 		case "http":
@@ -577,18 +594,35 @@ func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 	return options, nil
 }
 
-func addStorageOptions(startOpts *agentStartOpts,
-	allAriesOptions []aries.Option) ([]aries.Option, error) {
-	store, ariesKMS, err := createStorageAndKMSIfNeeded(startOpts)
+func createIndexedDBStorage(opts *agentStartOpts) (*jsindexeddb.Provider, error) {
+	indexedDBKMSProvider, err := jsindexeddb.NewProvider(opts.IndexedDBNamespace)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create storage and/or KMS: %w", err)
+		return nil, fmt.Errorf("failed to create IndexedDB provider: %w", err)
 	}
 
-	if ariesKMS != nil {
-		allAriesOptions = append(allAriesOptions,
-			aries.WithKMS(func(ctx kms.Provider) (kms.KeyManager, error) {
-				return ariesKMS, nil
-			}))
+	return indexedDBKMSProvider, nil
+}
+
+func addStorageOptions(startOpts *agentStartOpts, indexedDBProvider *jsindexeddb.Provider,
+	ariesKMS kms.KeyManager, ariesCrypto cryptoapi.Crypto, allAriesOptions []aries.Option) ([]aries.Option, error) {
+	if startOpts.StorageType == "" {
+		return nil, errors.New(blankStorageTypeErrMsg)
+	}
+
+	var store storage.Provider
+
+	var err error
+
+	switch startOpts.StorageType {
+	case storageTypeEDV:
+		store, err = createEDVStorage(startOpts, indexedDBProvider, ariesKMS, ariesCrypto)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create storage: %w", err)
+		}
+	case storageTypeIndexedDB:
+		store = indexedDBProvider
+	default:
+		return nil, fmt.Errorf(invalidStorageTypeErrMsg, startOpts.StorageType)
 	}
 
 	allAriesOptions = append(allAriesOptions, aries.WithStoreProvider(store))
@@ -596,56 +630,27 @@ func addStorageOptions(startOpts *agentStartOpts,
 	return allAriesOptions, nil
 }
 
-func createStorageAndKMSIfNeeded(opts *agentStartOpts) (storage.Provider, kms.KeyManager, error) {
-	if opts.StorageType == "" {
-		return nil, nil, errors.New(blankStorageTypeErrMsg)
+func createEDVStorage(opts *agentStartOpts, indexedDBProvider *jsindexeddb.Provider,
+	kmsImpl kms.KeyManager, cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
+	store, err := createEDVProvider(opts.EDVServerURL, opts.EDVVaultID, opts.AuthzKeyStoreURL, indexedDBProvider,
+		[]byte(opts.EDVCapability), kmsImpl, cryptoImpl)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create EDV provider: %w", err)
 	}
 
-	var store storage.Provider
-
-	var ariesKMS kms.KeyManager
-
-	switch opts.StorageType {
-	case storageTypeEDV:
-		var err error
-
-		store, ariesKMS, err = createEDVProviderAndKMS(opts.EDVServerURL, opts.EDVVaultID, opts.IndexedDBNamespace,
-			[]byte(opts.EDVCapability), opts.AuthzKeyStoreURL)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create EDV provider and KMS: %w", err)
-		}
-
-	case storageTypeIndexedDB:
-		var err error
-
-		store, err = jsindexeddb.NewProvider(opts.IndexedDBNamespace)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create JSIndexedDB provider: %w", err)
-		}
-	default:
-		return nil, nil, fmt.Errorf(invalidStorageTypeErrMsg, opts.StorageType)
-	}
-
-	return store, ariesKMS, nil
+	return store, nil
 }
 
-// TODO (#67) Use remote KMS for EDV storage operations.
-func createEDVProviderAndKMS(edvServerURL, edvVaultID, indexedDBNamespace string,
-	capability []byte, authzKeyStoreURL string) (storage.Provider,
-	*localkms.LocalKMS, error) {
-	indexedDBKMSProvider, err := jsindexeddb.NewProvider(indexedDBNamespace)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create IndexedDB provider for KMS: %w", err)
-	}
-
+func createLocalKMSAndCrypto(indexedDBKMSProvider storage.Provider,
+	allAriesOptions []aries.Option) (*localkms.LocalKMS, *tinkcrypto.Crypto, []aries.Option, error) {
 	masterKeyReader, err := prepareMasterKeyReader(indexedDBKMSProvider)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to prepare master key reader: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to prepare master key reader: %w", err)
 	}
 
 	secretLockService, err := local.NewService(masterKeyReader, nil)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create secret lock service: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to create secret lock service: %w", err)
 	}
 
 	kmsProv := kmsProvider{
@@ -655,16 +660,35 @@ func createEDVProviderAndKMS(edvServerURL, edvVaultID, indexedDBNamespace string
 
 	localKMS, err := localkms.New("local-lock://agentSDK", &kmsProv)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create local KMS: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to create local KMS: %w", err)
 	}
 
-	edvProvider, err := createEDVProvider(edvServerURL, edvVaultID, capability, authzKeyStoreURL,
-		indexedDBKMSProvider, localKMS)
+	if localKMS != nil {
+		allAriesOptions = append(allAriesOptions,
+			aries.WithKMS(func(ctx kms.Provider) (kms.KeyManager, error) {
+				return localKMS, nil
+			}))
+	}
+
+	c, err := tinkcrypto.New()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create EDV provider: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to create local Crypto: %w", err)
 	}
 
-	return edvProvider, localKMS, nil
+	allAriesOptions = append(allAriesOptions, aries.WithCrypto(c))
+
+	return localKMS, c, allAriesOptions, nil
+}
+
+func createEDVProvider(edvServerURL, edvVaultID, authzKeyStoreURL string, indexedDBKMSProvider *jsindexeddb.Provider,
+	capability []byte, kmsImpl kms.KeyManager, cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
+	edvProvider, err := createEDVStorageProvider(edvServerURL, edvVaultID, capability, authzKeyStoreURL,
+		indexedDBKMSProvider, kmsImpl, cryptoImpl)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create EDV provider: %w", err)
+	}
+
+	return edvProvider, nil
 }
 
 // prepareMasterKeyReader prepares a master key reader for secret lock usage.
@@ -701,23 +725,15 @@ func prepareMasterKeyReader(kmsSecretsStoreProvider storage.Provider) (*bytes.Re
 	return bytes.NewReader(masterKey), nil
 }
 
-// TODO (#45): Use the Aries Crypto object instantiated in the framework instead of creating a new one here. This will
-//  require some sort of change to aries-framework-go, since the Aries Crypto object isn't available until the
-//  framework has been initialized.
-func createEDVProvider(edvServerURL, vaultID string, capability []byte, authzKeyStoreURL string,
-	kmsStorageProvider storage.Provider, keyManager kms.KeyManager) (storage.Provider, error) {
-	crypto, err := tinkcrypto.New()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create new tink crypto: %w", err)
-	}
-
+func createEDVStorageProvider(edvServerURL, vaultID string, capability []byte, authzKeyStoreURL string,
+	kmsStorageProvider storage.Provider, keyManager kms.KeyManager, cr cryptoapi.Crypto) (storage.Provider, error) {
 	edvRESTProvider, err := prepareEDVRESTProvider(edvServerURL, vaultID, capability, authzKeyStoreURL,
-		kmsStorageProvider, keyManager, crypto)
+		kmsStorageProvider, keyManager, cr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare EDV REST provider: %w", err)
 	}
 
-	formattedProvider, err := prepareFormattedProvider(kmsStorageProvider, keyManager, crypto, edvRESTProvider)
+	formattedProvider, err := prepareFormattedProvider(kmsStorageProvider, keyManager, cr, edvRESTProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare formatted provider: %w", err)
 	}
