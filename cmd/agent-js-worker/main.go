@@ -220,8 +220,7 @@ func testHandlers() map[string]map[string]func(*command) *result {
 				return newErrResult(c.ID, "an error !!")
 			},
 			"timeout": func(c *command) *result {
-				// TODO (#84) Reduce this timeout value back to something reasonable once EDV storage speed is improved.
-				const echoTimeout = 120 * time.Second
+				const echoTimeout = 10 * time.Second
 
 				time.Sleep(echoTimeout)
 
