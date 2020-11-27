@@ -116,9 +116,10 @@ type agentStartOpts struct {
 	BlocDomain           string      `json:"blocDomain"`
 	TrustblocResolver    string      `json:"trustbloc-resolver"`
 	AuthzKeyStoreURL     string      `json:"authzKeyStoreURL,omitempty"`
-	MainKeyStoreURL      string      `json:"mainKeyStoreURL,omitempty"`
-	MainKIDURL           string      `json:"mainKIDURL,omitempty"`
-	UseRemoteKMS         bool        `json:"use-remote-kms"`
+	OpsKeyStoreURL       string      `json:"opsKeyStoreURL,omitempty"`
+	EDVOpsKIDURL         string      `json:"edvOpsKIDURL,omitempty"`
+	EDVHMACKIDURL        string      `json:"edvHMACKIDURL,omitempty"`
+	UseRemoteKMS         bool        `json:"useRemoteKMS"`
 	UserConfig           *userConfig `json:"userConfig,omitempty"`
 }
 
@@ -647,8 +648,7 @@ func addStorageOptions(startOpts *agentStartOpts, indexedDBProvider *jsindexeddb
 
 func createEDVStorage(opts *agentStartOpts, indexedDBProvider *jsindexeddb.Provider,
 	kmsImpl kms.KeyManager, cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
-	store, err := createEDVProvider(opts.EDVServerURL, opts.EDVVaultID, opts.AuthzKeyStoreURL,
-		opts.UserConfig, indexedDBProvider, []byte(opts.EDVCapability), kmsImpl, cryptoImpl)
+	store, err := createEDVProvider(opts, indexedDBProvider, kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create EDV provider: %w", err)
 	}
@@ -673,7 +673,7 @@ func createWebkms(opts *agentStartOpts,
 	httpClient := &http.Client{}
 	capability := []byte(opts.EDVCapability)
 
-	wKMS := webkms.New(opts.MainKeyStoreURL, httpClient,
+	wKMS := webkms.New(opts.OpsKeyStoreURL, httpClient,
 		webkms.WithHeaders(func(req *http.Request) (*http.Header, error) {
 			if len(capability) != 0 {
 				return zcapSVC.SignHeader(req, capability)
@@ -687,7 +687,7 @@ func createWebkms(opts *agentStartOpts,
 			return wKMS, nil
 		}))
 
-	wCrypto := webcrypto.New(opts.MainKeyStoreURL, httpClient,
+	wCrypto := webcrypto.New(opts.OpsKeyStoreURL, httpClient,
 		webkms.WithHeaders(func(req *http.Request) (*http.Header, error) {
 			if len(capability) != 0 {
 				return zcapSVC.SignHeader(req, capability)
@@ -740,11 +740,9 @@ func createLocalKMSAndCrypto(indexedDBKMSProvider storage.Provider,
 	return localKMS, c, allAriesOptions, nil
 }
 
-func createEDVProvider(edvServerURL, edvVaultID, authzKeyStoreURL string, userConfig *userConfig,
-	indexedDBKMSProvider *jsindexeddb.Provider, capability []byte, kmsImpl kms.KeyManager,
+func createEDVProvider(opts *agentStartOpts, indexedDBKMSProvider *jsindexeddb.Provider, kmsImpl kms.KeyManager,
 	cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
-	edvProvider, err := createEDVStorageProvider(edvServerURL, edvVaultID, capability, authzKeyStoreURL, userConfig,
-		indexedDBKMSProvider, kmsImpl, cryptoImpl)
+	edvProvider, err := createEDVStorageProvider(opts, indexedDBKMSProvider, kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create EDV provider: %w", err)
 	}
@@ -786,16 +784,14 @@ func prepareMasterKeyReader(kmsSecretsStoreProvider storage.Provider) (*bytes.Re
 	return bytes.NewReader(masterKey), nil
 }
 
-func createEDVStorageProvider(edvServerURL, vaultID string, capability []byte, authzKeyStoreURL string,
-	userConfig *userConfig, storageProvider storage.Provider, kmsImpl kms.KeyManager,
+func createEDVStorageProvider(opts *agentStartOpts, storageProvider storage.Provider, kmsImpl kms.KeyManager,
 	cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
-	edvRESTProvider, err := prepareEDVRESTProvider(edvServerURL, vaultID, capability, authzKeyStoreURL, userConfig,
-		storageProvider, kmsImpl, cryptoImpl)
+	edvRESTProvider, err := prepareEDVRESTProvider(opts, storageProvider, kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare EDV REST provider: %w", err)
 	}
 
-	formattedProvider, err := prepareFormattedProvider(storageProvider, kmsImpl, cryptoImpl, edvRESTProvider)
+	formattedProvider, err := prepareFormattedProvider(opts, storageProvider, kmsImpl, cryptoImpl, edvRESTProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare formatted provider: %w", err)
 	}
@@ -803,17 +799,18 @@ func createEDVStorageProvider(edvServerURL, vaultID string, capability []byte, a
 	return formattedProvider, nil
 }
 
-func prepareEDVRESTProvider(edvServerURL, vaultID string, capability []byte, authzKeyStoreURL string,
-	userConf *userConfig, storageProvider storage.Provider, kmsImpl kms.KeyManager,
+func prepareEDVRESTProvider(opts *agentStartOpts, storageProvider storage.Provider, kmsImpl kms.KeyManager,
 	cryptoImpl cryptoapi.Crypto) (*edv.RESTProvider, error) {
-	macCrypto, err := prepareLocalMACCrypto(storageProvider, kmsImpl, cryptoImpl)
+	macCrypto, err := prepareMACCrypto(opts, storageProvider, kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare MAC crypto: %w", err)
 	}
 
-	zcapSVC := zcapld.New(authzKeyStoreURL, userConf.Sub, userConf.SecretShare)
+	userConf := opts.UserConfig
+	capability := []byte(opts.EDVCapability)
+	zcapSVC := zcapld.New(opts.AuthzKeyStoreURL, userConf.Sub, userConf.SecretShare)
 
-	edvRESTProvider, err := edv.NewRESTProvider(edvServerURL, vaultID, macCrypto,
+	edvRESTProvider, err := edv.NewRESTProvider(opts.EDVServerURL, opts.EDVVaultID, macCrypto,
 		edv.WithHeaders(func(req *http.Request) (*http.Header, error) {
 			if len(capability) != 0 {
 				return zcapSVC.SignHeader(req, capability)
@@ -828,9 +825,9 @@ func prepareEDVRESTProvider(edvServerURL, vaultID string, capability []byte, aut
 	return edvRESTProvider, nil
 }
 
-func prepareFormattedProvider(kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager, cryptoImpl cryptoapi.Crypto,
-	provider storage.Provider) (*formattedstore.FormattedProvider, error) {
-	jweEncrypter, err := prepareLocalJWEEncrypter(kmsStorageProvider, kmsImpl, cryptoImpl)
+func prepareFormattedProvider(opts *agentStartOpts, kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager,
+	cryptoImpl cryptoapi.Crypto, provider storage.Provider) (*formattedstore.FormattedProvider, error) {
+	jweEncrypter, err := prepareJWEEncrypter(opts, kmsStorageProvider, kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare JWE encrypter: %w", err)
 	}
@@ -842,49 +839,55 @@ func prepareFormattedProvider(kmsStorageProvider storage.Provider, kmsImpl kms.K
 	return formattedstore.NewFormattedProvider(provider, encryptedFormatter, false), nil
 }
 
-func prepareLocalMACCrypto(kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager,
+func prepareMACCrypto(opts *agentStartOpts, kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager,
 	cryptoImpl cryptoapi.Crypto) (*edv.MACCrypto, error) {
-	_, macKeyHandle, err := prepareLocalKeyHandle(kmsStorageProvider, kmsImpl, hmacKeyIDDBKeyName,
-		kms.HMACSHA256Tag256Type)
-	if err != nil {
-		return nil, fmt.Errorf("failed to prepare MAC key handle: %w", err)
+	var (
+		macKeyHandle interface{}
+		err          error
+	)
+
+	if opts.UseRemoteKMS {
+		macKeyHandle = prepareRemoteKeyURL(opts, kms.HMACSHA256Tag256Type)
+	} else {
+		_, macKeyHandle, err = prepareLocalKeyHandle(kmsStorageProvider, kmsImpl, hmacKeyIDDBKeyName,
+			kms.HMACSHA256Tag256Type)
+		if err != nil {
+			return nil, fmt.Errorf("failed to prepare local MAC key handle: %w", err)
+		}
 	}
 
-	// TODO update aries-framework-go to process macKeyHandle as kidURL (of MAC key stored in remoteKMS)
 	return edv.NewMACCrypto(macKeyHandle, cryptoImpl), nil
 }
 
-func prepareLocalJWEEncrypter(kmsStorageProvider storage.Provider, keyManager kms.KeyManager,
+func prepareJWEEncrypter(opts *agentStartOpts, kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager,
 	crypto cryptoapi.Crypto) (*jose.JWEEncrypt, error) {
-	jweCryptoKID, jweCryptoKeyHandle, err := prepareLocalKeyHandle(kmsStorageProvider, keyManager, ecdhesKeyIDDBKeyName,
-		kms.ECDH256KWAES256GCMType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to prepare key handle for JWE crypto operations: %w", err)
-	}
+	var (
+		pubKeyBytes  []byte
+		jweCryptoKID string
+		err          error
+	)
 
-	pubKH, err := jweCryptoKeyHandle.Public()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get public key handle from JWE crypto private key handle: %w", err)
-	}
-
-	buf := new(bytes.Buffer)
-	pubKeyWriter := keyio.NewWriter(buf)
-
-	err = pubKH.WriteWithNoSecrets(pubKeyWriter)
-	if err != nil {
-		return nil, fmt.Errorf("failed to write JWE public key to bytes: %w", err)
+	if opts.UseRemoteKMS {
+		pubKeyBytes, jweCryptoKID, err = prepareRemoteJWEKey(opts.EDVOpsKIDURL, kmsImpl)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		pubKeyBytes, jweCryptoKID, err = prepareLocalJWEKey(kmsStorageProvider, kmsImpl)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	ecPubKey := new(cryptoapi.PublicKey)
 
 	ecPubKey.KID = jweCryptoKID
 
-	err = json.Unmarshal(buf.Bytes(), ecPubKey)
+	err = json.Unmarshal(pubKeyBytes, ecPubKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JWE public key bytes to an EC public key object: %w", err)
 	}
 
-	// TODO ensure jose.JWEEncrypter and jose.JWEDecrypter work with keys as kidURL for webkms (not just *keyset.Handle)
 	jweEncrypter, err := jose.NewJWEEncrypt(jose.A256GCM, jose.DIDCommEncType, "", nil,
 		[]*cryptoapi.PublicKey{ecPubKey}, crypto)
 	if err != nil {
@@ -892,6 +895,56 @@ func prepareLocalJWEEncrypter(kmsStorageProvider storage.Provider, keyManager km
 	}
 
 	return jweEncrypter, nil
+}
+
+func prepareRemoteJWEKey(keyURL string, kmsImpl kms.KeyManager) ([]byte, string, error) {
+	id := strings.LastIndex(keyURL, "/keys/") + len("/keys/")
+	if id > len(keyURL) {
+		return nil, "", fmt.Errorf("prepreRemoteJWEKey: keyURL not well well formatted: %s", keyURL)
+	}
+
+	kid := keyURL[id:] // need KID part only of keyURL since remoteKMS has the keystore URL.
+
+	pubKeyBytes, err := kmsImpl.ExportPubKeyBytes(kid)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to retrieve main public key bytes from remote KMS: %w", err)
+	}
+
+	return pubKeyBytes, kid, nil
+}
+
+func prepareLocalJWEKey(kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager) ([]byte, string, error) {
+	jweCryptoKID, jweCryptoKeyHandle, err := prepareLocalKeyHandle(kmsStorageProvider, kmsImpl, ecdhesKeyIDDBKeyName,
+		kms.ECDH256KWAES256GCMType)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to prepare key handle for JWE crypto operations: %w", err)
+	}
+
+	pubKH, err := jweCryptoKeyHandle.Public()
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to get public key handle from JWE crypto private key handle: %w", err)
+	}
+
+	buf := new(bytes.Buffer)
+	pubKeyWriter := keyio.NewWriter(buf)
+
+	err = pubKH.WriteWithNoSecrets(pubKeyWriter)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to write JWE public key to bytes: %w", err)
+	}
+
+	return buf.Bytes(), jweCryptoKID, nil
+}
+
+func prepareRemoteKeyURL(opts *agentStartOpts, keyType kms.KeyType) string {
+	switch keyType { // nolint:exhaustive // no need to check for other key types, only HMAC key is a special case.
+	case kms.HMACSHA256Tag256Type:
+		return opts.EDVHMACKIDURL
+	case kms.ECDH256KWAES256GCMType:
+		return opts.EDVOpsKIDURL
+	default:
+		return opts.EDVOpsKIDURL
+	}
 }
 
 func prepareLocalKeyHandle(storeProvider storage.Provider, keyManager kms.KeyManager,
