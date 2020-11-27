@@ -36,6 +36,8 @@ type httpClient interface {
 // Service to provide zcapld functionality.
 type Service struct {
 	authzKeyStoreURL string
+	userSub          string
+	secretShare      string
 	httpClient       httpClient
 }
 
@@ -48,8 +50,13 @@ type signResp struct {
 }
 
 // New return zcap service.
-func New(authzKeyStoreURL string) *Service {
-	return &Service{authzKeyStoreURL: authzKeyStoreURL, httpClient: &http.Client{}}
+func New(authzKeyStoreURL, userSub, secretShare string) *Service {
+	return &Service{
+		authzKeyStoreURL: authzKeyStoreURL,
+		userSub:          userSub,
+		secretShare:      secretShare,
+		httpClient:       &http.Client{},
+	}
 }
 
 // SignHeader sign header.
@@ -158,8 +165,8 @@ func (a *didKeySignatureHashAlgorithm) sign(keyID string, data []byte) ([]byte, 
 		return nil, err
 	}
 
-	// TODO change it
-	req.Header.Add("Hub-Kms-Secret", "changeme")
+	req.Header.Add("Hub-Kms-Secret", a.s.secretShare)
+	req.Header.Add("Hub-Kms-User", a.s.userSub)
 
 	resp, _, err := sendHTTPRequest(req, a.s.httpClient, http.StatusOK)
 	if err != nil {
