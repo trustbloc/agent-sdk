@@ -102,23 +102,29 @@ type result struct {
 
 // agentStartOpts contains opts for starting agent.
 type agentStartOpts struct {
-	Label                string   `json:"agent-default-label"`
-	HTTPResolvers        []string `json:"http-resolver-url"`
-	AutoAccept           bool     `json:"auto-accept"`
-	OutboundTransport    []string `json:"outbound-transport"`
-	TransportReturnRoute string   `json:"transport-return-route"`
-	LogLevel             string   `json:"log-level"`
-	StorageType          string   `json:"storageType"`
-	IndexedDBNamespace   string   `json:"indexedDB-namespace"`
-	EDVServerURL         string   `json:"edvServerURL"`
-	EDVVaultID           string   `json:"edvVaultID"`
-	EDVCapability        string   `json:"edvCapability,omitempty"`
-	BlocDomain           string   `json:"blocDomain"`
-	TrustblocResolver    string   `json:"trustbloc-resolver"`
-	AuthzKeyStoreURL     string   `json:"authzKeyStoreURL,omitempty"`
-	MainKeyStoreURL      string   `json:"mainKeyStoreURL,omitempty"`
-	MainKIDURL           string   `json:"mainKIDURL,omitempty"`
-	UseRemoteKMS         bool     `json:"use-remote-kms"`
+	Label                string      `json:"agent-default-label"`
+	HTTPResolvers        []string    `json:"http-resolver-url"`
+	AutoAccept           bool        `json:"auto-accept"`
+	OutboundTransport    []string    `json:"outbound-transport"`
+	TransportReturnRoute string      `json:"transport-return-route"`
+	LogLevel             string      `json:"log-level"`
+	StorageType          string      `json:"storageType"`
+	IndexedDBNamespace   string      `json:"indexedDB-namespace"`
+	EDVServerURL         string      `json:"edvServerURL"`
+	EDVVaultID           string      `json:"edvVaultID"`
+	EDVCapability        string      `json:"edvCapability,omitempty"`
+	BlocDomain           string      `json:"blocDomain"`
+	TrustblocResolver    string      `json:"trustbloc-resolver"`
+	AuthzKeyStoreURL     string      `json:"authzKeyStoreURL,omitempty"`
+	MainKeyStoreURL      string      `json:"mainKeyStoreURL,omitempty"`
+	MainKIDURL           string      `json:"mainKIDURL,omitempty"`
+	UseRemoteKMS         bool        `json:"use-remote-kms"`
+	UserConfig           *userConfig `json:"userConfig,omitempty"`
+}
+
+type userConfig struct {
+	Sub         string `sub:"sub"`
+	SecretShare string `json:"walletSecretShare"`
 }
 
 type kmsProvider struct {
@@ -481,6 +487,10 @@ func startOpts(payload map[string]interface{}) (*agentStartOpts, error) {
 		return nil, err
 	}
 
+	if opts.UserConfig == nil {
+		opts.UserConfig = &userConfig{}
+	}
+
 	return opts, nil
 }
 
@@ -637,8 +647,8 @@ func addStorageOptions(startOpts *agentStartOpts, indexedDBProvider *jsindexeddb
 
 func createEDVStorage(opts *agentStartOpts, indexedDBProvider *jsindexeddb.Provider,
 	kmsImpl kms.KeyManager, cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
-	store, err := createEDVProvider(opts.EDVServerURL, opts.EDVVaultID, opts.AuthzKeyStoreURL, indexedDBProvider,
-		[]byte(opts.EDVCapability), kmsImpl, cryptoImpl)
+	store, err := createEDVProvider(opts.EDVServerURL, opts.EDVVaultID, opts.AuthzKeyStoreURL,
+		opts.UserConfig, indexedDBProvider, []byte(opts.EDVCapability), kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create EDV provider: %w", err)
 	}
@@ -658,7 +668,7 @@ func createKMSAndCrypto(opts *agentStartOpts, indexedDBKMSProvider storage.Provi
 // nolint: unparam // need to match the number of returns of createKMSAndCrypto() and createLocalKMSAndCrypto()
 func createWebkms(opts *agentStartOpts,
 	allAriesOptions []aries.Option) (*webkms.RemoteKMS, *webcrypto.RemoteCrypto, []aries.Option, error) {
-	zcapSVC := zcapld.New(opts.AuthzKeyStoreURL)
+	zcapSVC := zcapld.New(opts.AuthzKeyStoreURL, opts.UserConfig.Sub, opts.UserConfig.SecretShare)
 
 	httpClient := &http.Client{}
 	capability := []byte(opts.EDVCapability)
@@ -730,9 +740,10 @@ func createLocalKMSAndCrypto(indexedDBKMSProvider storage.Provider,
 	return localKMS, c, allAriesOptions, nil
 }
 
-func createEDVProvider(edvServerURL, edvVaultID, authzKeyStoreURL string, indexedDBKMSProvider *jsindexeddb.Provider,
-	capability []byte, kmsImpl kms.KeyManager, cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
-	edvProvider, err := createEDVStorageProvider(edvServerURL, edvVaultID, capability, authzKeyStoreURL,
+func createEDVProvider(edvServerURL, edvVaultID, authzKeyStoreURL string, userConfig *userConfig,
+	indexedDBKMSProvider *jsindexeddb.Provider, capability []byte, kmsImpl kms.KeyManager,
+	cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
+	edvProvider, err := createEDVStorageProvider(edvServerURL, edvVaultID, capability, authzKeyStoreURL, userConfig,
 		indexedDBKMSProvider, kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create EDV provider: %w", err)
@@ -776,8 +787,9 @@ func prepareMasterKeyReader(kmsSecretsStoreProvider storage.Provider) (*bytes.Re
 }
 
 func createEDVStorageProvider(edvServerURL, vaultID string, capability []byte, authzKeyStoreURL string,
-	storageProvider storage.Provider, kmsImpl kms.KeyManager, cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
-	edvRESTProvider, err := prepareEDVRESTProvider(edvServerURL, vaultID, capability, authzKeyStoreURL,
+	userConfig *userConfig, storageProvider storage.Provider, kmsImpl kms.KeyManager,
+	cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
+	edvRESTProvider, err := prepareEDVRESTProvider(edvServerURL, vaultID, capability, authzKeyStoreURL, userConfig,
 		storageProvider, kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare EDV REST provider: %w", err)
@@ -792,14 +804,14 @@ func createEDVStorageProvider(edvServerURL, vaultID string, capability []byte, a
 }
 
 func prepareEDVRESTProvider(edvServerURL, vaultID string, capability []byte, authzKeyStoreURL string,
-	storageProvider storage.Provider, kmsImpl kms.KeyManager,
+	userConf *userConfig, storageProvider storage.Provider, kmsImpl kms.KeyManager,
 	cryptoImpl cryptoapi.Crypto) (*edv.RESTProvider, error) {
 	macCrypto, err := prepareLocalMACCrypto(storageProvider, kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare MAC crypto: %w", err)
 	}
 
-	zcapSVC := zcapld.New(authzKeyStoreURL)
+	zcapSVC := zcapld.New(authzKeyStoreURL, userConf.Sub, userConf.SecretShare)
 
 	edvRESTProvider, err := edv.NewRESTProvider(edvServerURL, vaultID, macCrypto,
 		edv.WithHeaders(func(req *http.Request) (*http.Header, error) {

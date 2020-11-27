@@ -27,7 +27,7 @@ import (
 
 func TestService_SignHeader(t *testing.T) {
 	t.Run("test wrong capability", func(t *testing.T) {
-		svc := New("")
+		svc := New("", "", "")
 
 		hdr, err := svc.SignHeader(&http.Request{Header: make(map[string][]string)}, []byte(""))
 		require.Error(t, err)
@@ -36,7 +36,7 @@ func TestService_SignHeader(t *testing.T) {
 	})
 
 	t.Run("test error creating signature", func(t *testing.T) {
-		svc := New("")
+		svc := New("", "", "")
 
 		hdr, err := svc.SignHeader(&http.Request{
 			Method: http.MethodGet,
@@ -50,7 +50,7 @@ func TestService_SignHeader(t *testing.T) {
 
 func TestDidKeySignatureHashAlgorithm_Create(t *testing.T) {
 	t.Run("test success", func(t *testing.T) {
-		svc := New("")
+		svc := New("", "", "")
 		svc.httpClient = &mockHTTPClient{DoFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
 				StatusCode: http.StatusOK,
@@ -70,7 +70,7 @@ func TestDidKeySignatureHashAlgorithm_Create(t *testing.T) {
 	})
 
 	t.Run("test wrong signature", func(t *testing.T) {
-		svc := New("")
+		svc := New("", "", "")
 		svc.httpClient = &mockHTTPClient{DoFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
 				StatusCode: http.StatusOK,
@@ -90,7 +90,7 @@ func TestDidKeySignatureHashAlgorithm_Create(t *testing.T) {
 	})
 
 	t.Run("test failed to unmarshal resp", func(t *testing.T) {
-		svc := New("")
+		svc := New("", "", "")
 		svc.httpClient = &mockHTTPClient{DoFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
 				StatusCode: http.StatusOK,
@@ -110,7 +110,7 @@ func TestDidKeySignatureHashAlgorithm_Create(t *testing.T) {
 	})
 
 	t.Run("test resp is not 200", func(t *testing.T) {
-		svc := New("")
+		svc := New("", "", "")
 		svc.httpClient = &mockHTTPClient{DoFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
 				StatusCode: http.StatusInternalServerError,
@@ -130,7 +130,7 @@ func TestDidKeySignatureHashAlgorithm_Create(t *testing.T) {
 	})
 
 	t.Run("test error from http client", func(t *testing.T) {
-		svc := New("")
+		svc := New("", "", "")
 		svc.httpClient = &mockHTTPClient{DoFunc: func(req *http.Request) (*http.Response, error) {
 			return nil, fmt.Errorf("http client error")
 		}}
