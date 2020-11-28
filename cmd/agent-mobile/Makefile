@@ -89,7 +89,7 @@ bindings-ios:
 	@echo '----------------------------------------'
 ifeq ($(IS_MACOS),true)
 	@mkdir -p $(IOS_BUILD_DIR)
-	$(GOMOBILE_CMD) bind -v -ldflags $(LDFLAGS) -target=$(IOS_TARGET) -o=$(IOS_BUILD_DIR)/$(IOS_OUTPUT_FILE_NAME) $(MOBILE_BUILD_PACKAGES)
+	@CGO_LDFLAGS_ALLOW='-fembed-bitcode' $(GOMOBILE_CMD) bind -v -ldflags $(LDFLAGS) -target=$(IOS_TARGET) -o=$(IOS_BUILD_DIR)/$(IOS_OUTPUT_FILE_NAME) $(MOBILE_BUILD_PACKAGES)
 else
 	@echo 'Skipping iOS bindings. Only available for Darwin operating systems.'
 endif

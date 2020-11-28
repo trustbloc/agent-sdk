@@ -10,11 +10,10 @@ replace github.com/kilic/bls12-381 => github.com/trustbloc/bls12-381 v0.0.0-2020
 require (
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.8.0
-	github.com/hyperledger/aries-framework-go v0.1.5-0.20201127225407-a71550e3ea9f
-	github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201127190801-509fc3277e1e
+	github.com/hyperledger/aries-framework-go v0.1.5-0.20201128183710-5fac40061fc4
+	github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201128183710-5fac40061fc4
 	github.com/igor-pavlenko/httpsignatures-go v0.0.21
 	github.com/stretchr/testify v1.6.1
 	github.com/trustbloc/edge-core v0.1.5-0.20201126210935-53388acb41fc
-	github.com/trustbloc/hub-kms v0.1.5-0.20201128171145-1064e10cc9e6 // indirect
 	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201113081448-0e789546b4d7
 )
