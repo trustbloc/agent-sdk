@@ -29,7 +29,7 @@ func TestService_SignHeader(t *testing.T) {
 	t.Run("test wrong capability", func(t *testing.T) {
 		svc := New("", "", "")
 
-		hdr, err := svc.SignHeader(&http.Request{Header: make(map[string][]string)}, []byte(""))
+		hdr, err := svc.SignHeader(&http.Request{Header: make(map[string][]string)}, []byte(""), "action")
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to unmarshal zcap")
 		require.Nil(t, hdr)
@@ -41,7 +41,7 @@ func TestService_SignHeader(t *testing.T) {
 		hdr, err := svc.SignHeader(&http.Request{
 			Method: http.MethodGet,
 			Header: make(map[string][]string),
-		}, []byte("{}"))
+		}, []byte("{}"), "action")
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "error creating signature")
 		require.Nil(t, hdr)

@@ -48,6 +48,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/mitchellh/mapstructure"
 	"github.com/trustbloc/edge-core/pkg/log"
+	kmszcap "github.com/trustbloc/hub-kms/pkg/restapi/kms/operation"
 	"github.com/trustbloc/trustbloc-did-method/pkg/vdri/trustbloc"
 
 	"github.com/trustbloc/agent-sdk/pkg/auth/zcapld"
@@ -682,7 +683,12 @@ func createWebkms(opts *agentStartOpts,
 	wKMS := webkms.New(opts.OpsKeyStoreURL, httpClient,
 		webkms.WithHeaders(func(req *http.Request) (*http.Header, error) {
 			if len(capability) != 0 {
-				return zcapSVC.SignHeader(req, capability)
+				invocationAction, err := kmszcap.CapabilityInvocationAction(req)
+				if err != nil {
+					return nil, fmt.Errorf("webkms: failed to determine the capability's invocation action: %w", err)
+				}
+
+				return zcapSVC.SignHeader(req, capability, invocationAction)
 			}
 
 			return nil, nil
@@ -696,7 +702,12 @@ func createWebkms(opts *agentStartOpts,
 	wCrypto := webcrypto.New(opts.OpsKeyStoreURL, httpClient,
 		webkms.WithHeaders(func(req *http.Request) (*http.Header, error) {
 			if len(capability) != 0 {
-				return zcapSVC.SignHeader(req, capability)
+				invocationAction, err := kmszcap.CapabilityInvocationAction(req)
+				if err != nil {
+					return nil, fmt.Errorf("webcrypto: failed to determine the capability's invocation action: %w", err)
+				}
+
+				return zcapSVC.SignHeader(req, capability, invocationAction)
 			}
 
 			return nil, nil
@@ -819,7 +830,13 @@ func prepareEDVRESTProvider(opts *agentStartOpts, storageProvider storage.Provid
 	edvRESTProvider, err := edv.NewRESTProvider(opts.EDVServerURL, opts.EDVVaultID, macCrypto,
 		edv.WithHeaders(func(req *http.Request) (*http.Header, error) {
 			if len(capability) != 0 {
-				return zcapSVC.SignHeader(req, capability)
+				action := "write"
+
+				if req.Method == http.MethodGet {
+					action = "read"
+				}
+
+				return zcapSVC.SignHeader(req, capability, action)
 			}
 
 			return nil, nil

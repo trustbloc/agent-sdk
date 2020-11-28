@@ -374,6 +374,8 @@ github.com/gorilla/mux v1.6.2/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2z
 github.com/gorilla/mux v1.7.3/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=
 github.com/gorilla/mux v1.7.4 h1:VuZ8uybHlWmqV03+zRzdwKL4tUnIp1MAQtp1mIFE1bc=
 github.com/gorilla/mux v1.7.4/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
+github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
+github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
 github.com/gorilla/securecookie v1.1.1/go.mod h1:ra0sb63/xPlUeL+yeDciTfxMRAA+MP+HVt/4epWDjd4=
 github.com/gorilla/sessions v1.2.0/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v0.0.0-20170926233335-4201258b820c/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
@@ -513,6 +515,8 @@ github.com/hyperledger/aries-framework-go v0.1.5-0.20201110161050-249e1c428734/g
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201120141223-c70cf578d36b/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201127190801-509fc3277e1e h1:kcsbyVkb0NOCKcVlQYim9QJIIDQRLdeV2eDOvNpPzFg=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201127190801-509fc3277e1e/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
+github.com/hyperledger/aries-framework-go v0.1.5-0.20201127225407-a71550e3ea9f h1:lfphkLXvaJT2LsHM8qTQ/ARIMS+VCHyEHaM0mEbzzo0=
+github.com/hyperledger/aries-framework-go v0.1.5-0.20201127225407-a71550e3ea9f/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
 github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201127190801-509fc3277e1e h1:lnNUO4959750k4CFy9XGc55keLcRxpr9PFS2n2w1GIg=
 github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201127190801-509fc3277e1e/go.mod h1:5Dwe/5rCyxqxAeygrilmJ4VpwwrFQlBOvLXvgPEhsdA=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
@@ -749,6 +753,7 @@ github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6So
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rs/cors v1.7.0 h1:+88SsELBHx5r+hZ8TCkggzSstaWNbDvThkVK8H6f9ik=
 github.com/rs/cors v1.7.0/go.mod h1:gFx+x8UowdsKA9AchylcLynDq+nNFfI8FkUZdN/jGCU=
+github.com/rs/xid v1.2.1/go.mod h1:+uKXf+4Djp6Md1KODXJxgGQPKngRmWyn10oCKFzNHOQ=
 github.com/rs/zerolog v1.4.0/go.mod h1:YbFCdg8HfsridGWAh22vktObvhZbQsZXe4/zB0OKkWU=
 github.com/russross/blackfriday v1.5.2/go.mod h1:JO/DiYxRf+HjHt06OyowR9PTA263kcR/rfWxYHBV53g=
 github.com/russross/blackfriday/v2 v2.0.1 h1:lPqVAte+HuHNfhJ/0LC98ESWRz8afy9tM/0RK8m9o+Q=
@@ -829,6 +834,10 @@ github.com/trustbloc/bls12-381 v0.0.0-20201104214312-31de2a204df8/go.mod h1:gcwD
 github.com/trustbloc/edge-core v0.1.4-0.20200709143857-e104bb29f6c6/go.mod h1:SZg7nAIc9FONS+G7MwEyGkCWCJR3R02bePwTpWxqH5w=
 github.com/trustbloc/edge-core v0.1.5-0.20201121214029-0646e96dbdcf h1:D8Q4KRWD64vWd6hgTdGDsWI0s9pEeKbN1eHsr+FVos0=
 github.com/trustbloc/edge-core v0.1.5-0.20201121214029-0646e96dbdcf/go.mod h1:iOoeeW5Jd6/hhEwaK0+lhBstV7yBWzJxckNU21V0+Vg=
+github.com/trustbloc/edge-core v0.1.5-0.20201126210935-53388acb41fc h1:sGjZhZKuOB/x4ZUXkrID05RwVYvHDg5fe5BQhhubE0g=
+github.com/trustbloc/edge-core v0.1.5-0.20201126210935-53388acb41fc/go.mod h1:iOoeeW5Jd6/hhEwaK0+lhBstV7yBWzJxckNU21V0+Vg=
+github.com/trustbloc/hub-kms v0.1.5-0.20201128171145-1064e10cc9e6 h1:iulM/ZZja011SxU8810nCapglryGh+9nTv8KiB6UZm8=
+github.com/trustbloc/hub-kms v0.1.5-0.20201128171145-1064e10cc9e6/go.mod h1:wP58fc6pZvFO2TWsnHUb63JFi/R9KgrFpqM0+0rL6SI=
 github.com/trustbloc/sidetree-core-go v0.1.5-0.20201111115036-54dcc46d4ee1 h1:HF6ZnQLt9SfXZXP74tN0yagXuOQE1LjXbG3LfKOphKI=
 github.com/trustbloc/sidetree-core-go v0.1.5-0.20201111115036-54dcc46d4ee1/go.mod h1:prRWqxBavkSxgKtPmUriSxCemrvl47yStMbW4jMFuRs=
 github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201113081448-0e789546b4d7 h1:jHYzRoZUCteZlLmBEISwf7/8jucWEJAor3yRrFp2euk=
