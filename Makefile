@@ -6,7 +6,7 @@
 GOBIN_PATH             = $(abspath .)/build/bin
 ARIES_AGENT_REST_PATH=cmd/agent-rest
 ARIES_AGENT_MOBILE_PATH=cmd/agent-mobile
-ARIES_FRAMEWORK_COMMIT=a37f1c10fd4e6cd84904a43cfd6a6eb9002f4161
+ARIES_FRAMEWORK_COMMIT=5fac40061fc4e5b229fb9278f376ec93f9a6c69a
 PROJECT_ROOT = github.com/trustbloc/agent-sdk
 OPENAPI_SPEC_PATH=build/rest/openapi/spec
 OPENAPI_DOCKER_IMG=quay.io/goswagger/swagger
