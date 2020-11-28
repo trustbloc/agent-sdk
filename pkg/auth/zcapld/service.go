@@ -60,7 +60,7 @@ func New(authzKeyStoreURL, userSub, secretShare string) *Service {
 }
 
 // SignHeader sign header.
-func (s *Service) SignHeader(req *http.Request, capabilityBytes []byte) (*http.Header, error) {
+func (s *Service) SignHeader(req *http.Request, capabilityBytes []byte, invocationAction string) (*http.Header, error) {
 	capability, err := zcapld.ParseCapability(capabilityBytes)
 	if err != nil {
 		return nil, err
@@ -71,13 +71,8 @@ func (s *Service) SignHeader(req *http.Request, capabilityBytes []byte) (*http.H
 		return nil, err
 	}
 
-	action := "write"
-	if req.Method == http.MethodGet {
-		action = "read"
-	}
-
 	req.Header.Set(zcapld.CapabilityInvocationHTTPHeader,
-		fmt.Sprintf(`zcap capability="%s",action="%s"`, compressedZcap, action))
+		fmt.Sprintf(`zcap capability="%s",action="%s"`, compressedZcap, invocationAction))
 
 	hs := httpsignatures.NewHTTPSignatures(&zcapld.AriesDIDKeySecrets{})
 	hs.SetSignatureHashAlgorithm(&didKeySignatureHashAlgorithm{
