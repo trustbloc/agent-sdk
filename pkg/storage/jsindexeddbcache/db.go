@@ -111,9 +111,8 @@ func (p *Provider) OpenStore(name string) (storage.Store, error) {
 	if !exist {
 		databaseName := fmt.Sprintf(dbName, name)
 		p.storesName[name] = databaseName
-		if err := clearStore(databaseName, name); err != nil {
-			return nil, err
-		}
+		// TODO find way to clear cache when user close browser
+		// Aries agent gets re-initialized every time CHAPI window opens
 	}
 
 	return store, nil
