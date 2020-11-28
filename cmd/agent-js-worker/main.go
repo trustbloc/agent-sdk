@@ -52,6 +52,7 @@ import (
 
 	"github.com/trustbloc/agent-sdk/pkg/auth/zcapld"
 	agentctrl "github.com/trustbloc/agent-sdk/pkg/controller"
+	"github.com/trustbloc/agent-sdk/pkg/storage/jsindexeddbcache"
 )
 
 var logger = log.New("agent-js-worker")
@@ -74,6 +75,7 @@ const (
 	masterKeyStoreName       = "MasterKey"
 	masterKeyDBKeyName       = masterKeyStoreName
 	masterKeyNumBytes        = 32
+	defaultClearCache        = "5m"
 )
 
 // TODO Signal JS when WASM is loaded and ready.
@@ -121,6 +123,8 @@ type agentStartOpts struct {
 	EDVHMACKIDURL        string      `json:"edvHMACKIDURL,omitempty"`
 	UseRemoteKMS         bool        `json:"useRemoteKMS"`
 	UserConfig           *userConfig `json:"userConfig,omitempty"`
+	UseEDVCache          bool        `json:"useEDVCache"`
+	ClearCache           string      `json:"clearCache"`
 }
 
 type userConfig struct {
@@ -635,6 +639,8 @@ func addStorageOptions(startOpts *agentStartOpts, indexedDBProvider *jsindexeddb
 		if err != nil {
 			return nil, fmt.Errorf("failed to create storage: %w", err)
 		}
+
+		allAriesOptions = append(allAriesOptions, aries.WithProtocolStateStoreProvider(indexedDBProvider))
 	case storageTypeIndexedDB:
 		store = indexedDBProvider
 	default:
@@ -836,7 +842,28 @@ func prepareFormattedProvider(opts *agentStartOpts, kmsStorageProvider storage.P
 
 	encryptedFormatter := edv.NewEncryptedFormatter(jweEncrypter, jweDecrypter)
 
-	return formattedstore.NewFormattedProvider(provider, encryptedFormatter, false), nil
+	var o []formattedstore.Option
+
+	if opts.UseEDVCache {
+		clearCache := opts.ClearCache
+		if clearCache == "" {
+			clearCache = defaultClearCache
+		}
+
+		t, err := time.ParseDuration(clearCache)
+		if err != nil {
+			return nil, err
+		}
+
+		p, err := jsindexeddbcache.NewProvider("cache", t)
+		if err != nil {
+			return nil, err
+		}
+
+		o = append(o, formattedstore.WithCacheProvider(p))
+	}
+
+	return formattedstore.NewFormattedProvider(provider, encryptedFormatter, false, o...), nil
 }
 
 func prepareMACCrypto(opts *agentStartOpts, kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager,
