@@ -58,9 +58,8 @@ func NewProvider(name string, clearCache time.Duration) (*Provider, error) {
 
 	for _, v := range getStoreNames() {
 		m[v] = db
-		if err := clearStore(db, v); err != nil {
-			return nil, err
-		}
+		// TODO find way to clear cache when user close browser
+		// Aries agent gets re-initialized every time CHAPI window opens
 	}
 
 	prov := &Provider{jsindexeddbProvider: jsindexeddbProvider, storesName: m}
