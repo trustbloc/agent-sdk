@@ -501,13 +501,10 @@ github.com/hyperledger/aries-framework-go v0.1.5-0.20201017112511-5734c20820a9/g
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201110161050-249e1c428734/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201120141223-c70cf578d36b/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201127225407-a71550e3ea9f/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
-github.com/hyperledger/aries-framework-go v0.1.5-0.20201129201502-2e2480bdec62 h1:feLUByve2RY8JEpXaTN5W/8i6dHIK5sbGz/ryUbaXVw=
-github.com/hyperledger/aries-framework-go v0.1.5-0.20201129201502-2e2480bdec62/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
-github.com/hyperledger/aries-framework-go v0.1.5-0.20201129230829-38376cc15c5a h1:0I6sjiulZVWOq3UBGldrapSf+OYKXZGtgZRxVaqNJY4=
-github.com/hyperledger/aries-framework-go v0.1.5-0.20201129230829-38376cc15c5a/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
-github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201129201502-2e2480bdec62/go.mod h1:5Dwe/5rCyxqxAeygrilmJ4VpwwrFQlBOvLXvgPEhsdA=
-github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201129230829-38376cc15c5a h1:WAP3yZkhKkQdYs0Bi10d/C5cbUoP6WHpmuTqQ0Ie7wo=
-github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201129230829-38376cc15c5a/go.mod h1:5Dwe/5rCyxqxAeygrilmJ4VpwwrFQlBOvLXvgPEhsdA=
+github.com/hyperledger/aries-framework-go v0.1.5-0.20201130183042-7389efefa5d5 h1:/flWCaHNECLXfj7NABNnKSWLxcktQH7hDdv5Fj43PNQ=
+github.com/hyperledger/aries-framework-go v0.1.5-0.20201130183042-7389efefa5d5/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
+github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201130183042-7389efefa5d5 h1:Ty5prPYu+pZPuGGnkZLHTDgM+mIp4Lo1v6AZ2R+ffZo=
+github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201130183042-7389efefa5d5/go.mod h1:5Dwe/5rCyxqxAeygrilmJ4VpwwrFQlBOvLXvgPEhsdA=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/igor-pavlenko/httpsignatures-go v0.0.21 h1:qSa8O/Xktnwh3zOdLYL3LFS3ARQ0K4m8JUdC0GJz3bU=
 github.com/igor-pavlenko/httpsignatures-go v0.0.21/go.mod h1:3LVsCi3evlfQSNDKMTg3uElxEP8SjK3/Q5N9I8GU9W0=
