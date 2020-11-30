@@ -70,6 +70,7 @@ const (
 	validStorageTypesMsg     = "Valid storage types: " + storageTypeEDV + ", " + storageTypeIndexedDB
 	blankStorageTypeErrMsg   = "no storage type specified. " + validStorageTypesMsg
 	invalidStorageTypeErrMsg = "%s is not a valid storage type. " + validStorageTypesMsg
+	kmsTypeWebKMS            = "webkms"
 	hmacKeyIDDBKeyName       = "hmackeyid"
 	keyIDStoreName           = "keyid"
 	ecdhesKeyIDDBKeyName     = "ecdheskeyid"
@@ -122,7 +123,7 @@ type agentStartOpts struct {
 	OpsKeyStoreURL       string      `json:"opsKeyStoreURL,omitempty"`
 	EDVOpsKIDURL         string      `json:"edvOpsKIDURL,omitempty"`
 	EDVHMACKIDURL        string      `json:"edvHMACKIDURL,omitempty"`
-	UseRemoteKMS         bool        `json:"useRemoteKMS"`
+	KMSType              string      `json:"kmsType"`
 	UserConfig           *userConfig `json:"userConfig,omitempty"`
 	UseEDVCache          bool        `json:"useEDVCache"`
 	ClearCache           string      `json:"clearCache"`
@@ -665,7 +666,7 @@ func createEDVStorage(opts *agentStartOpts, indexedDBProvider *jsindexeddb.Provi
 
 func createKMSAndCrypto(opts *agentStartOpts, indexedDBKMSProvider storage.Provider,
 	allAriesOptions []aries.Option) (kms.KeyManager, cryptoapi.Crypto, []aries.Option, error) {
-	if opts.UseRemoteKMS {
+	if opts.KMSType == kmsTypeWebKMS {
 		return createWebkms(opts, allAriesOptions)
 	}
 
@@ -891,7 +892,7 @@ func prepareMACCrypto(opts *agentStartOpts, kmsStorageProvider storage.Provider,
 		err          error
 	)
 
-	if opts.UseRemoteKMS {
+	if opts.KMSType == kmsTypeWebKMS {
 		macKeyHandle = prepareRemoteKeyURL(opts, kms.HMACSHA256Tag256Type)
 	} else {
 		_, macKeyHandle, err = prepareLocalKeyHandle(kmsStorageProvider, kmsImpl, hmacKeyIDDBKeyName,
@@ -912,7 +913,7 @@ func prepareJWEEncrypter(opts *agentStartOpts, kmsStorageProvider storage.Provid
 		err          error
 	)
 
-	if opts.UseRemoteKMS {
+	if opts.KMSType == kmsTypeWebKMS {
 		pubKeyBytes, jweCryptoKID, err = prepareRemoteJWEKey(opts.EDVOpsKIDURL, kmsImpl)
 		if err != nil {
 			return nil, err
