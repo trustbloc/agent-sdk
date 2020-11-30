@@ -840,7 +840,8 @@ func prepareEDVRESTProvider(opts *agentStartOpts, storageProvider storage.Provid
 			}
 
 			return nil, nil
-		}))
+		}),
+		edv.WithFullDocumentsReturnedFromQueries())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new EDV REST provider: %w", err)
 	}
