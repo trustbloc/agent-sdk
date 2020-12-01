@@ -9,6 +9,7 @@ SPDX-License-Identifier: Apache-2.0
 package jsindexeddbcache
 
 import (
+	"errors"
 	"fmt"
 	"syscall/js"
 	"time"
@@ -30,8 +31,9 @@ import (
 )
 
 const (
-	dbName    = "aries-%s"
-	defDBName = "aries"
+	dbName     = "aries-%s"
+	defDBName  = "aries"
+	timeLayout = "2006-01-02T15:04:05.000Z"
 )
 
 var logger = log.New("jsindexeddb-cache")
@@ -40,6 +42,7 @@ var logger = log.New("jsindexeddb-cache")
 type Provider struct {
 	jsindexeddbProvider storage.Provider
 	storesName          map[string]string
+	clearDB             bool
 }
 
 // NewProvider instantiates Provider.
@@ -54,15 +57,23 @@ func NewProvider(name string, clearCache time.Duration) (*Provider, error) {
 		db = fmt.Sprintf(dbName, name)
 	}
 
+	clearDB, err := checkClearTime(jsindexeddbProvider, clearCache)
+	if err != nil {
+		return nil, err
+	}
+
 	m := make(map[string]string)
 
 	for _, v := range getStoreNames() {
 		m[v] = db
-		// TODO find way to clear cache when user close browser
-		// Aries agent gets re-initialized every time CHAPI window opens
+		if clearDB {
+			if err := clearStore(db, v); err != nil {
+				return nil, err
+			}
+		}
 	}
 
-	prov := &Provider{jsindexeddbProvider: jsindexeddbProvider, storesName: m}
+	prov := &Provider{jsindexeddbProvider: jsindexeddbProvider, storesName: m, clearDB: clearDB}
 
 	ticker := time.NewTicker(clearCache)
 	quit := make(chan struct{})
@@ -110,8 +121,11 @@ func (p *Provider) OpenStore(name string) (storage.Store, error) {
 	if !exist {
 		databaseName := fmt.Sprintf(dbName, name)
 		p.storesName[name] = databaseName
-		// TODO find way to clear cache when user close browser
-		// Aries agent gets re-initialized every time CHAPI window opens
+		if p.clearDB {
+			if err := clearStore(databaseName, name); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return store, nil
@@ -171,4 +185,41 @@ func getStoreNames() []string {
 		issuecredential.Name,
 		presentproof.Name,
 	}
+}
+
+func checkClearTime(jsindexeddbProvider storage.Provider, clearCache time.Duration) (bool, error) {
+	cacheMeta, err := jsindexeddbProvider.OpenStore("cache_meta")
+	if err != nil {
+		return false, err
+	}
+
+	clearDB := false
+
+	clearTime, err := cacheMeta.Get("clear_time")
+	if err != nil {
+		if !errors.Is(err, storage.ErrDataNotFound) {
+			return false, err
+		}
+
+		if err := cacheMeta.Put("clear_time", []byte(time.Now().In(time.UTC).Add(clearCache).Format(timeLayout))); err != nil {
+			return false, err
+		}
+	} else {
+		// check clear time
+		now := time.Now().In(time.UTC)
+		t, err := time.Parse(timeLayout, string(clearTime))
+		if err != nil {
+			return false, err
+		}
+
+		if now.After(t) {
+			clearDB = true
+			if err := cacheMeta.Put("clear_time", []byte(time.Now().In(time.UTC).Add(clearCache).Format(timeLayout))); err != nil {
+				return false, err
+			}
+		}
+	}
+
+	return clearDB, nil
+
 }

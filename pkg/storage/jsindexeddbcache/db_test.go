@@ -49,4 +49,43 @@ func TestClear(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "data not found")
 	})
+
+	t.Run("test clear on open store", func(t *testing.T) {
+		prov, err := NewProvider(sampleDBName, 1*time.Second)
+		require.NoError(t, err)
+		store, err := prov.OpenStore("test")
+		require.NoError(t, err)
+
+		const key = "did:example:123"
+		data := []byte("value")
+
+		err = store.Put(key, data)
+		require.NoError(t, err)
+
+		doc, err := store.Get(key)
+		require.NoError(t, err)
+		require.NotEmpty(t, doc)
+		require.Equal(t, data, doc)
+
+		prov, err = NewProvider(sampleDBName, 1*time.Second)
+		require.NoError(t, err)
+		_, err = prov.OpenStore("test")
+		require.NoError(t, err)
+
+		doc, err = store.Get(key)
+		require.NoError(t, err)
+		require.NotEmpty(t, doc)
+		require.Equal(t, data, doc)
+
+		time.Sleep(2 * time.Second)
+
+		prov, err = NewProvider(sampleDBName, 1*time.Second)
+		require.NoError(t, err)
+		_, err = prov.OpenStore("test")
+		require.NoError(t, err)
+
+		_, err = store.Get(key)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "data not found")
+	})
 }
