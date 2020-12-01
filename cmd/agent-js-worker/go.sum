@@ -500,7 +500,6 @@ github.com/huaweicloud/golangsdk v0.0.0-20200304081349-45ec0797f2a4/go.mod h1:WQ
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201017112511-5734c20820a9/go.mod h1:cLWhBbjgrA04Di9ufGqAuTCdoM33Xq4Cuc3fL/VLAgI=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201110161050-249e1c428734/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201120141223-c70cf578d36b/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
-github.com/hyperledger/aries-framework-go v0.1.5-0.20201127225407-a71550e3ea9f/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201130232545-14a7f210c893 h1:cK1lAVgtoWhUJ2vE8OqiIRsdqTxpM0/nkUqUxQ4TOUc=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201130232545-14a7f210c893/go.mod h1:QzlBsH2J303U3r8lJ1jq69ackseH+v5/B9hpCFouBqg=
 github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201130232545-14a7f210c893 h1:EgWNnzX3SrcD7fmmu3mXFee0vcrd0ySKs3pTvsayaSs=
@@ -810,8 +809,8 @@ github.com/trustbloc/bls12-381 v0.0.0-20201104214312-31de2a204df8/go.mod h1:gcwD
 github.com/trustbloc/edge-core v0.1.4-0.20200709143857-e104bb29f6c6/go.mod h1:SZg7nAIc9FONS+G7MwEyGkCWCJR3R02bePwTpWxqH5w=
 github.com/trustbloc/edge-core v0.1.5-0.20201126210935-53388acb41fc h1:sGjZhZKuOB/x4ZUXkrID05RwVYvHDg5fe5BQhhubE0g=
 github.com/trustbloc/edge-core v0.1.5-0.20201126210935-53388acb41fc/go.mod h1:iOoeeW5Jd6/hhEwaK0+lhBstV7yBWzJxckNU21V0+Vg=
-github.com/trustbloc/hub-kms v0.1.5-0.20201128171145-1064e10cc9e6 h1:iulM/ZZja011SxU8810nCapglryGh+9nTv8KiB6UZm8=
-github.com/trustbloc/hub-kms v0.1.5-0.20201128171145-1064e10cc9e6/go.mod h1:wP58fc6pZvFO2TWsnHUb63JFi/R9KgrFpqM0+0rL6SI=
+github.com/trustbloc/hub-kms v0.1.5-0.20201201213232-7d1876ece16c h1:1tohk6zry/5sjLfhTuCQqyoeRdz7R4XlyprvjAddehI=
+github.com/trustbloc/hub-kms v0.1.5-0.20201201213232-7d1876ece16c/go.mod h1:tG3K06yehfFMBWPAnr6Xba/PDhlnfH/+b+COCrQUOCs=
 github.com/trustbloc/sidetree-core-go v0.1.5-0.20201111115036-54dcc46d4ee1 h1:HF6ZnQLt9SfXZXP74tN0yagXuOQE1LjXbG3LfKOphKI=
 github.com/trustbloc/sidetree-core-go v0.1.5-0.20201111115036-54dcc46d4ee1/go.mod h1:prRWqxBavkSxgKtPmUriSxCemrvl47yStMbW4jMFuRs=
 github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201113081448-0e789546b4d7 h1:jHYzRoZUCteZlLmBEISwf7/8jucWEJAor3yRrFp2euk=
