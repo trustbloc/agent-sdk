@@ -31,6 +31,7 @@ import (
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
+	ariesapi "github.com/hyperledger/aries-framework-go/pkg/framework/aries/api"
 	ariesvdr "github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/storage/mem"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
@@ -60,7 +61,9 @@ type Aries struct {
 
 // NewAries returns a new Aries instance that contains handlers and an Aries framework instance.
 func NewAries(opts *config.Options) (*Aries, error) {
-	options, err := prepareFrameworkOptions(opts)
+	msgHandler := msghandler.NewRegistrar()
+
+	options, err := prepareFrameworkOptions(opts, msgHandler)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare framework options: %w", err)
 	}
@@ -86,7 +89,10 @@ func NewAries(opts *config.Options) (*Aries, error) {
 	}
 
 	sdkCommandHandlers, err := sdkcontroller.GetCommandHandlers(context,
-		sdkcontroller.WithBlocDomain(opts.TrustblocDomain))
+		sdkcontroller.WithBlocDomain(opts.TrustblocDomain),
+		sdkcontroller.WithMessageHandler(msgHandler),
+		sdkcontroller.WithNotifier(notifier.NewNotifier(notifications)),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sdk command handlers: %w", err)
 	}
@@ -111,9 +117,8 @@ func NewAries(opts *config.Options) (*Aries, error) {
 }
 
 // TODO (#48): Add support for EDV storage.
-func prepareFrameworkOptions(opts *config.Options) ([]aries.Option, error) { // nolint: gocyclo
-	msgHandler := msghandler.NewRegistrar()
-
+func prepareFrameworkOptions(opts *config.Options, // nolint: gocyclo
+	msgHandler ariesapi.MessageServiceProvider) ([]aries.Option, error) {
 	var options []aries.Option
 	options = append(options, aries.WithMessageServiceProvider(msgHandler))
 
