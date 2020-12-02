@@ -10,7 +10,7 @@ replace github.com/kilic/bls12-381 => github.com/trustbloc/bls12-381 v0.0.0-2020
 require (
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.8.0
-	github.com/hyperledger/aries-framework-go v0.1.5-0.20201130232545-14a7f210c893
+	github.com/hyperledger/aries-framework-go v0.1.5-0.20201202081826-f11d5c44d1fb
 	github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201130232545-14a7f210c893
 	github.com/igor-pavlenko/httpsignatures-go v0.0.21
 	github.com/stretchr/testify v1.6.1
