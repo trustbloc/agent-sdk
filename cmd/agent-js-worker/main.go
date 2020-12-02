@@ -126,7 +126,9 @@ type agentStartOpts struct {
 	KMSType              string      `json:"kmsType"`
 	UserConfig           *userConfig `json:"userConfig,omitempty"`
 	UseEDVCache          bool        `json:"useEDVCache"`
-	ClearCache           string      `json:"clearCache"`
+	EDVClearCache        string      `json:"edvClearCache"`
+	EDVBatchLimit        int         `json:"edvBatchLimit,omitempty"`
+	EDVBatchTime         string      `json:"edvBatchTime,omitempty"`
 }
 
 type userConfig struct {
@@ -804,12 +806,18 @@ func prepareMasterKeyReader(kmsSecretsStoreProvider storage.Provider) (*bytes.Re
 
 func createEDVStorageProvider(opts *agentStartOpts, storageProvider storage.Provider, kmsImpl kms.KeyManager,
 	cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
-	edvRESTProvider, err := prepareEDVRESTProvider(opts, storageProvider, kmsImpl, cryptoImpl)
+	macCrypto, err := prepareMACCrypto(opts, storageProvider, kmsImpl, cryptoImpl)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare MAC crypto: %w", err)
+	}
+
+	edvRESTProvider, err := prepareEDVRESTProvider(opts, macCrypto)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare EDV REST provider: %w", err)
 	}
 
-	formattedProvider, err := prepareFormattedProvider(opts, storageProvider, kmsImpl, cryptoImpl, edvRESTProvider)
+	formattedProvider, err := prepareFormattedProvider(opts, storageProvider, kmsImpl, cryptoImpl, macCrypto,
+		edvRESTProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare formatted provider: %w", err)
 	}
@@ -817,13 +825,7 @@ func createEDVStorageProvider(opts *agentStartOpts, storageProvider storage.Prov
 	return formattedProvider, nil
 }
 
-func prepareEDVRESTProvider(opts *agentStartOpts, storageProvider storage.Provider, kmsImpl kms.KeyManager,
-	cryptoImpl cryptoapi.Crypto) (*edv.RESTProvider, error) {
-	macCrypto, err := prepareMACCrypto(opts, storageProvider, kmsImpl, cryptoImpl)
-	if err != nil {
-		return nil, fmt.Errorf("failed to prepare MAC crypto: %w", err)
-	}
-
+func prepareEDVRESTProvider(opts *agentStartOpts, macCrypto *edv.MACCrypto) (*edv.RESTProvider, error) {
 	userConf := opts.UserConfig
 	capability := []byte(opts.EDVCapability)
 	zcapSVC := zcapld.New(opts.AuthzKeyStoreURL, userConf.Sub, userConf.SecretShare)
@@ -851,7 +853,8 @@ func prepareEDVRESTProvider(opts *agentStartOpts, storageProvider storage.Provid
 }
 
 func prepareFormattedProvider(opts *agentStartOpts, kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager,
-	cryptoImpl cryptoapi.Crypto, provider storage.Provider) (*formattedstore.FormattedProvider, error) {
+	cryptoImpl cryptoapi.Crypto, macCrypto *edv.MACCrypto,
+	provider storage.Provider) (*formattedstore.FormattedProvider, error) {
 	jweEncrypter, err := prepareJWEEncrypter(opts, kmsStorageProvider, kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare JWE encrypter: %w", err)
@@ -859,12 +862,12 @@ func prepareFormattedProvider(opts *agentStartOpts, kmsStorageProvider storage.P
 
 	jweDecrypter := jose.NewJWEDecrypt(nil, cryptoImpl, kmsImpl)
 
-	encryptedFormatter := edv.NewEncryptedFormatter(jweEncrypter, jweDecrypter)
+	encryptedFormatter := edv.NewEncryptedFormatter(jweEncrypter, jweDecrypter, macCrypto)
 
 	var o []formattedstore.Option
 
 	if opts.UseEDVCache {
-		clearCache := opts.ClearCache
+		clearCache := opts.EDVClearCache
 		if clearCache == "" {
 			clearCache = defaultClearCache
 		}
@@ -880,6 +883,15 @@ func prepareFormattedProvider(opts *agentStartOpts, kmsStorageProvider storage.P
 		}
 
 		o = append(o, formattedstore.WithCacheProvider(p))
+	}
+
+	if opts.EDVBatchLimit != 0 && opts.EDVBatchTime != "" {
+		t, err := time.ParseDuration(opts.EDVBatchTime)
+		if err != nil {
+			return nil, err
+		}
+
+		o = append(o, formattedstore.WithBatchWrite(opts.EDVBatchLimit, t))
 	}
 
 	return formattedstore.NewFormattedProvider(provider, encryptedFormatter, false, o...), nil
