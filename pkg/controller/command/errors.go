@@ -34,6 +34,9 @@ const (
 
 	// MediatorClient error group for mediator client command errors.
 	MediatorClient Group = 2000
+
+	// Store error group for Store command errors.
+	Store Group = 3000
 )
 
 // Error is the  interface for representing an command error condition, with the nil value representing no error.
