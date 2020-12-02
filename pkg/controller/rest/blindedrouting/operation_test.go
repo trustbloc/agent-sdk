@@ -75,7 +75,7 @@ func TestOperation_SendDIDDocRequest(t *testing.T) {
 
 		go func() {
 			for {
-				if len(registrar.Services()) > 0 && mockMessenger.GetLastID() != "" { //nolint:gocritc
+				if len(registrar.Services()) > 0 && mockMessenger.GetLastID() != "" { //nolint: gocritic
 					replyMsg, e := service.ParseDIDCommMsgMap([]byte(fmt.Sprintf(replyMsgStr, mockMessenger.GetLastID())))
 					require.NoError(t, e)
 

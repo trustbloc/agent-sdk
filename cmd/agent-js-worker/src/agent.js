@@ -1151,6 +1151,54 @@ const Agent = function(opts) {
                 return invoke(aw, pending, this.pkgname, "SendRegisterRouteRequest", req, "timeout while sending register route request")
             },
         },
+
+        /**
+         * Store features
+         *
+         */
+        store: {
+            pkgname: "store",
+
+            /**
+             * Get fetches the record based on key.
+             *
+             * @param req - json document.
+             * @returns {Promise<Object>}
+             */
+            get: async function (req) {
+                return invoke(aw, pending, this.pkgname, "Get", req, "timeout while getting data")
+            },
+
+            /**
+             * Stores the key and the record.
+             *
+             * @param req - json document.
+             * @returns {Promise<Object>}
+             */
+            put: async function (req) {
+                return invoke(aw, pending, this.pkgname, "Put", req, "timeout while putting data")
+            },
+
+            /**
+             * Retrieves data according to given start and end keys.
+             *
+             * @param req - json document.
+             * @returns {Promise<Object>}
+             */
+            iterator: async function (req) {
+                return invoke(aw, pending, this.pkgname, "Iterator", req, "timeout while retrieving data")
+            },
+
+            /**
+             * Deletes a record with a given key.
+             *
+             * @param req - json document.
+             * @returns {Promise<Object>}
+             */
+            delete: async function (req) {
+                return invoke(aw, pending, this.pkgname, "Delete", req, "timeout while deleting data")
+            },
+        },
     }
 
     // start aries worker

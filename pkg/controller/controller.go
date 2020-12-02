@@ -18,6 +18,7 @@ import (
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/blindedrouting"
 	didclientcmd "github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
 	mediatorclientcmd "github.com/trustbloc/agent-sdk/pkg/controller/command/mediatorclient"
+	"github.com/trustbloc/agent-sdk/pkg/controller/command/store"
 	"github.com/trustbloc/agent-sdk/pkg/controller/rest"
 	blindedroutingrest "github.com/trustbloc/agent-sdk/pkg/controller/rest/blindedrouting"
 	"github.com/trustbloc/agent-sdk/pkg/controller/rest/didclient"
@@ -95,11 +96,17 @@ func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, 
 		return nil, err
 	}
 
+	storeCmd, err := store.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	// creat handlers for all command operations.
 	var allHandlers []command.Handler
 	allHandlers = append(allHandlers, didClientCmd.GetHandlers()...)
 	allHandlers = append(allHandlers, mediatorClientCmd.GetHandlers()...)
 	allHandlers = append(allHandlers, blindedRoutingCmd.GetHandlers()...)
+	allHandlers = append(allHandlers, storeCmd.GetHandlers()...)
 
 	return allHandlers, nil
 }

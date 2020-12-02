@@ -11,23 +11,30 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/common/service"
 	"github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol"
 	mocksvc "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/service"
+	"github.com/hyperledger/aries-framework-go/pkg/storage"
 )
 
 // MockProvider mock implementation of provider needed by sdk command controller.
 type MockProvider struct {
 	*protocol.MockProvider
+	StoreProvider        storage.Provider
 	ServiceEndpointValue string
 	CustomMessenger      service.Messenger
 }
 
 // NewMockProvider returns mock implementation of basic provider.
 func NewMockProvider() *MockProvider {
-	return &MockProvider{&protocol.MockProvider{}, "", nil}
+	return &MockProvider{MockProvider: &protocol.MockProvider{}}
 }
 
 // ServiceEndpoint returns the service endpoint.
 func (p *MockProvider) ServiceEndpoint() string {
 	return p.ServiceEndpointValue
+}
+
+// StorageProvider returns the storage provider.
+func (p *MockProvider) StorageProvider() storage.Provider {
+	return p.StoreProvider
 }
 
 // Messenger return mock messenger.
