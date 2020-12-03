@@ -1198,6 +1198,15 @@ const Agent = function(opts) {
             delete: async function (req) {
                 return invoke(aw, pending, this.pkgname, "Delete", req, "timeout while deleting data")
             },
+
+            /**
+             * Flush store data.
+             *
+             * @returns {Promise<Object>}
+             */
+            flush: async function () {
+                return invoke(aw, pending, this.pkgname, "Flush", {}, "timeout while flushing data")
+            },
         },
     }
 

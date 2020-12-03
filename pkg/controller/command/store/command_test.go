@@ -43,7 +43,7 @@ func TestCommand_GetHandlers(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cmd)
 
-	require.Len(t, cmd.GetHandlers(), 4)
+	require.Len(t, cmd.GetHandlers(), 5)
 }
 
 func TestCommand_Get(t *testing.T) {
@@ -166,6 +166,33 @@ func TestCommand_Delete(t *testing.T) {
 		require.NoError(t, cmd.Delete(res, bytes.NewBuffer(req)))
 
 		require.Equal(t, []byte(nil), storeProvider.Store.Store["key"])
+	})
+}
+
+func TestCommand_Flush(t *testing.T) {
+	t.Run("Error", func(t *testing.T) {
+		storeProvider := mocks.NewMockStoreProvider()
+		storeProvider.ErrFlush = errors.New("error")
+
+		cmd, err := New(&protocol.MockProvider{StoreProvider: storeProvider})
+		require.NoError(t, err)
+		require.NotNil(t, cmd)
+
+		res := &bytes.Buffer{}
+
+		require.EqualError(t, cmd.Flush(res, bytes.NewBuffer(nil)), "error")
+	})
+	t.Run("Success", func(t *testing.T) {
+		storeProvider := mocks.NewMockStoreProvider()
+		storeProvider.Store = &mocks.MockStore{Store: map[string][]byte{"key": []byte(`value`)}}
+
+		cmd, err := New(&protocol.MockProvider{StoreProvider: storeProvider})
+		require.NoError(t, err)
+		require.NotNil(t, cmd)
+
+		res := &bytes.Buffer{}
+
+		require.NoError(t, cmd.Flush(res, bytes.NewBuffer(nil)))
 	})
 }
 

@@ -22,6 +22,7 @@ type MockStoreProvider struct {
 	ErrClose           error
 	ErrCloseStore      error
 	FailNamespace      string
+	ErrFlush           error
 }
 
 // NewMockStoreProvider new store provider instance.
@@ -58,6 +59,11 @@ func (s *MockStoreProvider) Close() error {
 // CloseStore closes store for given name space.
 func (s *MockStoreProvider) CloseStore(name string) error {
 	return s.ErrCloseStore
+}
+
+// Flush data.
+func (s *MockStoreProvider) Flush() error {
+	return s.ErrFlush
 }
 
 // MockStore mock store.
