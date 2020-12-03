@@ -30,6 +30,8 @@ const (
 	IteratorCommandMethod = "Iterator"
 	// DeleteCommandMethod command method.
 	DeleteCommandMethod = "Delete"
+	// FlushCommandMethod command method.
+	FlushCommandMethod = "Flush"
 
 	successString = "success"
 )
@@ -47,6 +49,10 @@ const (
 	DeleteErrorCode
 )
 
+type batch interface {
+	Flush() error
+}
+
 var logger = log.New("agent-sdk-store")
 
 // Provider describes dependencies for the client.
@@ -57,16 +63,22 @@ type Provider interface {
 // Command is controller command for store.
 type Command struct {
 	store storage.Store
+	batch batch
 }
 
 // New returns new store controller command instance.
 func New(p Provider) (*Command, error) {
+	b, ok := p.StorageProvider().(batch)
+	if !ok {
+		logger.Infof("store provider not supporting batch")
+	}
+
 	store, err := p.StorageProvider().OpenStore(CommandName)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Command{store: store}, nil
+	return &Command{store: store, batch: b}, nil
 }
 
 // GetHandlers returns list of all commands supported by this controller command.
@@ -76,6 +88,7 @@ func (c *Command) GetHandlers() []command.Handler {
 		cmdutil.NewCommandHandler(CommandName, PutCommandMethod, c.Put),
 		cmdutil.NewCommandHandler(CommandName, IteratorCommandMethod, c.Iterator),
 		cmdutil.NewCommandHandler(CommandName, DeleteCommandMethod, c.Delete),
+		cmdutil.NewCommandHandler(CommandName, FlushCommandMethod, c.Flush),
 	}
 }
 
@@ -183,6 +196,22 @@ func (c *Command) Delete(rw io.Writer, req io.Reader) command.Error {
 	command.WriteNillableResponse(rw, nil, logger)
 
 	logutil.LogDebug(logger, CommandName, DeleteCommandMethod, successString)
+
+	return nil
+}
+
+// Flush data.
+func (c *Command) Flush(rw io.Writer, req io.Reader) command.Error {
+	err := c.batch.Flush()
+	if err != nil {
+		logutil.LogError(logger, CommandName, FlushCommandMethod, err.Error())
+
+		return command.NewExecuteError(GetErrorCode, err)
+	}
+
+	command.WriteNillableResponse(rw, &GetResponse{}, logger)
+
+	logutil.LogDebug(logger, CommandName, FlushCommandMethod, successString)
 
 	return nil
 }
