@@ -155,7 +155,7 @@ func (a *didKeySignatureHashAlgorithm) sign(keyID string, data []byte) ([]byte, 
 	}
 
 	req, err := http.NewRequestWithContext(context.TODO(),
-		http.MethodPost, "https://"+a.s.authzKeyStoreURL+fmt.Sprintf(signEndpoint, keyID), bytes.NewBuffer(reqBytes))
+		http.MethodPost, a.s.authzKeyStoreURL+fmt.Sprintf(signEndpoint, keyID), bytes.NewBuffer(reqBytes))
 	if err != nil {
 		return nil, err
 	}
