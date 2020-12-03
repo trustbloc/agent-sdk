@@ -10,11 +10,13 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -129,10 +131,11 @@ type agentStartOpts struct {
 	UseEDVCache          bool        `json:"useEDVCache"`
 	EDVClearCache        string      `json:"edvClearCache"`
 	EDVBatchThreadLimit  string      `json:"edvBatchThreadLimit,omitempty"`
+	OPSKMSCapability     string      `json:"opsKMSCapability,omitempty"` // TODO should remove this
 }
 
 type userConfig struct {
-	Sub         string `sub:"sub"`
+	AccessToken string `json:"accessToken,omitempty"` // TODO should remove this
 	SecretShare string `json:"walletSecretShare"`
 }
 
@@ -675,13 +678,16 @@ func createKMSAndCrypto(opts *agentStartOpts, indexedDBKMSProvider storage.Provi
 	return createLocalKMSAndCrypto(indexedDBKMSProvider, allAriesOptions)
 }
 
-// nolint: unparam // need to match the number of returns of createKMSAndCrypto() and createLocalKMSAndCrypto()
 func createWebkms(opts *agentStartOpts,
 	allAriesOptions []aries.Option) (*webkms.RemoteKMS, *webcrypto.RemoteCrypto, []aries.Option, error) {
-	zcapSVC := zcapld.New(opts.AuthzKeyStoreURL, opts.UserConfig.Sub, opts.UserConfig.SecretShare)
+	zcapSVC := zcapld.New(opts.AuthzKeyStoreURL, opts.UserConfig.AccessToken, opts.UserConfig.SecretShare)
 
 	httpClient := &http.Client{}
-	capability := []byte(opts.EDVCapability)
+
+	capability, err := decodeAndGunzip(opts.OPSKMSCapability)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to prepare OPS KMS capability for use: %w", err)
+	}
 
 	wKMS := webkms.New(opts.OpsKeyStoreURL, httpClient,
 		webkms.WithHeaders(func(req *http.Request) (*http.Header, error) {
@@ -719,6 +725,25 @@ func createWebkms(opts *agentStartOpts,
 	allAriesOptions = append(allAriesOptions, aries.WithCrypto(wCrypto))
 
 	return wKMS, wCrypto, allAriesOptions, nil
+}
+
+func decodeAndGunzip(zcap string) ([]byte, error) {
+	decoded, err := base64.URLEncoding.DecodeString(zcap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to base64URL-decode zcap: %w", err)
+	}
+
+	compressed, err := gzip.NewReader(bytes.NewReader(decoded))
+	if err != nil {
+		return nil, fmt.Errorf("failed to open gzip reader: %w", err)
+	}
+
+	uncompressed, err := ioutil.ReadAll(compressed)
+	if err != nil {
+		return nil, fmt.Errorf("failed to gunzip zcap: %w", err)
+	}
+
+	return uncompressed, nil
 }
 
 func createLocalKMSAndCrypto(indexedDBKMSProvider storage.Provider,
@@ -828,7 +853,7 @@ func createEDVStorageProvider(opts *agentStartOpts, storageProvider storage.Prov
 func prepareEDVRESTProvider(opts *agentStartOpts, macCrypto *edv.MACCrypto) (*edv.RESTProvider, error) {
 	userConf := opts.UserConfig
 	capability := []byte(opts.EDVCapability)
-	zcapSVC := zcapld.New(opts.AuthzKeyStoreURL, userConf.Sub, userConf.SecretShare)
+	zcapSVC := zcapld.New(opts.AuthzKeyStoreURL, userConf.AccessToken, userConf.SecretShare)
 
 	edvRESTProvider, err := edv.NewRESTProvider(opts.EDVServerURL, opts.EDVVaultID, macCrypto,
 		edv.WithHeaders(func(req *http.Request) (*http.Header, error) {
