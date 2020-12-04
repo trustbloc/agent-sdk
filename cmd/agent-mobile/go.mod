@@ -8,7 +8,7 @@ go 1.15
 
 require (
 	github.com/google/uuid v1.1.2
-	github.com/hyperledger/aries-framework-go v0.1.5-0.20201204140138-93181ce8f6bd
+	github.com/hyperledger/aries-framework-go v0.1.5-0.20201204175718-47143e0eada8
 	github.com/stretchr/testify v1.6.1
 	github.com/trustbloc/agent-sdk v0.0.0-00010101000000-000000000000
 	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201203214019-c56f43ad3f6e

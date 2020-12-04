@@ -18,7 +18,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 	"syscall/js"
 	"time"
@@ -130,7 +129,7 @@ type agentStartOpts struct {
 	UserConfig           *userConfig `json:"userConfig,omitempty"`
 	UseEDVCache          bool        `json:"useEDVCache"`
 	EDVClearCache        string      `json:"edvClearCache"`
-	EDVBatchThreadLimit  string      `json:"edvBatchThreadLimit,omitempty"`
+	UseEDVBatch          bool        `json:"useEDVBatch"`
 	OPSKMSCapability     string      `json:"opsKMSCapability,omitempty"` // TODO should remove this
 }
 
@@ -910,13 +909,8 @@ func prepareFormattedProvider(opts *agentStartOpts, kmsStorageProvider storage.P
 		o = append(o, formattedstore.WithCacheProvider(p))
 	}
 
-	if opts.EDVBatchThreadLimit != "" {
-		edvBatchThreadLimit, err := strconv.Atoi(opts.EDVBatchThreadLimit)
-		if err != nil {
-			return nil, err
-		}
-
-		o = append(o, formattedstore.WithBatchWrite(edvBatchThreadLimit))
+	if opts.UseEDVBatch {
+		o = append(o, formattedstore.WithBatchWrite())
 	}
 
 	return formattedstore.NewFormattedProvider(provider, encryptedFormatter, false, o...), nil
