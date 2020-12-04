@@ -43,6 +43,10 @@ func TestClear(t *testing.T) {
 		require.NotEmpty(t, doc)
 		require.Equal(t, data, doc)
 
+		itr := store.Iterator("1", "2")
+		require.Error(t, itr.Error())
+		require.Contains(t, itr.Error().Error(), "range not found")
+
 		time.Sleep(3 * time.Second)
 
 		_, err = store.Get(key)

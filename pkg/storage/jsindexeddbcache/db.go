@@ -128,7 +128,68 @@ func (p *Provider) OpenStore(name string) (storage.Store, error) {
 		}
 	}
 
-	return store, nil
+	return &cacheStore{store: store}, nil
+}
+
+type cacheStore struct {
+	store storage.Store
+}
+
+// Put stores the key and the record.
+func (s *cacheStore) Put(k string, v []byte) error {
+	return s.store.Put(k, v)
+}
+
+// Get fetches the record based on key.
+func (s *cacheStore) Get(k string) ([]byte, error) {
+	return s.store.Get(k)
+}
+
+// Iterator returns iterator for the latest snapshot of the underlying db.
+func (s *cacheStore) Iterator(start, limit string) storage.StoreIterator {
+	itr := s.store.Iterator(start, limit)
+
+	// Need to check iterator is empty
+	// TODO need refactor iterator to expose empty
+	if !itr.Next() {
+		return &iterator{err: fmt.Errorf("range not found")}
+	}
+
+	return s.store.Iterator(start, limit)
+}
+
+// Delete will delete record with k key.
+func (s *cacheStore) Delete(k string) error {
+	return s.store.Delete(k)
+}
+
+type iterator struct {
+	err error
+}
+
+// Next moves pointer to next value of iterator.
+// It returns false if the iterator is exhausted.
+func (s *iterator) Next() bool {
+	return false
+}
+
+// Release releases associated resources.
+func (s *iterator) Release() {
+}
+
+// Error returns error in iterator.
+func (s *iterator) Error() error {
+	return s.err
+}
+
+// Key returns the key of the current key/value pair.
+func (s *iterator) Key() []byte {
+	return nil
+}
+
+// Value returns the value of the current key/value pair.
+func (s *iterator) Value() []byte {
+	return nil
 }
 
 func clearStore(databaseName, storeName string) error {
