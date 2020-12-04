@@ -11,7 +11,7 @@ require (
 	github.com/hyperledger/aries-framework-go v0.1.5-0.20201203213646-f860d0851f7e
 	github.com/stretchr/testify v1.6.1
 	github.com/trustbloc/agent-sdk v0.0.0-00010101000000-000000000000
-	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201113081448-0e789546b4d7
+	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201203214019-c56f43ad3f6e
 	nhooyr.io/websocket v1.8.3
 )
 

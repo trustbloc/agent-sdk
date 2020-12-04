@@ -15,5 +15,5 @@ require (
 	github.com/igor-pavlenko/httpsignatures-go v0.0.21
 	github.com/stretchr/testify v1.6.1
 	github.com/trustbloc/edge-core v0.1.5-0.20201126210935-53388acb41fc
-	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201113081448-0e789546b4d7
+	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201203214019-c56f43ad3f6e
 )
