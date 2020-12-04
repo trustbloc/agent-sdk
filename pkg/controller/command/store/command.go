@@ -202,11 +202,13 @@ func (c *Command) Delete(rw io.Writer, req io.Reader) command.Error {
 
 // Flush data.
 func (c *Command) Flush(rw io.Writer, req io.Reader) command.Error {
-	err := c.batch.Flush()
-	if err != nil {
-		logutil.LogError(logger, CommandName, FlushCommandMethod, err.Error())
+	if c.batch != nil {
+		err := c.batch.Flush()
+		if err != nil {
+			logutil.LogError(logger, CommandName, FlushCommandMethod, err.Error())
 
-		return command.NewExecuteError(GetErrorCode, err)
+			return command.NewExecuteError(GetErrorCode, err)
+		}
 	}
 
 	command.WriteNillableResponse(rw, &GetResponse{}, logger)
