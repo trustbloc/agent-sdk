@@ -26,7 +26,7 @@ require (
 	github.com/trustbloc/agent-sdk v0.0.0
 	github.com/trustbloc/edge-core v0.1.5-0.20201126210935-53388acb41fc
 	github.com/trustbloc/hub-kms v0.1.5-0.20201201213232-7d1876ece16c
-	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201113081448-0e789546b4d7
+	github.com/trustbloc/trustbloc-did-method v0.1.5-0.20201203214019-c56f43ad3f6e
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897 // indirect
 	golang.org/x/sys v0.0.0-20201028094953-708e7fb298ac // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
