@@ -130,6 +130,8 @@ type agentStartOpts struct {
 	UseEDVCache          bool        `json:"useEDVCache"`
 	EDVClearCache        string      `json:"edvClearCache"`
 	UseEDVBatch          bool        `json:"useEDVBatch"`
+	EDVBatchSize         int         `json:"edvBatchSize"`
+	CacheSize            int         `json:"cacheSize"`
 	OPSKMSCapability     string      `json:"opsKMSCapability,omitempty"` // TODO should remove this
 }
 
@@ -707,19 +709,25 @@ func createWebkms(opts *agentStartOpts,
 			return wKMS, nil
 		}))
 
-	wCrypto := webcrypto.New(opts.OpsKeyStoreURL, httpClient,
-		webkms.WithHeaders(func(req *http.Request) (*http.Header, error) {
-			if len(capability) != 0 {
-				invocationAction, err := kmszcap.CapabilityInvocationAction(req)
-				if err != nil {
-					return nil, fmt.Errorf("webcrypto: failed to determine the capability's invocation action: %w", err)
-				}
+	var opt []webkms.Opt
+	if opts.CacheSize >= 0 {
+		opt = append(opt, webkms.WithCache(opts.CacheSize))
+	}
 
-				return zcapSVC.SignHeader(req, capability, invocationAction)
+	opt = append(opt, webkms.WithHeaders(func(req *http.Request) (*http.Header, error) {
+		if len(capability) != 0 {
+			invocationAction, err := kmszcap.CapabilityInvocationAction(req)
+			if err != nil {
+				return nil, fmt.Errorf("webcrypto: failed to determine the capability's invocation action: %w", err)
 			}
 
-			return nil, nil
-		}))
+			return zcapSVC.SignHeader(req, capability, invocationAction)
+		}
+
+		return nil, nil
+	}))
+
+	wCrypto := webcrypto.New(opts.OpsKeyStoreURL, httpClient, opt...)
 
 	allAriesOptions = append(allAriesOptions, aries.WithCrypto(wCrypto))
 
@@ -910,7 +918,7 @@ func prepareFormattedProvider(opts *agentStartOpts, kmsStorageProvider storage.P
 	}
 
 	if opts.UseEDVBatch {
-		o = append(o, formattedstore.WithBatchWrite())
+		o = append(o, formattedstore.WithBatchWrite(opts.EDVBatchSize))
 	}
 
 	return formattedstore.NewFormattedProvider(provider, encryptedFormatter, false, o...), nil
