@@ -6,7 +6,7 @@
 
 # Release Parameters
 BASE_VERSION=0.1.5
-IS_RELEASE=false
+IS_RELEASE=true
 
 SOURCE_REPO=agent-sdk
 RELEASE_REPO=trustbloc/${SOURCE_REPO}
