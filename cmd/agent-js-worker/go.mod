@@ -13,8 +13,8 @@ require (
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/google/tink/go v1.5.0
 	github.com/google/uuid v1.1.2
-	github.com/hyperledger/aries-framework-go v0.1.5-0.20201207174605-8e3674244a19
-	github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201205211909-fdef7da31ced
+	github.com/hyperledger/aries-framework-go v0.1.5-0.20201207215715-f6487952da9b
+	github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201207215715-f6487952da9b
 	github.com/jinzhu/copier v0.0.0-20201025035756-632e723a6687 // indirect
 	github.com/kilic/bls12-381 v0.0.0-20201022102231-585cb842ccd9 // indirect
 	github.com/mitchellh/mapstructure v1.3.3
