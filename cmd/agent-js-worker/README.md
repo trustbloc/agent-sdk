@@ -31,7 +31,7 @@ Run `npm install && npm run build` in this directory. The output bundles will be
 **Example:** accept a did-exchange invitation:
 
 ```js
-// in the browser
+// in the browser (this agent's initialization shows all possible arguments)
 
 const agent = await new Agent.Framework({
     assetsPath: "/public/dist/assets",
@@ -40,9 +40,27 @@ const agent = await new Agent.Framework({
     "auto-accept": true,
     "outbound-transport": ["ws", "http"],
     "transport-return-route": "all",
-    "indexedDB-namespace": "demo",
+    "log-level": "debug",
     "storageType": "indexedDB",
-    "log-level": "debug"
+    "indexedDB-namespace": "demo",
+    "edvServerURL": "",
+    "edvVaultID": "",
+    "edvCapability": "",
+    "blocDomain": "",
+    "trustbloc-resolver": "",
+    "authzKeyStoreURL": "",
+    "opsKeyStoreURL": "",
+    "edvOpsKIDURL": "",
+    "edvHMACKIDURL": "",
+    "kmsType": "",
+    "userConfig": {
+        "walletSecretShare": ""
+    },
+    "useEDVCache": false,
+    "edvClearCache": "",
+    "useEDVBatch": false,
+    "edvBatchSize": 0,
+    "cacheSize": 0
 })
 
 // sample invitation
