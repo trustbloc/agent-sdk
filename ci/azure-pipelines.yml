@@ -24,6 +24,7 @@ jobs:
           echo '//npm.pkg.github.com/:_authToken=${DOCKER_PASSWORD}' > ~/.npmrc
           echo '@hyperledger:registry=https://npm.pkg.github.com' >> ~/.npmrc
           echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
+          echo '@trustbloc:registry=https://npm.pkg.github.com' >> ~/.npmrc
           make checks
         env:
           DOCKER_PASSWORD: $(DOCKER_PASSWORD)
@@ -89,6 +90,7 @@ jobs:
           echo '//npm.pkg.github.com/:_authToken=${DOCKER_PASSWORD}' > ~/.npmrc
           echo '@hyperledger:registry=https://npm.pkg.github.com' >> ~/.npmrc
           echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
+          echo '@trustbloc:registry=https://npm.pkg.github.com' >> ~/.npmrc
           export npm_config_prefix=~/.npm-prefix
           make aries-js-bdd
         env:
@@ -122,6 +124,7 @@ jobs:
           echo '//npm.pkg.github.com/:_authToken=${DOCKER_PASSWORD}' > ~/.npmrc
           echo '@hyperledger:registry=https://npm.pkg.github.com' >> ~/.npmrc
           echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
+          echo '@trustbloc:registry=https://npm.pkg.github.com' >> ~/.npmrc
           make agent-rest-docker
           docker tag docker.pkg.github.com/trustbloc/agent-sdk/agent-sdk-rest:latest ${AGENT_SDK_PKG}:${AGENT_SDK_TAG}
           docker push ${AGENT_SDK_PKG}:${AGENT_SDK_TAG}
