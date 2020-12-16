@@ -200,8 +200,6 @@ func TestCommand_Connect(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, resp.ConnectionID, sampleConnID)
-		require.Equal(t, resp.RoutingKeys, []string{sampleRoutingKeys})
-		require.Equal(t, resp.RouterEndpoint, sampleRouterEndpoint)
 	})
 
 	t.Run("test successful connect with state complete notification", func(t *testing.T) {
@@ -247,8 +245,6 @@ func TestCommand_Connect(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, resp.ConnectionID, sampleConnID)
-		require.Equal(t, resp.RoutingKeys, []string{sampleRoutingKeys})
-		require.Equal(t, resp.RouterEndpoint, sampleRouterEndpoint)
 	})
 
 	t.Run("test failure due to incorrect request", func(t *testing.T) {
@@ -348,29 +344,6 @@ func TestCommand_Connect(t *testing.T) {
 		cmdErr := c.Connect(&b, bytes.NewBufferString(sampleInvitation))
 		require.Error(t, cmdErr)
 		require.Contains(t, cmdErr.Error(), sampleErr)
-		require.Equal(t, cmdErr.Type(), command.ExecuteError)
-		require.Equal(t, cmdErr.Code(), ConnectMediatorError)
-	})
-
-	t.Run("test failure due to mediator registration error", func(t *testing.T) {
-		prov := newMockProvider(map[string]interface{}{
-			mediatorsvc.Coordination:   &mockroute.MockMediatorSvc{},
-			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{ConnID: sampleConnID},
-			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
-				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ string, _ []string) (s string, e error) {
-					return sampleConnID, nil
-				},
-			},
-		})
-
-		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
-		require.NoError(t, err)
-		require.NotNil(t, c)
-
-		var b bytes.Buffer
-		cmdErr := c.Connect(&b, bytes.NewBufferString(sampleInvitation))
-		require.Error(t, cmdErr)
-		require.Contains(t, cmdErr.Error(), "router not registered")
 		require.Equal(t, cmdErr.Type(), command.ExecuteError)
 		require.Equal(t, cmdErr.Code(), ConnectMediatorError)
 	})

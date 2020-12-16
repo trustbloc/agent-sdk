@@ -152,8 +152,6 @@ func TestOperation_Connect(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, resp.Response.ConnectionID, sampleConnID)
-		require.Equal(t, resp.Response.RoutingKeys, []string{sampleRoutingKeys})
-		require.Equal(t, resp.Response.RouterEndpoint, sampleRouterEndpoint)
 	})
 
 	t.Run("test failed connect", func(t *testing.T) {
