@@ -33,9 +33,7 @@ type ConnectionRequest struct {
 
 // ConnectionResponse contains response.
 type ConnectionResponse struct {
-	ConnectionID   string   `json:"connectionID"`
-	RouterEndpoint string   `json:"routerEndpoint"`
-	RoutingKeys    []string `json:"routingKeys"`
+	ConnectionID string `json:"connectionID"`
 }
 
 // CreateInvitationRequest model

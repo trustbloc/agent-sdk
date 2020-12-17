@@ -192,14 +192,7 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:
 		return command.NewExecuteError(ConnectMediatorError, err)
 	}
 
-	err = c.waitForStateCompleted(statusCh, connID)
-	if err != nil {
-		logutil.LogError(logger, CommandName, Connect, err.Error())
-
-		return command.NewExecuteError(ConnectMediatorError, err)
-	}
-
-	err = c.waitForStateCompletedNotification(notificationCh)
+	err = c.waitForConnect(statusCh, notificationCh, connID)
 	if err != nil {
 		logutil.LogError(logger, CommandName, Connect, err.Error())
 
@@ -213,18 +206,7 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:
 		return command.NewExecuteError(ConnectMediatorError, err)
 	}
 
-	config, err := c.mediator.GetConfig(connID)
-	if err != nil {
-		logutil.LogError(logger, CommandName, Connect, err.Error())
-
-		return command.NewExecuteError(ConnectMediatorError, err)
-	}
-
-	command.WriteNillableResponse(rw, &ConnectionResponse{
-		ConnectionID:   connID,
-		RoutingKeys:    config.Keys(),
-		RouterEndpoint: config.Endpoint(),
-	}, logger)
+	command.WriteNillableResponse(rw, &ConnectionResponse{ConnectionID: connID}, logger)
 
 	logutil.LogDebug(logger, CommandName, Connect, successString)
 
@@ -329,7 +311,19 @@ func (c *Command) SendCreateConnectionRequest(rw io.Writer, req io.Reader) comma
 	return nil
 }
 
-func (c *Command) waitForStateCompleted(didStateMsgs chan service.StateMsg, connID string) error {
+//nolint: gocyclo
+func (c *Command) waitForConnect(didStateMsgs chan service.StateMsg,
+	notificationCh chan messaging.NotificationPayload, connID string) error {
+	if notificationCh != nil {
+		select {
+		case <-notificationCh:
+			// TODO correlate connection ID
+			return nil
+		case <-time.After(c.didExchTimeout):
+			return fmt.Errorf("timeout waiting for state completed message from mediator")
+		}
+	}
+
 	done := make(chan struct{})
 
 	go func() {
@@ -367,19 +361,4 @@ func (c *Command) waitForStateCompleted(didStateMsgs chan service.StateMsg, conn
 	case <-time.After(c.didExchTimeout):
 		return fmt.Errorf("time out waiting for did exchange state 'completed'")
 	}
-}
-
-func (c *Command) waitForStateCompletedNotification(notificationCh chan messaging.NotificationPayload) error {
-	if notificationCh == nil {
-		return nil
-	}
-
-	select {
-	case <-notificationCh:
-		// TODO correlate connection ID
-	case <-time.After(c.didExchTimeout):
-		return fmt.Errorf("timeout waiting for state completed message from mediator")
-	}
-
-	return nil
 }
