@@ -26,6 +26,7 @@ import (
 	"github.com/google/tink/go/subtle/random"
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb"
+	arieslog "github.com/hyperledger/aries-framework-go/pkg/common/log"
 	ariesctrl "github.com/hyperledger/aries-framework-go/pkg/controller"
 	controllercmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	cryptoapi "github.com/hyperledger/aries-framework-go/pkg/crypto"
@@ -1090,7 +1091,14 @@ func setLogLevel(logLevel string) error {
 			return err
 		}
 
+		ariesLoglevel, err := arieslog.ParseLevel(logLevel)
+		if err != nil {
+			return fmt.Errorf("parse aries log level '%s' : %w", logLevel, err)
+		}
+
 		log.SetLevel("", level)
+		arieslog.SetLevel("", ariesLoglevel)
+
 		logger.Infof("log level set to `%s`", logLevel)
 	}
 
