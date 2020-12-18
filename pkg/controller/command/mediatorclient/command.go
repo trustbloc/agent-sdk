@@ -155,16 +155,9 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:
 		return command.NewValidationError(InvalidRequestErrorCode, fmt.Errorf(errInvalidConnectionRequest))
 	}
 
-	statusCh := make(chan service.StateMsg)
-
-	err = c.didExchange.RegisterMsgEvent(statusCh)
-	if err != nil {
-		logutil.LogError(logger, CommandName, Connect, err.Error())
-
-		return command.NewExecuteError(ConnectMediatorError, err)
-	}
-
 	var notificationCh chan messaging.NotificationPayload
+
+	var statusCh chan service.StateMsg
 
 	if request.StateCompleteMessageType != "" {
 		notificationCh = make(chan messaging.NotificationPayload)
@@ -183,6 +176,15 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:
 				logger.Warnf("Failed to unregister state completion notifier: %w", e)
 			}
 		}()
+	} else {
+		statusCh = make(chan service.StateMsg)
+
+		err = c.didExchange.RegisterMsgEvent(statusCh)
+		if err != nil {
+			logutil.LogError(logger, CommandName, Connect, err.Error())
+
+			return command.NewExecuteError(ConnectMediatorError, err)
+		}
 	}
 
 	connID, err := c.outOfBand.AcceptInvitation(request.Invitation, request.MyLabel)
