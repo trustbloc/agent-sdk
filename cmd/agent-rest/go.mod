@@ -4,16 +4,13 @@
 
 module github.com/trustbloc/agent-sdk/cmd/agent-rest
 
-replace (
-	github.com/kilic/bls12-381 => github.com/trustbloc/bls12-381 v0.0.0-20201104214312-31de2a204df8
-	github.com/trustbloc/agent-sdk => ../../
-)
+replace github.com/trustbloc/agent-sdk => ../../
 
 require (
 	github.com/cenkalti/backoff/v4 v4.1.0
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/gorilla/mux v1.8.0
-	github.com/hyperledger/aries-framework-go v0.1.5
+	github.com/hyperledger/aries-framework-go v0.1.6-0.20201222220949-494657120ff6
 	github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20201113155502-c4ba5d2c7c0a
 	github.com/hyperledger/aries-framework-go-ext/component/storage/mysql v0.0.0-20201113155502-c4ba5d2c7c0a
 	github.com/hyperledger/aries-framework-go/component/storage/leveldb v0.0.0-20201208011347-35f4bc183acf
