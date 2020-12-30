@@ -1147,7 +1147,7 @@ const Agent = function(opts) {
              * @param req - json document containing message id and raw DID document.
              * @returns {Promise<Object>}
              */
-            sendRegisterRouteRequest: async function () {
+            sendRegisterRouteRequest: async function (req) {
                 return invoke(aw, pending, this.pkgname, "SendRegisterRouteRequest", req, "timeout while sending register route request")
             },
         },
