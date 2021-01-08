@@ -61,16 +61,7 @@ jobs:
       - template: azp-dependencies.yml
       - checkout: self
       - bash: |
-          function logout {
-            docker logout
-          }
-          trap logout EXIT
-          source ci/version_var.sh
-          echo $DOCKER_PASSWORD | docker login docker.pkg.github.com --username $DOCKER_USER --password-stdin
           make rest-api-bdd
-        env:
-          DOCKER_PASSWORD: $(DOCKER_PASSWORD)
-          DOCKER_USER: $(DOCKER_USER)
         displayName: Run agent REST API tests (docker)
 
   - job: AgentJSTest
@@ -81,12 +72,7 @@ jobs:
       - template: azp-dependencies.yml
       - checkout: self
       - bash: |
-          function logout {
-            docker logout
-          }
-          trap logout EXIT
           source ci/version_var.sh
-          echo $DOCKER_PASSWORD | docker login docker.pkg.github.com --username $DOCKER_USER --password-stdin
           echo '//npm.pkg.github.com/:_authToken=${DOCKER_PASSWORD}' > ~/.npmrc
           echo '@hyperledger:registry=https://npm.pkg.github.com' >> ~/.npmrc
           echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
@@ -95,7 +81,6 @@ jobs:
           make aries-js-bdd
         env:
           DOCKER_PASSWORD: $(DOCKER_PASSWORD)
-          DOCKER_USER: $(DOCKER_USER)
         displayName: Run agent JS tests (npm)
 
   - job: Publish
@@ -120,13 +105,13 @@ jobs:
           git lfs install
           git lfs pull
           source ci/version_var.sh
-          echo $DOCKER_PASSWORD | docker login docker.pkg.github.com --username $DOCKER_USER --password-stdin
+          echo $DOCKER_PASSWORD | docker login ghcr.io --username $DOCKER_USER --password-stdin
           echo '//npm.pkg.github.com/:_authToken=${DOCKER_PASSWORD}' > ~/.npmrc
           echo '@hyperledger:registry=https://npm.pkg.github.com' >> ~/.npmrc
           echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
           echo '@trustbloc:registry=https://npm.pkg.github.com' >> ~/.npmrc
-          make agent-rest-docker
-          docker tag docker.pkg.github.com/trustbloc/agent-sdk/agent-sdk-rest:latest ${AGENT_SDK_PKG}:${AGENT_SDK_TAG}
+          make agent-server-docker
+          docker tag ghcr.io/trustbloc/agent-sdk-server:latest ${AGENT_SDK_PKG}:${AGENT_SDK_TAG}
           docker push ${AGENT_SDK_PKG}:${AGENT_SDK_TAG}
           cd ./cmd/agent-js-worker
           sed -i 's/"version": "0.1.0"/"version": "'$NPM_PKG_TAG'"/g' package.json

@@ -13,8 +13,8 @@ RELEASE_REPO=trustbloc/${SOURCE_REPO}
 SNAPSHOT_REPO=trustbloc-cicd/snapshot
 NPM_PKG_NAME=${RELEASE_REPO}
 
-DOCKER_RELEASE_REPO=docker.pkg.github.com/trustbloc/${SOURCE_REPO}
-DOCKER_SNAPSHOT_REPO=docker.pkg.github.com/trustbloc-cicd/snapshot
+DOCKER_RELEASE_REPO=ghcr.io/trustbloc
+DOCKER_SNAPSHOT_REPO=ghcr.io/trustbloc-cicd
 
 if [ ${IS_RELEASE} = false ]
 then
@@ -33,4 +33,4 @@ export NPM_PKG_TAG=${PROJECT_VERSION}
 export NPM_PKG_NAME=${NPM_PKG_NAME}
 export NPM_PKG_REPO=${PROJECT_PKG_REPO}
 export AGENT_SDK_TAG=${PROJECT_VERSION}
-export AGENT_SDK_PKG=${DOCKER_PROJECT_PKG_REPO}/agent-sdk-rest
+export AGENT_SDK_PKG=${DOCKER_PROJECT_PKG_REPO}/agent-sdk-server
