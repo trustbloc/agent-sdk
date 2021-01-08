@@ -26,9 +26,9 @@ cd $framework_dir || exit 1
 git checkout ${ARIES_FRAMEWORK_COMMIT}
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  sed -i '' -e "1,/E2E_AGENT_REST_IMAGE.*/s/E2E_AGENT_REST_IMAGE.*/E2E_AGENT_REST_IMAGE=docker.pkg.github.com\/trustbloc\/agent-sdk\/agent-sdk-rest/" test/aries-js-worker/fixtures/.env
+  sed -i '' -e "1,/E2E_AGENT_REST_IMAGE.*/s/E2E_AGENT_REST_IMAGE.*/E2E_AGENT_REST_IMAGE=ghcr.io\/trustbloc\/agent-sdk-server/" test/aries-js-worker/fixtures/.env
 else
-  sed -i -e "1,/E2E_AGENT_REST_IMAGE.*/s/E2E_AGENT_REST_IMAGE.*/E2E_AGENT_REST_IMAGE=docker.pkg.github.com\/trustbloc\/agent-sdk\/agent-sdk-rest/" test/aries-js-worker/fixtures/.env
+  sed -i -e "1,/E2E_AGENT_REST_IMAGE.*/s/E2E_AGENT_REST_IMAGE.*/E2E_AGENT_REST_IMAGE=ghcr.io\/trustbloc\/agent-sdk-server/" test/aries-js-worker/fixtures/.env
 fi
 
 make sidetree-cli

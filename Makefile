@@ -6,22 +6,22 @@
 GOBIN_PATH             = $(abspath .)/build/bin
 ARIES_AGENT_REST_PATH=cmd/agent-rest
 ARIES_AGENT_MOBILE_PATH=cmd/agent-mobile
-ARIES_FRAMEWORK_COMMIT=35f4bc183acf12d3eb8969f71170b6a54345f71f
+ARIES_FRAMEWORK_COMMIT=20fa96607e8faf48c65ac62c7492d58e01e46e95
 PROJECT_ROOT = github.com/trustbloc/agent-sdk
 OPENAPI_SPEC_PATH=build/rest/openapi/spec
 OPENAPI_DOCKER_IMG=quay.io/goswagger/swagger
 OPENAPI_DOCKER_IMG_VERSION=v0.23.0
 
 # Namespace for the agent images
-DOCKER_OUTPUT_NS   ?= docker.pkg.github.com
-REPO_IMAGE_NAME   ?= trustbloc/agent-sdk
-DOCKER_AGENT_NAME ?= agent-sdk-rest
+DOCKER_OUTPUT_NS   ?= ghcr.io
+REPO_IMAGE_NAME   ?= trustbloc
+DOCKER_AGENT_NAME ?= agent-sdk-server
 
 ALPINE_VER ?= 3.12
 GO_VER ?= 1.15
 
 .PHONY: all
-all: clean checks unit-test unit-test-wasm agent-rest agent-rest-docker bdd-test
+all: clean checks unit-test unit-test-wasm agent-rest agent-server-docker bdd-test
 
 .PHONY: checks
 checks: license lint
@@ -52,8 +52,8 @@ agent-rest:
 	@mkdir -p ./build/bin
 	@cd ${ARIES_AGENT_REST_PATH} && go build -o ../../build/bin/agent-rest main.go
 
-.PHONY: agent-rest-docker
-agent-rest-docker:
+.PHONY: agent-server-docker
+agent-server-docker:
 	@echo "Building aries agent rest docker image"
 	@docker build -f ./images/agent-rest/Dockerfile --no-cache -t $(DOCKER_OUTPUT_NS)/$(REPO_IMAGE_NAME)/${DOCKER_AGENT_NAME}:latest \
 	--build-arg GO_VER=$(GO_VER) \
@@ -62,11 +62,11 @@ agent-rest-docker:
 	--build-arg GOPROXY=$(GOPROXY) .
 
 .PHONY: rest-api-bdd
-rest-api-bdd: clean agent-rest-docker
+rest-api-bdd: clean agent-server-docker
 	@ARIES_FRAMEWORK_COMMIT=$(ARIES_FRAMEWORK_COMMIT) scripts/aries_bdd_tests.sh
 
 .PHONY: aries-js-bdd
-aries-js-bdd: clean agent-rest-docker
+aries-js-bdd: clean agent-server-docker
 	@ARIES_FRAMEWORK_COMMIT=$(ARIES_FRAMEWORK_COMMIT) scripts/aries_js_bdd_tests.sh
 
 .PHONY: unit-test-mobile
@@ -93,7 +93,7 @@ generate-openapi-spec: clean
 	scripts/generate-openapi-spec.sh
 
 .PHONY: generate-openapi-demo-specs
-generate-openapi-demo-specs: clean generate-openapi-spec agent-rest-docker
+generate-openapi-demo-specs: clean generate-openapi-spec agent-server-docker
 	@echo "Generate demo agent rest controller API specifications using Open API"
 	@SPEC_PATH=${OPENAPI_SPEC_PATH} OPENAPI_DEMO_PATH=deployments/demo/openapi \
     	DOCKER_IMAGE=$(OPENAPI_DOCKER_IMG) DOCKER_IMAGE_VERSION=$(OPENAPI_DOCKER_IMG_VERSION)  \
@@ -107,7 +107,7 @@ generate-test-keys: clean
 		frapsoft/openssl
 
 .PHONY: run-openapi-demo
-run-openapi-demo: generate-test-keys generate-openapi-demo-specs agent-rest-docker
+run-openapi-demo: generate-test-keys generate-openapi-demo-specs agent-server-docker
 	@echo "Starting demo agent rest containers ..."
 	@DEMO_COMPOSE_PATH=deployments/demo/openapi SIDETREE_COMPOSE_PATH=deployments/sidetree-mock AGENT_REST_COMPOSE_PATH=deployments/agent-rest  \
         scripts/run-openapi-demo.sh

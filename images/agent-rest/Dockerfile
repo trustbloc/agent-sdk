@@ -26,6 +26,8 @@ RUN GO_TAGS=${GO_TAGS} GOPROXY=${GOPROXY} make agent-rest
 
 
 FROM alpine:${ALPINE_VER} as base
+LABEL org.opencontainers.image.source https://github.com/trustbloc/agent-sdk
+
 RUN apk add -U --no-cache ca-certificates
 COPY --from=aries-framework /go/src/github.com/trustbloc/agent-sdk/build/bin/agent-rest /usr/local/bin
 ENTRYPOINT ["agent-rest"]
