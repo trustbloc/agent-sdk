@@ -157,7 +157,7 @@ For example, to create a "sidetree" public DID in alice agent, go to `HTTP POST 
 
 NOTE: Before using Present Proof protocol you need to establish did-connection.
 If you already have established a did-connection you can use it, if not then  see the instruction
-of [how to establish a did-connection](https://github.com/trustbloc/agent-sdk/blob/master/docs/rest/openapi_demo.md#how-to-create-a-did-connection-through-the-out-of-band-protocol).
+of [how to establish a did-connection](https://github.com/trustbloc/agent-sdk/blob/main/docs/rest/openapi_demo.md#how-to-create-a-did-connection-through-the-out-of-band-protocol).
 
 1. Send a request presentation (Alice).
 
@@ -330,7 +330,7 @@ of [how to establish a did-connection](https://github.com/trustbloc/agent-sdk/bl
 
 NOTE: Before using Issue Credential protocol you need to establish did-connection.
 If you already have established a did-connection you can use it, if not then see the instruction
-of [how to establish a did-connection](https://github.com/trustbloc/agent-sdk/blob/master/docs/rest/openapi_demo.md#how-to-create-a-did-connection-through-the-out-of-band-protocol).
+of [how to establish a did-connection](https://github.com/trustbloc/agent-sdk/blob/main/docs/rest/openapi_demo.md#how-to-create-a-did-connection-through-the-out-of-band-protocol).
 
 1. Send an offer (Alice).
 
