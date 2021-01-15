@@ -20,7 +20,7 @@ npm install
 npm link
 cd $root
 
-git clone -b master https://github.com/hyperledger/aries-framework-go $framework_dir
+git clone -b main https://github.com/hyperledger/aries-framework-go $framework_dir
 cd $framework_dir || exit 1
 
 git checkout ${ARIES_FRAMEWORK_COMMIT}

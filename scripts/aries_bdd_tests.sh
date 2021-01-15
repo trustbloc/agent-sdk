@@ -9,7 +9,7 @@ set -e
 echo "Copying aries feature file..."
 pwd=$(pwd)
 rm -rf ./build/aries-framework-go
-git clone -b master https://github.com/hyperledger/aries-framework-go ./build/aries-framework-go
+git clone -b main https://github.com/hyperledger/aries-framework-go ./build/aries-framework-go
 cd ./build/aries-framework-go || exit
 
 git checkout ${ARIES_FRAMEWORK_COMMIT}
