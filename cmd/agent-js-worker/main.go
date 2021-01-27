@@ -1001,7 +1001,7 @@ func prepareRemoteJWEKey(keyURL string, kmsImpl kms.KeyManager) ([]byte, string,
 
 func prepareLocalJWEKey(kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager) ([]byte, string, error) {
 	jweCryptoKID, jweCryptoKeyHandle, err := prepareLocalKeyHandle(kmsStorageProvider, kmsImpl, ecdhesKeyIDDBKeyName,
-		kms.ECDH256KWAES256GCMType)
+		kms.NISTP256ECDHKW)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to prepare key handle for JWE crypto operations: %w", err)
 	}
@@ -1026,7 +1026,7 @@ func prepareRemoteKeyURL(opts *agentStartOpts, keyType kms.KeyType) string {
 	switch keyType { // nolint:exhaustive // no need to check for other key types, only HMAC key is a special case.
 	case kms.HMACSHA256Tag256Type:
 		return opts.EDVHMACKIDURL
-	case kms.ECDH256KWAES256GCMType:
+	case kms.NISTP256ECDHKW:
 		return opts.EDVOpsKIDURL
 	default:
 		return opts.EDVOpsKIDURL
