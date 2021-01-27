@@ -16,14 +16,16 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
+	"github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc"
 	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
 	mediatorservice "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	ariesjose "github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
+	"github.com/hyperledger/aries-framework-go/pkg/kms"
+	"github.com/hyperledger/aries-framework-go/pkg/vdr/peer"
 	"github.com/trustbloc/edge-core/pkg/log"
-	didclient "github.com/trustbloc/trustbloc-did-method/pkg/did"
-	"github.com/trustbloc/trustbloc-did-method/pkg/did/doc"
-	"github.com/trustbloc/trustbloc-did-method/pkg/did/option/create"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/cmdutil"
@@ -43,6 +45,12 @@ const (
 	successString = "success"
 
 	didCommServiceType = "did-communication"
+
+	// ed25519KeyType defines ed25119 key type.
+	ed25519KeyType = "Ed25519"
+
+	// p256KeyType EC P-256 key type.
+	p256KeyType = "P256"
 )
 
 const (
@@ -65,7 +73,7 @@ type Provider interface {
 }
 
 type didBlocClient interface {
-	CreateDID(domain string, opts ...create.Option) (*did.Doc, error)
+	Create(keyManager kms.KeyManager, did *did.Doc, opts ...vdr.DIDMethodOption) (*did.DocResolution, error)
 }
 
 // mediatorClient is client interface for mediator.
@@ -76,7 +84,7 @@ type mediatorClient interface {
 
 // New returns new DID Exchange controller command instance.
 func New(domain string, p Provider) (*Command, error) {
-	client := didclient.New()
+	client := trustbloc.New(nil, trustbloc.WithDomain(domain))
 
 	mClient, err := mediator.New(p)
 	if err != nil {
@@ -122,7 +130,7 @@ func (c *Command) GetHandlers() []command.Handler {
 }
 
 // CreateTrustBlocDID creates a new trust bloc DID.
-func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error { //nolint: funlen
+func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error { //nolint: funlen,gocyclo
 	var request CreateBlocDIDRequest
 
 	err := json.NewDecoder(req).Decode(&request)
@@ -132,7 +140,9 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 		return command.NewValidationError(InvalidRequestErrorCode, err)
 	}
 
-	var opts []create.Option
+	didDoc := did.Doc{}
+
+	var didMethodOpt []vdr.DIDMethodOption
 
 	for _, v := range request.PublicKeys {
 		value, decodeErr := base64.RawURLEncoding.DecodeString(v.Value)
@@ -142,46 +152,74 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 			return command.NewExecuteError(CreateDIDErrorCode, decodeErr)
 		}
 
+		k, errGet := getKey(v.KeyType, value)
+		if errGet != nil {
+			logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, errGet.Error())
+
+			return command.NewExecuteError(CreateDIDErrorCode, errGet)
+		}
+
 		if v.Recovery {
-			k, recoverKeyErr := getKey(v.KeyType, value)
-			if recoverKeyErr != nil {
-				logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, recoverKeyErr.Error())
-
-				return command.NewExecuteError(CreateDIDErrorCode, recoverKeyErr)
-			}
-
-			opts = append(opts, create.WithRecoveryPublicKey(k))
+			didMethodOpt = append(didMethodOpt, vdr.WithOption(trustbloc.RecoveryPublicKeyOpt, k))
 
 			continue
 		}
 
 		if v.Update {
-			k, updateKeyErr := getKey(v.KeyType, value)
-			if updateKeyErr != nil {
-				logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, updateKeyErr.Error())
-
-				return command.NewExecuteError(CreateDIDErrorCode, updateKeyErr)
-			}
-
-			opts = append(opts, create.WithUpdatePublicKey(k))
+			didMethodOpt = append(didMethodOpt, vdr.WithOption(trustbloc.UpdatePublicKeyOpt, k))
 
 			continue
 		}
 
-		opts = append(opts, create.WithPublicKey(&doc.PublicKey{
-			ID: v.ID, Type: v.Type, Encoding: v.Encoding,
-			KeyType: v.KeyType, Purposes: v.Purposes, Value: value,
-		}))
+		jwk, errJWK := ariesjose.JWKFromPublicKey(k)
+		if errJWK != nil {
+			logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, errJWK.Error())
+
+			return command.NewExecuteError(CreateDIDErrorCode, errJWK)
+		}
+
+		vm, errVM := did.NewVerificationMethodFromJWK(v.ID, v.Type, "", jwk)
+		if errVM != nil {
+			logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, errVM.Error())
+
+			return command.NewExecuteError(CreateDIDErrorCode, errVM)
+		}
+
+		for _, p := range v.Purposes {
+			switch p {
+			case doc.KeyPurposeAuthentication:
+				didDoc.Authentication = append(didDoc.Authentication,
+					*did.NewReferencedVerification(vm, did.Authentication))
+			case doc.KeyPurposeAssertionMethod:
+				didDoc.AssertionMethod = append(didDoc.AssertionMethod,
+					*did.NewReferencedVerification(vm, did.AssertionMethod))
+			case doc.KeyPurposeKeyAgreement:
+				didDoc.KeyAgreement = append(didDoc.KeyAgreement,
+					*did.NewReferencedVerification(vm, did.KeyAgreement))
+			case doc.KeyPurposeCapabilityDelegation:
+				didDoc.CapabilityDelegation = append(didDoc.CapabilityDelegation,
+					*did.NewReferencedVerification(vm, did.CapabilityDelegation))
+			case doc.KeyPurposeCapabilityInvocation:
+				didDoc.CapabilityInvocation = append(didDoc.CapabilityInvocation,
+					*did.NewReferencedVerification(vm, did.CapabilityInvocation))
+			default:
+				logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod,
+					fmt.Sprintf("public key purpose %s not supported", p))
+
+				return command.NewExecuteError(CreateDIDErrorCode,
+					fmt.Errorf("public key purpose %s not supported", p))
+			}
+		}
 	}
 
-	didDoc, err := c.didBlocClient.CreateDID(c.domain, opts...)
+	docResolution, err := c.didBlocClient.Create(nil, &didDoc, didMethodOpt...)
 	if err != nil {
 		logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, err.Error())
 
 		return command.NewExecuteError(CreateDIDErrorCode, err)
 	}
 
-	bytes, err := didDoc.JSONBytes()
+	bytes, err := docResolution.DIDDocument.JSONBytes()
 	if err != nil {
 		logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, err.Error())
 
@@ -199,9 +237,9 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 
 func getKey(keyType string, value []byte) (interface{}, error) {
 	switch keyType {
-	case doc.Ed25519KeyType:
+	case ed25519KeyType:
 		return ed25519.PublicKey(value), nil
-	case doc.P256KeyType:
+	case p256KeyType:
 		x, y := elliptic.Unmarshal(elliptic.P256(), value)
 
 		return &ecdsa.PublicKey{X: x, Y: y, Curve: elliptic.P256()}, nil
@@ -234,12 +272,11 @@ func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //n
 		return command.NewExecuteError(CreateDIDErrorCode, err)
 	}
 
-	newDidDoc, err := c.vdrRegistry.Create(
-		"peer",
-		vdr.WithServices(did.Service{
+	docResolution, err := c.vdrRegistry.Create(
+		peer.DIDMethod, &did.Doc{Service: []did.Service{{
 			ServiceEndpoint: config.Endpoint(),
 			RoutingKeys:     config.Keys(),
-		}),
+		}}},
 	)
 	if err != nil {
 		logutil.LogError(logger, CommandName, CreatePeerDIDCommandMethod, err.Error())
@@ -247,7 +284,7 @@ func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //n
 		return command.NewExecuteError(CreateDIDErrorCode, err)
 	}
 
-	didSvc, ok := did.LookupService(newDidDoc, didCommServiceType)
+	didSvc, ok := did.LookupService(docResolution.DIDDocument, didCommServiceType)
 	if !ok {
 		logutil.LogError(logger, CommandName, CreatePeerDIDCommandMethod, errMissingDIDCommServiceType)
 
@@ -264,7 +301,7 @@ func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //n
 		}
 	}
 
-	bytes, err := newDidDoc.JSONBytes()
+	bytes, err := docResolution.DIDDocument.JSONBytes()
 	if err != nil {
 		logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, err.Error())
 

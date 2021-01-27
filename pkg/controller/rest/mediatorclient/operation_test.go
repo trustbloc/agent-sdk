@@ -250,7 +250,7 @@ func TestOperation_SendCreateConnectionRequest(t *testing.T) {
 
 		go func() {
 			for {
-				if len(registrar.Services()) > 0 && mockmsgr.GetLastID() != "" { //nolint:gocritc
+				if len(registrar.Services()) > 0 && mockmsgr.GetLastID() != "" { //nolint: gocritic
 					replyMsg, e := service.ParseDIDCommMsgMap([]byte(fmt.Sprintf(replyMsgStr, mockmsgr.GetLastID())))
 					require.NoError(t, e)
 

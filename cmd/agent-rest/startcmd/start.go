@@ -20,6 +20,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb"
 	"github.com/hyperledger/aries-framework-go-ext/component/storage/mysql"
+	"github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc"
 	"github.com/hyperledger/aries-framework-go/component/storage/leveldb"
 	"github.com/hyperledger/aries-framework-go/pkg/common/log"
 	"github.com/hyperledger/aries-framework-go/pkg/controller"
@@ -37,7 +38,6 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/rs/cors"
 	"github.com/spf13/cobra"
-	"github.com/trustbloc/trustbloc-did-method/pkg/vdri/trustbloc"
 
 	sdkcontroller "github.com/trustbloc/agent-sdk/pkg/controller"
 )
@@ -608,7 +608,7 @@ func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) (
 		VDRs[order[url]] = resolverVDR
 	}
 
-	VDRs = append(VDRs, trustbloc.New(
+	VDRs = append(VDRs, trustbloc.New(nil,
 		trustbloc.WithDomain(trustblocDomain),
 		trustbloc.WithResolverURL(trustblocResolver),
 	))
