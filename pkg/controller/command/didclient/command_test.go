@@ -17,15 +17,16 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
 	mediatorsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
+	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
+	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	mockprotocol "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
 	mockvdr "github.com/hyperledger/aries-framework-go/pkg/mock/vdr"
 	"github.com/stretchr/testify/require"
-	"github.com/trustbloc/trustbloc-did-method/pkg/did/doc"
-	"github.com/trustbloc/trustbloc-did-method/pkg/did/option/create"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 )
@@ -88,13 +89,42 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 		jwk.Key = make(chan struct{})
 
-		c.didBlocClient = &mockDIDClient{createDIDValue: &did.Doc{VerificationMethod: []did.VerificationMethod{*v}}}
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{
+			DIDDocument: &did.Doc{
+				VerificationMethod: []did.VerificationMethod{*v},
+			},
+		}}
 
 		var b bytes.Buffer
 		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBufferString("{}"))
 		require.Error(t, cmdErr)
 		require.Equal(t, CreateDIDErrorCode, cmdErr.Code())
 		require.Equal(t, command.ExecuteError, cmdErr.Type())
+	})
+
+	t.Run("test error unsupported purpose", func(t *testing.T) {
+		c, err := New("domain", getMockProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		c.didBlocClient = &mockDIDClient{}
+
+		var b bytes.Buffer
+
+		req, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+			{
+				ID: "key1", Type: "key1", KeyType: "Ed25519",
+				Value:    base64.RawURLEncoding.EncodeToString([]byte("value")),
+				Purposes: []string{"wrong"},
+			},
+		}})
+		require.NoError(t, err)
+
+		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(req))
+		require.Error(t, cmdErr)
+		require.Equal(t, CreateDIDErrorCode, cmdErr.Code())
+		require.Equal(t, command.ExecuteError, cmdErr.Type())
+		require.Contains(t, cmdErr.Error(), "public key purpose wrong not supported")
 	})
 
 	t.Run("test error from create did", func(t *testing.T) {
@@ -106,10 +136,20 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 		var b bytes.Buffer
 
-		req, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{{
-			ID: "key1", Type: "key1",
-			Value: base64.RawURLEncoding.EncodeToString([]byte("value")),
-		}}})
+		req, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+			{
+				ID: "key1", Type: "key1", KeyType: "Ed25519",
+				Value: base64.RawURLEncoding.EncodeToString([]byte("value")),
+				Purposes: []string{
+					doc.KeyPurposeAuthentication,
+					doc.KeyPurposeKeyAgreement,
+					doc.KeyPurposeCapabilityDelegation,
+					doc.KeyPurposeCapabilityInvocation,
+					doc.KeyPurposeAuthentication,
+					doc.KeyPurposeAssertionMethod,
+				},
+			},
+		}})
 		require.NoError(t, err)
 
 		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(req))
@@ -183,7 +223,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 	ecPubKeyBytes := elliptic.Marshal(ecPrivKey.PublicKey.Curve, ecPrivKey.PublicKey.X, ecPrivKey.PublicKey.Y)
 
-	c.didBlocClient = &mockDIDClient{createDIDValue: &did.Doc{ID: "1"}}
+	c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: &did.Doc{ID: "1"}}}
 
 	var b bytes.Buffer
 
@@ -191,12 +231,12 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		// ED key
 		r, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
 			{
-				KeyType:  doc.Ed25519KeyType,
+				KeyType:  ed25519KeyType,
 				Value:    base64.RawURLEncoding.EncodeToString(pubKey),
 				Recovery: true,
 			},
 			{
-				KeyType: doc.P256KeyType,
+				KeyType: p256KeyType,
 				Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
 				Update:  true,
 			},
@@ -397,11 +437,12 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 }
 
 type mockDIDClient struct {
-	createDIDValue *did.Doc
+	createDIDValue *did.DocResolution
 	createDIDErr   error
 }
 
-func (m *mockDIDClient) CreateDID(domain string, opts ...create.Option) (*did.Doc, error) {
+func (m *mockDIDClient) Create(keyManager kms.KeyManager, didDoc *did.Doc,
+	opts ...vdr.DIDMethodOption) (*did.DocResolution, error) {
 	return m.createDIDValue, m.createDIDErr
 }
 

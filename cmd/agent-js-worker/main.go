@@ -25,6 +25,7 @@ import (
 	"github.com/google/tink/go/keyset"
 	"github.com/google/tink/go/subtle/random"
 	"github.com/google/uuid"
+	"github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc"
 	"github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb"
 	arieslog "github.com/hyperledger/aries-framework-go/pkg/common/log"
 	ariesctrl "github.com/hyperledger/aries-framework-go/pkg/controller"
@@ -52,7 +53,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/trustbloc/edge-core/pkg/log"
 	kmszcap "github.com/trustbloc/hub-kms/pkg/restapi/kms/operation"
-	"github.com/trustbloc/trustbloc-did-method/pkg/vdri/trustbloc"
 
 	"github.com/trustbloc/agent-sdk/pkg/auth/zcapld"
 	agentctrl "github.com/trustbloc/agent-sdk/pkg/controller"
@@ -552,7 +552,7 @@ func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) (
 		VDRs[order[url]] = resolverVDR
 	}
 
-	VDRs = append(VDRs, trustbloc.New(
+	VDRs = append(VDRs, trustbloc.New(nil,
 		trustbloc.WithDomain(trustblocDomain),
 		trustbloc.WithResolverURL(trustblocResolver),
 	))
