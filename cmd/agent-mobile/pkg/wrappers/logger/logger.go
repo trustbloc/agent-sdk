@@ -10,7 +10,7 @@ package logger
 import (
 	"fmt"
 
-	"github.com/hyperledger/aries-framework-go/pkg/common/log"
+	"github.com/hyperledger/aries-framework-go/spi/log"
 
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/api"
 )
