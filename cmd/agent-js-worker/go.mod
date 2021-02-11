@@ -12,7 +12,7 @@ require (
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/google/tink/go v1.5.0
 	github.com/google/uuid v1.1.2
-	github.com/hyperledger/aries-framework-go v0.1.6-0.20210210013602-d14c77b2e8a9
+	github.com/hyperledger/aries-framework-go v0.1.6-0.20210211154552-224e2e53596e
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc v0.0.0-20210125133828-10c25f5d6d37
 	github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201208011347-35f4bc183acf
 	github.com/jinzhu/copier v0.0.0-20201025035756-632e723a6687 // indirect
