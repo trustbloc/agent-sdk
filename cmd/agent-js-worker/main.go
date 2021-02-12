@@ -52,7 +52,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/mitchellh/mapstructure"
 	"github.com/trustbloc/edge-core/pkg/log"
-	kmszcap "github.com/trustbloc/hub-kms/pkg/restapi/kms/operation"
+	kmszcap "github.com/trustbloc/kms/pkg/restapi/kms/operation"
 
 	"github.com/trustbloc/agent-sdk/pkg/auth/zcapld"
 	agentctrl "github.com/trustbloc/agent-sdk/pkg/controller"
