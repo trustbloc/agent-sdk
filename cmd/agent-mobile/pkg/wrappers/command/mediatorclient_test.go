@@ -19,7 +19,7 @@ const (
 	sampleConnectRequest = `{
     	"invitation": {
         	"@id": "3ae3d2cb-83bf-429f-93ea-0802f92ecf42",
-        	"@type": "https://didcomm.org/oob-invitation/1.0/invitation",
+        	"@type": "https://didcomm.org/out-of-band/1.0/invitation",
         	"label": "hub-router",
         	"service": [{
             	"ID": "1d03b636-ab0d-4a4e-904b-cdc70265c6bc",
