@@ -7,7 +7,7 @@ module github.com/trustbloc/agent-sdk/cmd/agent-js-worker
 go 1.15
 
 require (
-	github.com/btcsuite/btcd v0.21.0-beta // indirect
+	github.com/btcsuite/btcd v0.21.0-beta
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/google/tink/go v1.5.0

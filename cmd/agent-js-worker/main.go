@@ -22,6 +22,7 @@ import (
 	"syscall/js"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec"
 	"github.com/google/tink/go/keyset"
 	"github.com/google/tink/go/subtle/random"
 	"github.com/google/uuid"
@@ -198,9 +199,17 @@ func pipe(input chan *command, output chan *result) {
 
 	addAgentHandlers(handlers)
 
+	// Upon the first call `btcec.S256()` deserializes the pre-computed byte points for the secp256k1 curve and
+	// it takes some time. Triggering that function here speeds up the following protocols.
+	go initS256()
+
 	for w := 0; w < workers; w++ {
 		go worker(input, output, handlers)
 	}
+}
+
+func initS256() {
+	btcec.S256()
 }
 
 func worker(input chan *command, output chan *result, handlers map[string]map[string]func(*command) *result) {
