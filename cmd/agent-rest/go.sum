@@ -525,10 +525,9 @@ github.com/huaweicloud/golangsdk v0.0.0-20200304081349-45ec0797f2a4/go.mod h1:WQ
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201017112511-5734c20820a9/go.mod h1:cLWhBbjgrA04Di9ufGqAuTCdoM33Xq4Cuc3fL/VLAgI=
 github.com/hyperledger/aries-framework-go v0.1.5-0.20201028195746-556cee009e20/go.mod h1:UF34fHG3WLB1QSxeIqDrWDhK98GLqA09NauwultnG7w=
 github.com/hyperledger/aries-framework-go v0.1.6-0.20210120000618-bdf82385e9df/go.mod h1:CB1aCGsuCC/U+mJ43aU5Nx7s6iCYOVquO7kCUn8tVhY=
-github.com/hyperledger/aries-framework-go v0.1.6-0.20210212132055-b94cce120dda h1:s+40jra43As9eY9FjWA22HjRg0/kqTAi8/hXC2xUQqc=
 github.com/hyperledger/aries-framework-go v0.1.6-0.20210212132055-b94cce120dda/go.mod h1:jWpvVjYk1wETWfVJBII71ta6LusGKbzOkha8TOxeBRM=
-github.com/hyperledger/aries-framework-go v0.1.6-0.20210223185118-1d6fb5f95ad4 h1:dvFR8ONBJtiBPNuxJZ0QsWif7eZHOTM6q1CxtRYvyc4=
-github.com/hyperledger/aries-framework-go v0.1.6-0.20210223185118-1d6fb5f95ad4/go.mod h1:A6SHE7BuL1x88YN15R+MT8yG59zv2L4gE141Ou4tJJ4=
+github.com/hyperledger/aries-framework-go v0.1.6-0.20210224230531-58e1368e5661 h1:9DXpo2H8oQErT49ao3JZsG2bJplQ602t/KhR44MxBbU=
+github.com/hyperledger/aries-framework-go v0.1.6-0.20210224230531-58e1368e5661/go.mod h1:A6SHE7BuL1x88YN15R+MT8yG59zv2L4gE141Ou4tJJ4=
 github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20201113155502-c4ba5d2c7c0a h1:RzG6xTcO3FlQzz8VS6dVe7ZlnGiFdSMZlGMxZDITF3c=
 github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20201113155502-c4ba5d2c7c0a/go.mod h1:M7/MF6JD45J4CfhiHuO/CSt9ryzQR+ApV3IOAn2HKzo=
 github.com/hyperledger/aries-framework-go-ext/component/storage/mysql v0.0.0-20201113155502-c4ba5d2c7c0a h1:hWhe6yhalnMMljeAsi9XYYAjwyNMHb+YhSH3GmC/+rA=
@@ -726,7 +725,6 @@ github.com/ory/dockertest/v3 v3.6.2 h1:Q3Y8naCMyC1Nw91BHum1bGyEsNQc/UOIYS3ZoPoou
 github.com/ory/dockertest/v3 v3.6.2/go.mod h1:EFLcVUOl8qCwp9NyDAcCDtq/QviLtYswW/VbWzUnTNE=
 github.com/otiai10/copy v1.0.2 h1:DDNipYy6RkIkjMwy+AWzgKiNTyj2RUI9yEMeETEpVyc=
 github.com/otiai10/copy v1.0.2/go.mod h1:c7RpqBkwMom4bYTSkLSym4VSJz/XtncWRAj/J4PEIMY=
-github.com/otiai10/curr v0.0.0-20150429015615-9b4961190c95 h1:+OLn68pqasWca0z5ryit9KGfp3sUsW4Lqg32iRMJyzs=
 github.com/otiai10/curr v0.0.0-20150429015615-9b4961190c95/go.mod h1:9qAhocn7zKJG+0mI8eUu6xqkFDYS2kb2saOteoSB3cE=
 github.com/otiai10/curr v0.0.0-20190513014714-f5a3d24e5776 h1:o59bHXu8Ejas8Kq6pjoVJQ9/neN66SM8AKh6wI42BBs=
 github.com/otiai10/curr v0.0.0-20190513014714-f5a3d24e5776/go.mod h1:3HNVkVOU7vZeFXocWuvtcS0XSFLcf2XUSDHkq9t1jU4=
@@ -745,7 +743,6 @@ github.com/pierrec/lz4 v2.0.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi
 github.com/pierrec/lz4 v2.2.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
 github.com/pierrec/lz4 v2.2.6+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
 github.com/pierrec/lz4 v2.5.2+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
-github.com/piprate/json-gold v0.3.0 h1:a1vHx7Q1jOO1pjCtKwTI/WCzwaQwRt9VM7apK2uy200=
 github.com/piprate/json-gold v0.3.0/go.mod h1:OK1z7UgtBZk06n2cDE2OSq1kffmjFFp5/2yhLLCz9UM=
 github.com/piprate/json-gold v0.3.1-0.20201222165305-f4ce31c02ca3 h1:XZ5wU47zEb+01GyzcDuNFPAZMU8YNwcObKZ5wu/9DgE=
 github.com/piprate/json-gold v0.3.1-0.20201222165305-f4ce31c02ca3/go.mod h1:OK1z7UgtBZk06n2cDE2OSq1kffmjFFp5/2yhLLCz9UM=
@@ -902,7 +899,6 @@ github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9de
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 gitlab.com/flimzy/testy v0.0.2/go.mod h1:YObF4cq711ubd/3U0ydRQQVz7Cnq/ChgJpVwNr/AJac=
 gitlab.com/flimzy/testy v0.0.3/go.mod h1:YObF4cq711ubd/3U0ydRQQVz7Cnq/ChgJpVwNr/AJac=
-gitlab.com/flimzy/testy v0.2.1 h1:qg6z6kyFFt7g70WhSPT4zROUOh+C6PQPfcdyDDOesAM=
 gitlab.com/flimzy/testy v0.2.1/go.mod h1:YObF4cq711ubd/3U0ydRQQVz7Cnq/ChgJpVwNr/AJac=
 gitlab.com/flimzy/testy v0.3.2 h1:4djQFwBJ1ayM681Zx7Y3+OKns/E9zAfGFsLc967jfdk=
 gitlab.com/flimzy/testy v0.3.2/go.mod h1:YObF4cq711ubd/3U0ydRQQVz7Cnq/ChgJpVwNr/AJac=
@@ -1109,7 +1105,6 @@ golang.org/x/sys v0.0.0-20200803210538-64077c9b5642/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20200831180312-196b9ba8737a/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200905004654-be1d3432aa8f/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20201009025420-dfb3f7c4e634 h1:bNEHhJCnrwMKNMmOx3yAynp5vs5/gRy+XWFtZFu7NBM=
 golang.org/x/sys v0.0.0-20201009025420-dfb3f7c4e634/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20201211090839-8ad439b19e0f h1:QdHQnPce6K4XQewki9WNbG5KOROuDzqO3NaYjI1cXJ0=
 golang.org/x/sys v0.0.0-20201211090839-8ad439b19e0f/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
