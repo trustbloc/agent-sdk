@@ -22,7 +22,7 @@ type Options struct {
 	TrustblocResolver    string
 	WebsocketURL         string
 	Logger               api.LoggerProvider
-	Storage              api.StorageProvider
+	Storage              api.Provider
 	// expected to be ignored by gomobile
 	// not intended to be used by golang code
 	HTTPResolvers     []string

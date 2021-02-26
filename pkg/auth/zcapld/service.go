@@ -121,7 +121,7 @@ func (a *didKeySignatureHashAlgorithm) Algorithm() string {
 
 // Create signs data with the secret.
 func (a *didKeySignatureHashAlgorithm) Create(secret httpsignatures.Secret, data []byte) ([]byte, error) {
-	key, err := (&zcapld.DIDKeyResolver{}).Resolve(secret.KeyID)
+	key, err := (zcapld.NewDIDKeyResolver(nil)).Resolve(secret.KeyID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve did:key URL %s: %w", secret.KeyID, err)
 	}

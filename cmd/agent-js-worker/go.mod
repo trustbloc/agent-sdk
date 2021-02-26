@@ -8,25 +8,19 @@ go 1.15
 
 require (
 	github.com/btcsuite/btcd v0.21.0-beta
-	github.com/golang/protobuf v1.4.3 // indirect
-	github.com/golang/snappy v0.0.2 // indirect
 	github.com/google/tink/go v1.5.0
-	github.com/google/uuid v1.1.2
-	github.com/hyperledger/aries-framework-go v0.1.6-0.20210224230531-58e1368e5661
+	github.com/google/uuid v1.2.0
+	github.com/hyperledger/aries-framework-go v0.1.6-0.20210226001736-7c70b7efda83
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc v0.0.0-20210125133828-10c25f5d6d37
-	github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb v0.0.0-20201208011347-35f4bc183acf
-	github.com/jinzhu/copier v0.0.0-20201025035756-632e723a6687 // indirect
-	github.com/mitchellh/mapstructure v1.3.3
-	github.com/mr-tron/base58 v1.2.0 // indirect
-	github.com/multiformats/go-multibase v0.0.3 // indirect
-	github.com/multiformats/go-varint v0.0.6 // indirect
-	github.com/pquerna/cachecontrol v0.0.0-20200921180117-858c6e7e6b7e // indirect
-	github.com/stretchr/testify v1.6.1
+	github.com/hyperledger/aries-framework-go/component/storage/edv v0.0.0-20210226001736-7c70b7efda83
+	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20210226001736-7c70b7efda83
+	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20210226001736-7c70b7efda83
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210226001736-7c70b7efda83
+	github.com/mitchellh/mapstructure v1.4.1
+	github.com/stretchr/testify v1.7.0
 	github.com/trustbloc/agent-sdk v0.0.0
-	github.com/trustbloc/edge-core v0.1.6-0.20210218132256-ea94ce52be69
-	github.com/trustbloc/kms v0.1.6-0.20210224171641-3d8ccf667bde
-	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
+	github.com/trustbloc/edge-core v0.1.6-0.20210224175343-275d0e0370c4
+	github.com/trustbloc/kms v0.1.6-0.20210226144927-6c67cc12839f
 )
 
 replace github.com/trustbloc/agent-sdk => ../../

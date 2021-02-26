@@ -1180,13 +1180,13 @@ const Agent = function(opts) {
             },
 
             /**
-             * Retrieves data according to given start and end keys.
+             * Retrieves data according to the given expression.
              *
              * @param req - json document.
              * @returns {Promise<Object>}
              */
-            iterator: async function (req) {
-                return invoke(aw, pending, this.pkgname, "Iterator", req, "timeout while retrieving data")
+            query: async function (req) {
+                return invoke(aw, pending, this.pkgname, "Query", req, "timeout while retrieving data")
             },
 
             /**
@@ -1200,7 +1200,7 @@ const Agent = function(opts) {
             },
 
             /**
-             * Flush store data.
+             * Flush all stores' data.
              *
              * @returns {Promise<Object>}
              */

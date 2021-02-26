@@ -8,10 +8,9 @@ package mocks
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"sync"
 
-	"github.com/hyperledger/aries-framework-go/pkg/storage"
+	"github.com/hyperledger/aries-framework-go/spi/storage"
 )
 
 // MockStoreProvider mock store provider.
@@ -22,7 +21,6 @@ type MockStoreProvider struct {
 	ErrClose           error
 	ErrCloseStore      error
 	FailNamespace      string
-	ErrFlush           error
 }
 
 // NewMockStoreProvider new store provider instance.
@@ -51,33 +49,44 @@ func (s *MockStoreProvider) OpenStore(name string) (storage.Store, error) {
 	return s.Store, s.ErrOpenStoreHandle
 }
 
+// SetStoreConfig is not implemented.
+func (s *MockStoreProvider) SetStoreConfig(name string, config storage.StoreConfiguration) error {
+	panic("implement me")
+}
+
+// GetStoreConfig is not implemented.
+func (s *MockStoreProvider) GetStoreConfig(name string) (storage.StoreConfiguration, error) {
+	panic("implement me")
+}
+
+// GetOpenStores returns the single mocked store.
+func (s *MockStoreProvider) GetOpenStores() []storage.Store {
+	if s.Custom != nil {
+		return []storage.Store{s.Custom}
+	}
+
+	return []storage.Store{s.Store}
+}
+
 // Close closes all stores created under this store provider.
 func (s *MockStoreProvider) Close() error {
 	return s.ErrClose
 }
 
-// CloseStore closes store for given name space.
-func (s *MockStoreProvider) CloseStore(name string) error {
-	return s.ErrCloseStore
-}
-
-// Flush data.
-func (s *MockStoreProvider) Flush() error {
-	return s.ErrFlush
-}
-
 // MockStore mock store.
 type MockStore struct {
-	Store     map[string][]byte
-	lock      sync.RWMutex
-	ErrPut    error
-	ErrGet    error
-	ErrItr    error
-	ErrDelete error
+	Store          map[string][]byte
+	lock           sync.RWMutex
+	ErrPut         error
+	ErrGet         error
+	ErrQuery       error
+	ErrDelete      error
+	ErrFlush       error
+	QueryReturnItr storage.Iterator
 }
 
 // Put stores the key and the record.
-func (s *MockStore) Put(k string, v []byte) error {
+func (s *MockStore) Put(k string, v []byte, _ ...storage.Tag) error {
 	if k == "" {
 		return errors.New("key is mandatory")
 	}
@@ -110,24 +119,19 @@ func (s *MockStore) Get(k string) ([]byte, error) {
 	return val, s.ErrGet
 }
 
-// Iterator returns an iterator for the underlying mockstore.
-func (s *MockStore) Iterator(start, limit string) storage.StoreIterator {
-	if s.ErrItr != nil {
-		return NewMockIteratorWithError(s.ErrItr)
-	}
+// GetTags is not implemented.
+func (s *MockStore) GetTags(string) ([]storage.Tag, error) {
+	panic("implement me")
+}
 
-	s.lock.RLock()
-	defer s.lock.RUnlock()
+// GetBulk is not implemented.
+func (s *MockStore) GetBulk(...string) ([][]byte, error) {
+	panic("implement me")
+}
 
-	var batch [][]string
-
-	for k, v := range s.Store {
-		if strings.HasPrefix(k, start) {
-			batch = append(batch, []string{k, string(v)})
-		}
-	}
-
-	return NewMockIterator(batch)
+// Query returns mocked data.
+func (s *MockStore) Query(string, ...storage.QueryOption) (storage.Iterator, error) {
+	return s.QueryReturnItr, s.ErrQuery
 }
 
 // Delete will delete record with k key.
@@ -139,71 +143,54 @@ func (s *MockStore) Delete(k string) error {
 	return s.ErrDelete
 }
 
-// NewMockIterator returns new mock iterator for given batch.
-func NewMockIterator(batch [][]string) *MockIterator {
-	if len(batch) == 0 {
-		return &MockIterator{}
-	}
-
-	return &MockIterator{items: batch}
+// Batch is not implemented.
+func (s *MockStore) Batch([]storage.Operation) error {
+	panic("implement me")
 }
 
-// NewMockIteratorWithError returns new mock iterator with error.
-func NewMockIteratorWithError(err error) *MockIterator {
-	return &MockIterator{err: err}
+// Flush returns a mocked error.
+func (s *MockStore) Flush() error {
+	return s.ErrFlush
 }
 
-// MockIterator is the mock implementation of storage iterator.
+// Close is not implemented.
+func (s *MockStore) Close() error {
+	panic("implement me")
+}
+
+// MockIterator is a mocked implementation of storage.Iterator.
 type MockIterator struct {
-	currentIndex int
-	currentItem  []string
-	items        [][]string
-	err          error
+	MoreResults bool
+	ErrNext     error
 }
 
-func (s *MockIterator) isExhausted() bool {
-	return len(s.items) == 0 || len(s.items) == s.currentIndex
-}
+// Next returns mocked values.
+func (m *MockIterator) Next() (bool, error) {
+	if m.MoreResults {
+		m.MoreResults = false
 
-// Next moves pointer to next value of iterator.
-// It returns false if the iterator is exhausted.
-func (s *MockIterator) Next() bool {
-	if s.isExhausted() {
-		return false
+		return true, m.ErrNext
 	}
 
-	s.currentItem = s.items[s.currentIndex]
-	s.currentIndex++
-
-	return true
+	return false, m.ErrNext
 }
 
-// Release releases associated resources.
-func (s *MockIterator) Release() {
-	s.currentIndex = 0
-	s.items = make([][]string, 0)
-	s.currentItem = make([]string, 0)
+// Key is not implemented.
+func (m *MockIterator) Key() (string, error) {
+	panic("implement me")
 }
 
-// Error returns error in iterator.
-func (s *MockIterator) Error() error {
-	return s.err
+// Value returns a mocked value.
+func (m *MockIterator) Value() ([]byte, error) {
+	return []byte("Value"), nil
 }
 
-// Key returns the key of the current key/value pair.
-func (s *MockIterator) Key() []byte {
-	if len(s.items) == 0 || len(s.currentItem) == 0 {
-		return nil
-	}
-
-	return []byte(s.currentItem[0])
+// Tags is not implemented.
+func (m *MockIterator) Tags() ([]storage.Tag, error) {
+	panic("implement me")
 }
 
-// Value returns the value of the current key/value pair.
-func (s *MockIterator) Value() []byte {
-	if len(s.items) == 0 || len(s.currentItem) < 1 {
-		return nil
-	}
-
-	return []byte(s.currentItem[1])
+// Close always returns a nil error.
+func (m *MockIterator) Close() error {
+	return nil
 }

@@ -13,7 +13,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/hyperledger/aries-framework-go/pkg/storage"
+	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/stretchr/testify/require"
 
 	. "github.com/trustbloc/agent-sdk/pkg/controller/command/store"
@@ -44,6 +44,45 @@ func TestCommand_GetHandlers(t *testing.T) {
 	require.NotNil(t, cmd)
 
 	require.Len(t, cmd.GetHandlers(), 5)
+}
+
+func TestCommand_Put(t *testing.T) {
+	t.Run("No data", func(t *testing.T) {
+		cmd, err := New(&protocol.MockProvider{StoreProvider: mocks.NewMockStoreProvider()})
+		require.NoError(t, err)
+		require.NotNil(t, cmd)
+
+		res := &bytes.Buffer{}
+
+		require.EqualError(t, cmd.Put(res, bytes.NewBufferString(`{}`)), "key is mandatory")
+	})
+
+	t.Run("Empty request", func(t *testing.T) {
+		cmd, err := New(&protocol.MockProvider{StoreProvider: mocks.NewMockStoreProvider()})
+		require.NoError(t, err)
+		require.NotNil(t, cmd)
+
+		res := &bytes.Buffer{}
+
+		require.EqualError(t, cmd.Put(res, bytes.NewBufferString(``)), io.EOF.Error())
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		storeProvider := mocks.NewMockStoreProvider()
+		storeProvider.Store = &mocks.MockStore{Store: map[string][]byte{}}
+
+		cmd, err := New(&protocol.MockProvider{StoreProvider: storeProvider})
+		require.NoError(t, err)
+		require.NotNil(t, cmd)
+
+		res := &bytes.Buffer{}
+
+		req, err := json.Marshal(PutRequest{Key: "key", Value: []byte(`value`)})
+		require.NoError(t, err)
+		require.NoError(t, cmd.Put(res, bytes.NewBuffer(req)))
+
+		require.Equal(t, []byte(`value`), storeProvider.Store.Store["key"])
+	})
 }
 
 func TestCommand_Get(t *testing.T) {
@@ -88,15 +127,38 @@ func TestCommand_Get(t *testing.T) {
 	})
 }
 
-func TestCommand_Put(t *testing.T) {
-	t.Run("No data", func(t *testing.T) {
-		cmd, err := New(&protocol.MockProvider{StoreProvider: mocks.NewMockStoreProvider()})
+func TestCommand_Query(t *testing.T) {
+	t.Run("Failure during store query call", func(t *testing.T) {
+		storeProvider := mocks.NewMockStoreProvider()
+		storeProvider.Store = &mocks.MockStore{ErrQuery: errors.New("query failure")}
+
+		cmd, err := New(&protocol.MockProvider{StoreProvider: storeProvider})
 		require.NoError(t, err)
 		require.NotNil(t, cmd)
 
 		res := &bytes.Buffer{}
 
-		require.EqualError(t, cmd.Put(res, bytes.NewBufferString(`{}`)), "key is mandatory")
+		req, err := json.Marshal(QueryRequest{Expression: "expression", PageSize: 5})
+		require.NoError(t, err)
+
+		require.EqualError(t, cmd.Query(res, bytes.NewBuffer(req)), "query failure")
+	})
+
+	t.Run("Failure while getting first result from iterator", func(t *testing.T) {
+		storeProvider := mocks.NewMockStoreProvider()
+		storeProvider.Store =
+			&mocks.MockStore{QueryReturnItr: &mocks.MockIterator{ErrNext: errors.New("next failure")}}
+
+		cmd, err := New(&protocol.MockProvider{StoreProvider: storeProvider})
+		require.NoError(t, err)
+		require.NotNil(t, cmd)
+
+		res := &bytes.Buffer{}
+
+		req, err := json.Marshal(QueryRequest{Expression: "expression", PageSize: 5})
+		require.NoError(t, err)
+
+		require.EqualError(t, cmd.Query(res, bytes.NewBuffer(req)), "next failure")
 	})
 
 	t.Run("Empty request", func(t *testing.T) {
@@ -106,12 +168,12 @@ func TestCommand_Put(t *testing.T) {
 
 		res := &bytes.Buffer{}
 
-		require.EqualError(t, cmd.Put(res, bytes.NewBufferString(``)), io.EOF.Error())
+		require.EqualError(t, cmd.Query(res, bytes.NewBufferString(``)), io.EOF.Error())
 	})
 
 	t.Run("Success", func(t *testing.T) {
 		storeProvider := mocks.NewMockStoreProvider()
-		storeProvider.Store = &mocks.MockStore{Store: map[string][]byte{}}
+		storeProvider.Store = &mocks.MockStore{QueryReturnItr: &mocks.MockIterator{MoreResults: true}}
 
 		cmd, err := New(&protocol.MockProvider{StoreProvider: storeProvider})
 		require.NoError(t, err)
@@ -119,11 +181,15 @@ func TestCommand_Put(t *testing.T) {
 
 		res := &bytes.Buffer{}
 
-		req, err := json.Marshal(PutRequest{Key: "key", Value: []byte(`value`)})
+		req, err := json.Marshal(QueryRequest{Expression: "expression", PageSize: 5})
 		require.NoError(t, err)
-		require.NoError(t, cmd.Put(res, bytes.NewBuffer(req)))
+		require.NoError(t, cmd.Query(res, bytes.NewBuffer(req)))
 
-		require.Equal(t, []byte(`value`), storeProvider.Store.Store["key"])
+		var resp *QueryResponse
+		require.NoError(t, json.Unmarshal(res.Bytes(), &resp))
+
+		require.Len(t, resp.Results, 1)
+		require.Equal(t, "Value", string(resp.Results[0]))
 	})
 }
 
@@ -170,9 +236,9 @@ func TestCommand_Delete(t *testing.T) {
 }
 
 func TestCommand_Flush(t *testing.T) {
-	t.Run("Error", func(t *testing.T) {
+	t.Run("Failure during store flush call", func(t *testing.T) {
 		storeProvider := mocks.NewMockStoreProvider()
-		storeProvider.ErrFlush = errors.New("error")
+		storeProvider.Store = &mocks.MockStore{ErrFlush: errors.New("flush failure")}
 
 		cmd, err := New(&protocol.MockProvider{StoreProvider: storeProvider})
 		require.NoError(t, err)
@@ -180,8 +246,9 @@ func TestCommand_Flush(t *testing.T) {
 
 		res := &bytes.Buffer{}
 
-		require.EqualError(t, cmd.Flush(res, bytes.NewBuffer(nil)), "error")
+		require.EqualError(t, cmd.Flush(res, nil), "flush failure")
 	})
+
 	t.Run("Success", func(t *testing.T) {
 		storeProvider := mocks.NewMockStoreProvider()
 		storeProvider.Store = &mocks.MockStore{Store: map[string][]byte{"key": []byte(`value`)}}
@@ -193,45 +260,5 @@ func TestCommand_Flush(t *testing.T) {
 		res := &bytes.Buffer{}
 
 		require.NoError(t, cmd.Flush(res, bytes.NewBuffer(nil)))
-	})
-}
-
-func TestCommand_Iterator(t *testing.T) {
-	t.Run("Error", func(t *testing.T) {
-		storeProvider := mocks.NewMockStoreProvider()
-		storeProvider.Store = &mocks.MockStore{ErrItr: errors.New("error")}
-
-		cmd, err := New(&protocol.MockProvider{StoreProvider: storeProvider})
-		require.NoError(t, err)
-		require.NotNil(t, cmd)
-
-		res := &bytes.Buffer{}
-
-		require.EqualError(t, cmd.Iterator(res, bytes.NewBufferString(`{}`)), "error")
-	})
-
-	t.Run("Empty request", func(t *testing.T) {
-		cmd, err := New(&protocol.MockProvider{StoreProvider: mocks.NewMockStoreProvider()})
-		require.NoError(t, err)
-		require.NotNil(t, cmd)
-
-		res := &bytes.Buffer{}
-
-		require.EqualError(t, cmd.Iterator(res, bytes.NewBufferString(``)), io.EOF.Error())
-	})
-
-	t.Run("Success", func(t *testing.T) {
-		storeProvider := mocks.NewMockStoreProvider()
-		storeProvider.Store = &mocks.MockStore{Store: map[string][]byte{}}
-
-		cmd, err := New(&protocol.MockProvider{StoreProvider: storeProvider})
-		require.NoError(t, err)
-		require.NotNil(t, cmd)
-
-		res := &bytes.Buffer{}
-
-		req, err := json.Marshal(IteratorRequest{})
-		require.NoError(t, err)
-		require.NoError(t, cmd.Iterator(res, bytes.NewBuffer(req)))
 	})
 }

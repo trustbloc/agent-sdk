@@ -6,9 +6,21 @@ SPDX-License-Identifier: Apache-2.0
 
 package store
 
+import "github.com/hyperledger/aries-framework-go/spi/storage"
+
+// PutRequest model
+//
+// This is used for putting data in the store
+//
+type PutRequest struct {
+	Key   string        `json:"key"`
+	Value []byte        `json:"value"`
+	Tags  []storage.Tag `json:"tags"`
+}
+
 // GetRequest model
 //
-// This is used for getting data from the store
+// This is used for getting data (value or tags) from the store
 //
 type GetRequest struct {
 	Key string `json:"key"`
@@ -22,29 +34,20 @@ type GetResponse struct {
 	Result []byte `json:"result"`
 }
 
-// PutRequest model
+// QueryRequest model
 //
-// This is used for putting data to the store
+// This is used for getting data (values only, without tags) from the store.
 //
-type PutRequest struct {
-	Key   string `json:"key"`
-	Value []byte `json:"value"`
+type QueryRequest struct {
+	Expression string `json:"expression"`
+	PageSize   int    `json:"pageSize"`
 }
 
-// IteratorRequest model
+// QueryResponse model
 //
-// This is used for getting data from the store.
+// Represents a response of Query command.
 //
-type IteratorRequest struct {
-	StartKey string `json:"start_key"`
-	EndKey   string `json:"end_key"`
-}
-
-// IteratorResponse model
-//
-// Represents a response of Iterator command.
-//
-type IteratorResponse struct {
+type QueryResponse struct {
 	Results [][]byte `json:"results"`
 }
 

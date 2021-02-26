@@ -14,6 +14,7 @@ import (
 	"syscall/js"
 	"time"
 
+	"github.com/hyperledger/aries-framework-go/component/storage/indexeddb"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/messenger"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/introduce"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/issuecredential"
@@ -24,9 +25,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/store/did"
 	"github.com/hyperledger/aries-framework-go/pkg/store/verifiable"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/peer"
-
-	"github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb"
-	"github.com/hyperledger/aries-framework-go/pkg/storage"
+	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/trustbloc/edge-core/pkg/log"
 )
 
@@ -47,7 +46,7 @@ type Provider struct {
 
 // NewProvider instantiates Provider.
 func NewProvider(name string, clearCache time.Duration) (*Provider, error) {
-	jsindexeddbProvider, err := jsindexeddb.NewProvider(name)
+	jsindexeddbProvider, err := indexeddb.NewProvider(name)
 	if err != nil {
 		return nil, err
 	}
@@ -94,22 +93,6 @@ func NewProvider(name string, clearCache time.Duration) (*Provider, error) {
 	return prov, nil
 }
 
-// Close closes all stores created under this store provider.
-func (p *Provider) Close() error {
-	for storeName, databaseName := range p.storesName {
-		if err := clearStore(databaseName, storeName); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// CloseStore close store
-func (p *Provider) CloseStore(_ string) error {
-	return nil
-}
-
 // OpenStore open store.
 func (p *Provider) OpenStore(name string) (storage.Store, error) {
 	store, err := p.jsindexeddbProvider.OpenStore(name)
@@ -131,12 +114,35 @@ func (p *Provider) OpenStore(name string) (storage.Store, error) {
 	return &cacheStore{store: store}, nil
 }
 
+func (p *Provider) SetStoreConfig(name string, config storage.StoreConfiguration) error {
+	return p.jsindexeddbProvider.SetStoreConfig(name, config)
+}
+
+func (p *Provider) GetStoreConfig(name string) (storage.StoreConfiguration, error) {
+	return p.jsindexeddbProvider.GetStoreConfig(name)
+}
+
+func (p *Provider) GetOpenStores() []storage.Store {
+	return p.jsindexeddbProvider.GetOpenStores()
+}
+
+// Close closes all stores created under this store provider.
+func (p *Provider) Close() error {
+	for storeName, databaseName := range p.storesName {
+		if err := clearStore(databaseName, storeName); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 type cacheStore struct {
 	store storage.Store
 }
 
 // Put stores the key and the record.
-func (s *cacheStore) Put(k string, v []byte) error {
+func (s *cacheStore) Put(k string, v []byte, tags ...storage.Tag) error {
 	return s.store.Put(k, v)
 }
 
@@ -145,17 +151,16 @@ func (s *cacheStore) Get(k string) ([]byte, error) {
 	return s.store.Get(k)
 }
 
-// Iterator returns iterator for the latest snapshot of the underlying db.
-func (s *cacheStore) Iterator(start, limit string) storage.StoreIterator {
-	itr := s.store.Iterator(start, limit)
+func (s *cacheStore) GetTags(key string) ([]storage.Tag, error) {
+	return s.store.GetTags(key)
+}
 
-	// Need to check iterator is empty
-	// TODO need refactor iterator to expose empty
-	if !itr.Next() {
-		return &iterator{err: fmt.Errorf("range not found")}
-	}
+func (s *cacheStore) GetBulk(keys ...string) ([][]byte, error) {
+	return s.store.GetBulk(keys...)
+}
 
-	return s.store.Iterator(start, limit)
+func (s *cacheStore) Query(expression string, options ...storage.QueryOption) (storage.Iterator, error) {
+	return s.store.Query(expression, options...)
 }
 
 // Delete will delete record with k key.
@@ -163,33 +168,16 @@ func (s *cacheStore) Delete(k string) error {
 	return s.store.Delete(k)
 }
 
-type iterator struct {
-	err error
+func (s *cacheStore) Batch(operations []storage.Operation) error {
+	return s.store.Batch(operations)
 }
 
-// Next moves pointer to next value of iterator.
-// It returns false if the iterator is exhausted.
-func (s *iterator) Next() bool {
-	return false
+func (s *cacheStore) Flush() error {
+	return s.store.Flush()
 }
 
-// Release releases associated resources.
-func (s *iterator) Release() {
-}
-
-// Error returns error in iterator.
-func (s *iterator) Error() error {
-	return s.err
-}
-
-// Key returns the key of the current key/value pair.
-func (s *iterator) Key() []byte {
-	return nil
-}
-
-// Value returns the value of the current key/value pair.
-func (s *iterator) Value() []byte {
-	return nil
+func (s *cacheStore) Close() error {
+	return s.store.Close()
 }
 
 func clearStore(databaseName, storeName string) error {
@@ -282,5 +270,4 @@ func checkClearTime(jsindexeddbProvider storage.Provider, clearCache time.Durati
 	}
 
 	return clearDB, nil
-
 }
