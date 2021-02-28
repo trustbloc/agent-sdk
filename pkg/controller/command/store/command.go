@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/hyperledger/aries-framework-go/pkg/storage"
+	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/trustbloc/edge-core/pkg/log"
 
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
@@ -22,12 +22,12 @@ import (
 const (
 	// CommandName package command name.
 	CommandName = "store"
-	// GetCommandMethod command method.
-	GetCommandMethod = "Get"
 	// PutCommandMethod command method.
 	PutCommandMethod = "Put"
-	// IteratorCommandMethod command method.
-	IteratorCommandMethod = "Iterator"
+	// GetCommandMethod command method.
+	GetCommandMethod = "Get"
+	// QueryCommandMethod command method.
+	QueryCommandMethod = "Query"
 	// DeleteCommandMethod command method.
 	DeleteCommandMethod = "Delete"
 	// FlushCommandMethod command method.
@@ -39,19 +39,17 @@ const (
 const (
 	// InvalidRequestErrorCode is typically a code for validation errors.
 	InvalidRequestErrorCode = command.Code(iota + command.Store)
-	// GetErrorCode is typically a code for Get errors.
-	GetErrorCode
 	// PutErrorCode is typically a code for Put errors.
 	PutErrorCode
-	// IteratorErrorCode is typically a code for Iterator errors.
-	IteratorErrorCode
+	// GetErrorCode is typically a code for Get errors.
+	GetErrorCode
+	// QueryErrorCode is typically a code for Query errors.
+	QueryErrorCode
 	// DeleteErrorCode is typically a code for Delete errors.
 	DeleteErrorCode
+	// FlushErrorCode is typically a code for Flush errors.
+	FlushErrorCode
 )
-
-type batch interface {
-	Flush() error
-}
 
 var logger = log.New("agent-sdk-store")
 
@@ -62,34 +60,53 @@ type Provider interface {
 
 // Command is controller command for store.
 type Command struct {
-	store storage.Store
-	batch batch
+	provider storage.Provider
+	store    storage.Store
 }
 
 // New returns new store controller command instance.
 func New(p Provider) (*Command, error) {
-	b, ok := p.StorageProvider().(batch)
-	if !ok {
-		logger.Infof("store provider not supporting batch")
-	}
-
 	store, err := p.StorageProvider().OpenStore(CommandName)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Command{store: store, batch: b}, nil
+	return &Command{provider: p.StorageProvider(), store: store}, nil
 }
 
 // GetHandlers returns list of all commands supported by this controller command.
 func (c *Command) GetHandlers() []command.Handler {
 	return []command.Handler{
-		cmdutil.NewCommandHandler(CommandName, GetCommandMethod, c.Get),
 		cmdutil.NewCommandHandler(CommandName, PutCommandMethod, c.Put),
-		cmdutil.NewCommandHandler(CommandName, IteratorCommandMethod, c.Iterator),
+		cmdutil.NewCommandHandler(CommandName, GetCommandMethod, c.Get),
+		cmdutil.NewCommandHandler(CommandName, QueryCommandMethod, c.Query),
 		cmdutil.NewCommandHandler(CommandName, DeleteCommandMethod, c.Delete),
 		cmdutil.NewCommandHandler(CommandName, FlushCommandMethod, c.Flush),
 	}
+}
+
+// Put stores the key, value and (optional) tags.
+func (c *Command) Put(rw io.Writer, req io.Reader) command.Error {
+	var request PutRequest
+
+	err := json.NewDecoder(req).Decode(&request)
+	if err != nil {
+		logutil.LogError(logger, CommandName, PutCommandMethod, err.Error())
+
+		return command.NewValidationError(InvalidRequestErrorCode, err)
+	}
+
+	if err = c.store.Put(request.Key, request.Value, request.Tags...); err != nil {
+		logutil.LogError(logger, CommandName, PutCommandMethod, err.Error())
+
+		return command.NewExecuteError(PutErrorCode, err)
+	}
+
+	command.WriteNillableResponse(rw, nil, logger)
+
+	logutil.LogDebug(logger, CommandName, PutCommandMethod, successString)
+
+	return nil
 }
 
 // Get fetches the record based on key.
@@ -119,59 +136,45 @@ func (c *Command) Get(rw io.Writer, req io.Reader) command.Error {
 	return nil
 }
 
-// Put stores the key and the record.
-func (c *Command) Put(rw io.Writer, req io.Reader) command.Error {
-	var request PutRequest
+// Query retrieves data according to given expression.
+func (c *Command) Query(rw io.Writer, req io.Reader) command.Error {
+	var request QueryRequest
 
 	err := json.NewDecoder(req).Decode(&request)
 	if err != nil {
-		logutil.LogError(logger, CommandName, PutCommandMethod, err.Error())
+		logutil.LogError(logger, CommandName, QueryCommandMethod, err.Error())
 
 		return command.NewValidationError(InvalidRequestErrorCode, err)
 	}
 
-	if err = c.store.Put(request.Key, request.Value); err != nil {
-		logutil.LogError(logger, CommandName, PutCommandMethod, err.Error())
+	var pageSizeOption storage.QueryOption
 
-		return command.NewExecuteError(PutErrorCode, err)
+	if request.PageSize > 0 {
+		pageSizeOption = storage.WithPageSize(request.PageSize)
 	}
 
-	command.WriteNillableResponse(rw, nil, logger)
-
-	logutil.LogDebug(logger, CommandName, PutCommandMethod, successString)
-
-	return nil
-}
-
-// Iterator retrieves data according to given start and end keys.
-func (c *Command) Iterator(rw io.Writer, req io.Reader) command.Error {
-	var request IteratorRequest
-
-	err := json.NewDecoder(req).Decode(&request)
+	records, err := c.store.Query(request.Expression, pageSizeOption)
 	if err != nil {
-		logutil.LogError(logger, CommandName, IteratorCommandMethod, err.Error())
+		logutil.LogError(logger, CommandName, QueryCommandMethod, err.Error())
 
-		return command.NewValidationError(InvalidRequestErrorCode, err)
+		return command.NewExecuteError(QueryErrorCode, err)
 	}
 
-	records := c.store.Iterator(request.StartKey, request.EndKey)
-	defer records.Release()
+	defer func() {
+		errClose := records.Close()
+		if errClose != nil {
+			logutil.LogError(logger, CommandName, QueryCommandMethod, errClose.Error())
+		}
+	}()
 
-	var values [][]byte
-
-	for records.Next() {
-		values = append(values, records.Value())
+	values, cmdErr := getValuesFromIterator(records)
+	if cmdErr != nil {
+		return cmdErr
 	}
 
-	if err = records.Error(); err != nil {
-		logutil.LogError(logger, CommandName, IteratorCommandMethod, err.Error())
+	command.WriteNillableResponse(rw, &QueryResponse{Results: values}, logger)
 
-		return command.NewExecuteError(IteratorErrorCode, err)
-	}
-
-	command.WriteNillableResponse(rw, &IteratorResponse{Results: values}, logger)
-
-	logutil.LogDebug(logger, CommandName, IteratorCommandMethod, successString)
+	logutil.LogDebug(logger, CommandName, QueryCommandMethod, successString)
 
 	return nil
 }
@@ -200,14 +203,16 @@ func (c *Command) Delete(rw io.Writer, req io.Reader) command.Error {
 	return nil
 }
 
-// Flush data.
-func (c *Command) Flush(rw io.Writer, req io.Reader) command.Error {
-	if c.batch != nil {
-		err := c.batch.Flush()
+// Flush data in all currently open stores.
+func (c *Command) Flush(rw io.Writer, _ io.Reader) command.Error {
+	openStores := c.provider.GetOpenStores()
+
+	for _, openStore := range openStores {
+		err := openStore.Flush()
 		if err != nil {
 			logutil.LogError(logger, CommandName, FlushCommandMethod, err.Error())
 
-			return command.NewExecuteError(GetErrorCode, err)
+			return command.NewExecuteError(FlushErrorCode, err)
 		}
 	}
 
@@ -216,4 +221,37 @@ func (c *Command) Flush(rw io.Writer, req io.Reader) command.Error {
 	logutil.LogDebug(logger, CommandName, FlushCommandMethod, successString)
 
 	return nil
+}
+
+func getValuesFromIterator(iterator storage.Iterator) ([][]byte, command.Error) {
+	var values [][]byte
+
+	moreRecords, err := iterator.Next()
+	if err != nil {
+		logutil.LogError(logger, CommandName, QueryCommandMethod, err.Error())
+
+		return nil, command.NewExecuteError(QueryErrorCode, err)
+	}
+
+	for moreRecords {
+		value, errValue := iterator.Value()
+		if errValue != nil {
+			logutil.LogError(logger, CommandName, QueryCommandMethod, errValue.Error())
+
+			return nil, command.NewExecuteError(QueryErrorCode, errValue)
+		}
+
+		values = append(values, value)
+
+		var errNext error
+
+		moreRecords, errNext = iterator.Next()
+		if errNext != nil {
+			logutil.LogError(logger, CommandName, QueryCommandMethod, errNext.Error())
+
+			return nil, command.NewExecuteError(QueryErrorCode, errNext)
+		}
+	}
+
+	return values, nil
 }

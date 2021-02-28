@@ -27,7 +27,10 @@ import (
 	"github.com/google/tink/go/subtle/random"
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc"
-	"github.com/hyperledger/aries-framework-go/component/storage/jsindexeddb"
+	"github.com/hyperledger/aries-framework-go/component/storage/edv"
+	"github.com/hyperledger/aries-framework-go/component/storage/indexeddb"
+	"github.com/hyperledger/aries-framework-go/component/storageutil/batchedstore"
+	"github.com/hyperledger/aries-framework-go/component/storageutil/cachedstore"
 	arieslog "github.com/hyperledger/aries-framework-go/pkg/common/log"
 	ariesctrl "github.com/hyperledger/aries-framework-go/pkg/controller"
 	controllercmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
@@ -47,10 +50,8 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/kms/webkms"
 	"github.com/hyperledger/aries-framework-go/pkg/secretlock"
 	"github.com/hyperledger/aries-framework-go/pkg/secretlock/local"
-	"github.com/hyperledger/aries-framework-go/pkg/storage"
-	"github.com/hyperledger/aries-framework-go/pkg/storage/edv"
-	"github.com/hyperledger/aries-framework-go/pkg/storage/formattedstore"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
+	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/mitchellh/mapstructure"
 	"github.com/trustbloc/edge-core/pkg/log"
 	kmszcap "github.com/trustbloc/kms/pkg/restapi/kms/operation"
@@ -632,8 +633,8 @@ func addOutboundTransports(startOpts *agentStartOpts, options []aries.Option) ([
 	return options, nil
 }
 
-func createIndexedDBStorage(opts *agentStartOpts) (*jsindexeddb.Provider, error) {
-	indexedDBKMSProvider, err := jsindexeddb.NewProvider(opts.IndexedDBNamespace)
+func createIndexedDBStorage(opts *agentStartOpts) (*indexeddb.Provider, error) {
+	indexedDBKMSProvider, err := indexeddb.NewProvider(opts.IndexedDBNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create IndexedDB provider: %w", err)
 	}
@@ -641,7 +642,7 @@ func createIndexedDBStorage(opts *agentStartOpts) (*jsindexeddb.Provider, error)
 	return indexedDBKMSProvider, nil
 }
 
-func addStorageOptions(startOpts *agentStartOpts, indexedDBProvider *jsindexeddb.Provider,
+func addStorageOptions(startOpts *agentStartOpts, indexedDBProvider *indexeddb.Provider,
 	ariesKMS kms.KeyManager, ariesCrypto cryptoapi.Crypto, allAriesOptions []aries.Option) ([]aries.Option, error) {
 	if startOpts.StorageType == "" {
 		return nil, errors.New(blankStorageTypeErrMsg)
@@ -670,7 +671,7 @@ func addStorageOptions(startOpts *agentStartOpts, indexedDBProvider *jsindexeddb
 	return allAriesOptions, nil
 }
 
-func createEDVStorage(opts *agentStartOpts, indexedDBProvider *jsindexeddb.Provider,
+func createEDVStorage(opts *agentStartOpts, indexedDBProvider *indexeddb.Provider,
 	kmsImpl kms.KeyManager, cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
 	store, err := createEDVProvider(opts, indexedDBProvider, kmsImpl, cryptoImpl)
 	if err != nil {
@@ -802,7 +803,7 @@ func createLocalKMSAndCrypto(indexedDBKMSProvider storage.Provider,
 	return localKMS, c, allAriesOptions, nil
 }
 
-func createEDVProvider(opts *agentStartOpts, indexedDBKMSProvider *jsindexeddb.Provider, kmsImpl kms.KeyManager,
+func createEDVProvider(opts *agentStartOpts, indexedDBKMSProvider *indexeddb.Provider, kmsImpl kms.KeyManager,
 	cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
 	edvProvider, err := createEDVStorageProvider(opts, indexedDBKMSProvider, kmsImpl, cryptoImpl)
 	if err != nil {
@@ -853,26 +854,41 @@ func createEDVStorageProvider(opts *agentStartOpts, storageProvider storage.Prov
 		return nil, fmt.Errorf("failed to prepare MAC crypto: %w", err)
 	}
 
-	edvRESTProvider, err := prepareEDVRESTProvider(opts, macCrypto)
-	if err != nil {
-		return nil, fmt.Errorf("failed to prepare EDV REST provider: %w", err)
-	}
-
-	formattedProvider, err := prepareFormattedProvider(opts, storageProvider, kmsImpl, cryptoImpl, macCrypto,
-		edvRESTProvider)
+	encryptedFormatter, err := prepareEncryptedFormatter(opts, storageProvider, kmsImpl, cryptoImpl, macCrypto)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare formatted provider: %w", err)
 	}
 
-	return formattedProvider, nil
+	edvRESTProvider := prepareEDVRESTProvider(opts, encryptedFormatter)
+
+	batchedProvider := batchedstore.NewProvider(edvRESTProvider, opts.EDVBatchSize)
+
+	clearCache := opts.EDVClearCache
+	if clearCache == "" {
+		clearCache = defaultClearCache
+	}
+
+	t, err := time.ParseDuration(clearCache)
+	if err != nil {
+		return nil, err
+	}
+
+	indexedDBCacheProvider, err := jsindexeddbcache.NewProvider("cache", t)
+	if err != nil {
+		return nil, err
+	}
+
+	cachedProvider := cachedstore.NewProvider(batchedProvider, indexedDBCacheProvider)
+
+	return cachedProvider, nil
 }
 
-func prepareEDVRESTProvider(opts *agentStartOpts, macCrypto *edv.MACCrypto) (*edv.RESTProvider, error) {
+func prepareEDVRESTProvider(opts *agentStartOpts, formatter *edv.EncryptedFormatter) *edv.RESTProvider {
 	userConf := opts.UserConfig
 	capability := []byte(opts.EDVCapability)
 	zcapSVC := zcapld.New(opts.AuthzKeyStoreURL, userConf.AccessToken, userConf.SecretShare)
 
-	edvRESTProvider, err := edv.NewRESTProvider(opts.EDVServerURL, opts.EDVVaultID, macCrypto,
+	return edv.NewRESTProvider(opts.EDVServerURL, opts.EDVVaultID, formatter,
 		edv.WithHeaders(func(req *http.Request) (*http.Header, error) {
 			if len(capability) != 0 {
 				action := "write"
@@ -886,17 +902,11 @@ func prepareEDVRESTProvider(opts *agentStartOpts, macCrypto *edv.MACCrypto) (*ed
 
 			return nil, nil
 		}),
-		edv.WithFullDocumentsReturnedFromQueries())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create new EDV REST provider: %w", err)
-	}
-
-	return edvRESTProvider, nil
+		edv.WithFullDocumentsReturnedFromQueries(), edv.WithBatchEndpointExtension())
 }
 
-func prepareFormattedProvider(opts *agentStartOpts, kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager,
-	cryptoImpl cryptoapi.Crypto, macCrypto *edv.MACCrypto,
-	provider storage.Provider) (*formattedstore.FormattedProvider, error) {
+func prepareEncryptedFormatter(opts *agentStartOpts, kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager,
+	cryptoImpl cryptoapi.Crypto, macCrypto *edv.MACCrypto) (*edv.EncryptedFormatter, error) {
 	jweEncrypter, err := prepareJWEEncrypter(opts, kmsStorageProvider, kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare JWE encrypter: %w", err)
@@ -904,34 +914,7 @@ func prepareFormattedProvider(opts *agentStartOpts, kmsStorageProvider storage.P
 
 	jweDecrypter := jose.NewJWEDecrypt(nil, cryptoImpl, kmsImpl)
 
-	encryptedFormatter := edv.NewEncryptedFormatter(jweEncrypter, jweDecrypter, macCrypto)
-
-	var o []formattedstore.Option
-
-	if opts.UseEDVCache {
-		clearCache := opts.EDVClearCache
-		if clearCache == "" {
-			clearCache = defaultClearCache
-		}
-
-		t, err := time.ParseDuration(clearCache)
-		if err != nil {
-			return nil, err
-		}
-
-		p, err := jsindexeddbcache.NewProvider("cache", t)
-		if err != nil {
-			return nil, err
-		}
-
-		o = append(o, formattedstore.WithCacheProvider(p))
-	}
-
-	if opts.UseEDVBatch {
-		o = append(o, formattedstore.WithBatchWrite(opts.EDVBatchSize))
-	}
-
-	return formattedstore.NewFormattedProvider(provider, encryptedFormatter, false, o...), nil
+	return edv.NewEncryptedFormatter(jweEncrypter, jweDecrypter, macCrypto), nil
 }
 
 func prepareMACCrypto(opts *agentStartOpts, kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager,

@@ -237,7 +237,7 @@ func TestOperation_SendCreateConnectionRequest(t *testing.T) {
 			ConnectionID: "sample-connection",
 			State:        "completed", MyDID: "mydid", TheirDID: "theirDID-001",
 		}
-		mockStore := &mockstorage.MockStore{Store: make(map[string][]byte)}
+		mockStore := &mockstorage.MockStore{Store: make(map[string]mockstorage.DBEntry)}
 		connBytes, err := json.Marshal(record)
 		require.NoError(t, err)
 		require.NoError(t, mockStore.Put("conn_sample-connection", connBytes))
