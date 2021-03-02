@@ -12,11 +12,11 @@ require (
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
-	github.com/hyperledger/aries-framework-go v0.1.6-0.20210226001736-7c70b7efda83
+	github.com/hyperledger/aries-framework-go v0.1.6-0.20210302153503-0e00e248f14d
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v0.0.0-20210121210840-ee9984a4579c
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc v0.0.0-20210125133828-10c25f5d6d37
-	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20210226001736-7c70b7efda83
-	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210226001736-7c70b7efda83
+	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20210302153503-0e00e248f14d
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210302153503-0e00e248f14d
 	github.com/igor-pavlenko/httpsignatures-go v0.0.21
 	github.com/jinzhu/copier v0.2.5 // indirect
 	github.com/kilic/bls12-381 v0.1.0 // indirect
@@ -31,6 +31,6 @@ require (
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect
 	github.com/trustbloc/edge-core v0.1.6-0.20210224175343-275d0e0370c4
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
-	golang.org/x/sys v0.0.0-20210225134936-a50acf3fe073 // indirect
+	golang.org/x/sys v0.0.0-20210301091718-77cc2087c03b // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

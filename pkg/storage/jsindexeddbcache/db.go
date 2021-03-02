@@ -143,7 +143,7 @@ type cacheStore struct {
 
 // Put stores the key and the record.
 func (s *cacheStore) Put(k string, v []byte, tags ...storage.Tag) error {
-	return s.store.Put(k, v)
+	return s.store.Put(k, v, tags...)
 }
 
 // Get fetches the record based on key.
