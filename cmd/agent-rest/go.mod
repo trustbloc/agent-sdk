@@ -9,7 +9,7 @@ replace github.com/trustbloc/agent-sdk => ../../
 require (
 	github.com/cenkalti/backoff/v4 v4.1.0
 	github.com/gorilla/mux v1.8.0
-	github.com/hyperledger/aries-framework-go v0.1.6-0.20210303032959-86447a80557e
+	github.com/hyperledger/aries-framework-go v0.1.6-0.20210303180208-4bb3ae8b32c9
 	github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20210225210527-93579cabaa31
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc v0.0.0-20210125133828-10c25f5d6d37
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20210226001736-7c70b7efda83
