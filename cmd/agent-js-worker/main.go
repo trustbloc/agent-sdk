@@ -51,6 +51,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/secretlock"
 	"github.com/hyperledger/aries-framework-go/pkg/secretlock/local"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
+	"github.com/hyperledger/aries-framework-go/pkg/vdr/key"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/mitchellh/mapstructure"
 	"github.com/trustbloc/edge-core/pkg/log"
@@ -565,7 +566,7 @@ func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) (
 	VDRs = append(VDRs, trustbloc.New(nil,
 		trustbloc.WithDomain(trustblocDomain),
 		trustbloc.WithResolverURL(trustblocResolver),
-	))
+	), key.New())
 
 	return VDRs, nil
 }
