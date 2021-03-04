@@ -84,7 +84,10 @@ type mediatorClient interface {
 
 // New returns new DID Exchange controller command instance.
 func New(domain string, p Provider) (*Command, error) {
-	client := trustbloc.New(nil, trustbloc.WithDomain(domain))
+	client, err := trustbloc.New(nil, trustbloc.WithDomain(domain))
+	if err != nil {
+		return nil, err
+	}
 
 	mClient, err := mediator.New(p)
 	if err != nil {
