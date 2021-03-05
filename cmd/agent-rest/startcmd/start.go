@@ -19,7 +19,9 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gorilla/mux"
 	"github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb"
+	"github.com/hyperledger/aries-framework-go-ext/component/storage/mysql"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc"
+	"github.com/hyperledger/aries-framework-go/component/storage/leveldb"
 	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 	"github.com/hyperledger/aries-framework-go/pkg/common/log"
 	"github.com/hyperledger/aries-framework-go/pkg/controller"
@@ -59,7 +61,7 @@ const (
 	databaseTypeEnvKey        = "ARIESD_DATABASE_TYPE"
 	databaseTypeFlagShorthand = "q"
 	databaseTypeFlagUsage     = "The type of database to use for everything except key storage. " +
-		"Supported options: mem, couchdb. " +
+		"Supported options: mem, couchdb, mysql, leveldb. " +
 		" Alternatively, this can be set with the following environment variable: " + databaseTypeEnvKey
 
 	databaseURLFlagName      = "database-url"
@@ -195,6 +197,8 @@ const (
 
 	databaseTypeMemOption     = "mem"
 	databaseTypeCouchDBOption = "couchdb"
+	databaseTypeMYSQLDBOption = "mysql"
+	databaseTypeLevelDBOption = "leveldb"
 )
 
 var (
@@ -225,15 +229,19 @@ type dbParam struct {
 }
 
 // TODO (#47): Add support for EDV storage.
-// TODO (#149) Add support for LevelDB storage.
-// TODO (#150) Add support for MySQL storage.
 // nolint:gochecknoglobals
 var supportedStorageProviders = map[string]func(url, prefix string) (storage.Provider, error){
 	databaseTypeMemOption: func(_, _ string) (storage.Provider, error) { // nolint:unparam
 		return mem.NewProvider(), nil
 	},
+	databaseTypeLevelDBOption: func(_, path string) (storage.Provider, error) { // nolint:unparam
+		return leveldb.NewProvider(path), nil
+	},
 	databaseTypeCouchDBOption: func(url, prefix string) (storage.Provider, error) {
 		return couchdb.NewProvider(url, couchdb.WithDBPrefix(prefix))
+	},
+	databaseTypeMYSQLDBOption: func(url, prefix string) (storage.Provider, error) {
+		return mysql.NewProvider(url, mysql.WithDBPrefix(prefix))
 	},
 }
 

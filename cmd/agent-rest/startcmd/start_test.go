@@ -19,8 +19,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hyperledger/aries-framework-go/component/storage/leveldb"
 	"github.com/hyperledger/aries-framework-go/pkg/common/log"
 	spilog "github.com/hyperledger/aries-framework-go/spi/log"
+	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 )
@@ -324,7 +326,7 @@ func TestStartCmdWithoutInboundHostArg(t *testing.T) {
 func TestStartCmd(t *testing.T) {
 	t.Run("invalid inbound internal host option", func(t *testing.T) {
 		_, err := createAriesAgent(&agentParameters{
-			dbParam:              &dbParam{dbType: "mem"},
+			dbParam:              &dbParam{dbType: "leveldb"},
 			inboundHostInternals: []string{"1@2@3"},
 		})
 		require.Contains(t, err.Error(), "invalid inbound host option")
@@ -332,7 +334,7 @@ func TestStartCmd(t *testing.T) {
 
 	t.Run("invalid inbound external host option", func(t *testing.T) {
 		_, err := createAriesAgent(&agentParameters{
-			dbParam:              &dbParam{dbType: "mem"},
+			dbParam:              &dbParam{dbType: "leveldb"},
 			inboundHostExternals: []string{"1@2@3"},
 		})
 		require.Contains(t, err.Error(), "invalid inbound host option")
@@ -800,8 +802,53 @@ func TestStoreProvider(t *testing.T) {
 	t.Run("test error from create new couchdb", func(t *testing.T) {
 		_, err := createAriesAgent(&agentParameters{dbParam: &dbParam{dbType: databaseTypeCouchDBOption}})
 		require.Error(t, err)
-		require.Contains(t, err.Error(),
-			"failed to connect to storage at : failed to ping couchDB: url can't be blank")
+		require.Contains(t, err.Error(), "failed to connect to storage at : "+
+			"failed to ping couchDB: url can't be blank")
+	})
+
+	t.Run("test error from create new mysql", func(t *testing.T) {
+		_, err := createAriesAgent(&agentParameters{dbParam: &dbParam{dbType: databaseTypeMYSQLDBOption}})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "DB URL for new mySQL DB provider can't be blank")
+	})
+
+	t.Run("leveldb database with retry", func(t *testing.T) {
+		retry := true
+		origin := supportedStorageProviders[databaseTypeLevelDBOption]
+		defer func() { supportedStorageProviders[databaseTypeLevelDBOption] = origin }()
+
+		supportedStorageProviders[databaseTypeLevelDBOption] = func(_, path string) (storage.Provider, error) {
+			if retry {
+				retry = false
+
+				return nil, errors.New("db error")
+			}
+
+			return leveldb.NewProvider(path), nil
+		}
+
+		_, err := createAriesAgent(&agentParameters{dbParam: &dbParam{
+			timeout: 1,
+			prefix:  "/tmp/agent-sdk/test",
+			dbType:  "leveldb",
+		}})
+		require.NoError(t, err)
+	})
+
+	t.Run("db database error after with retry", func(t *testing.T) {
+		origin := supportedStorageProviders[databaseTypeLevelDBOption]
+		defer func() { supportedStorageProviders[databaseTypeLevelDBOption] = origin }()
+
+		supportedStorageProviders[databaseTypeLevelDBOption] = func(_, path string) (storage.Provider, error) {
+			return nil, errors.New("db error")
+		}
+
+		_, err := createAriesAgent(&agentParameters{dbParam: &dbParam{
+			timeout: 1,
+			prefix:  "/tmp/agent-sdk/test",
+			dbType:  "leveldb",
+		}})
+		require.EqualError(t, err, "failed to connect to storage at : db error")
 	})
 }
 
