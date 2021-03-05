@@ -20,12 +20,21 @@ npm install
 npm link
 cd $root
 
+function version { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
+
 git clone -b main https://github.com/hyperledger/aries-framework-go $framework_dir
 cd $framework_dir || exit 1
 
 git checkout ${ARIES_FRAMEWORK_COMMIT}
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
+  mOSVer=$(sw_vers -productVersion)
+  # MaxOS Big Sur executes sed just like GNU sed while previous versions require ''
+  if [ $(version $mOSVer) -lt $(version "11") ]; then
+    sed -i '' -e "1,/E2E_AGENT_REST_IMAGE.*/s/E2E_AGENT_REST_IMAGE.*/E2E_AGENT_REST_IMAGE=ghcr.io\/trustbloc\/agent-sdk-server/" test/aries-js-worker/fixtures/.env
+  else
+    sed -i -e "1,/E2E_AGENT_REST_IMAGE.*/s/E2E_AGENT_REST_IMAGE.*/E2E_AGENT_REST_IMAGE=ghcr.io\/trustbloc\/agent-sdk-server/" test/aries-js-worker/fixtures/.env
+  fi
   sed -i '' -e "1,/E2E_AGENT_REST_IMAGE.*/s/E2E_AGENT_REST_IMAGE.*/E2E_AGENT_REST_IMAGE=ghcr.io\/trustbloc\/agent-sdk-server/" test/aries-js-worker/fixtures/.env
 else
   sed -i -e "1,/E2E_AGENT_REST_IMAGE.*/s/E2E_AGENT_REST_IMAGE.*/E2E_AGENT_REST_IMAGE=ghcr.io\/trustbloc\/agent-sdk-server/" test/aries-js-worker/fixtures/.env
@@ -47,10 +56,17 @@ mv $working_dir/node_modules/@trustbloc $working_dir/node_modules/@hyperledger
 echo "gunzip public/aries-framework-go/assets/agent-js-worker.wasm.gz" >> $working_dir/scripts/setup_assets.sh
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  sed -i '' -e "s/Aries.Framework/Agent.Framework/" $working_dir/test/common.js
-  sed -i '' -e "s/db-namespace/indexedDB-namespace/" $working_dir/test/common.js
-  sed -i '' -e "s/\"log-level\": \"debug\",/\"log-level\": \"debug\",\"storageType\": \"indexedDB\",/" $working_dir/test/common.js
-  sed -i '' -e "s/15000/20000/" $working_dir/karma.conf.js
+  if [ $(version $mOSVer) -lt $(version "11") ]; then
+    sed -i '' -e "s/Aries.Framework/Agent.Framework/" $working_dir/test/common.js
+    sed -i '' -e "s/db-namespace/indexedDB-namespace/" $working_dir/test/common.js
+    sed -i '' -e "s/\"log-level\": \"debug\",/\"log-level\": \"debug\",\"storageType\": \"indexedDB\",/" $working_dir/test/common.js
+    sed -i '' -e "s/15000/20000/" $working_dir/karma.conf.js
+  else
+    sed -i -e "s/Aries.Framework/Agent.Framework/" $working_dir/test/common.js
+    sed -i -e "s/db-namespace/indexedDB-namespace/" $working_dir/test/common.js
+    sed -i -e "s/\"log-level\": \"debug\",/\"log-level\": \"debug\",\"storageType\": \"indexedDB\",/" $working_dir/test/common.js
+    sed -i -e "s/15000/20000/" $working_dir/karma.conf.js
+  fi
 else
   sed -i -e "s/Aries.Framework/Agent.Framework/" $working_dir/test/common.js
   sed -i -e "s/db-namespace/indexedDB-namespace/" $working_dir/test/common.js
