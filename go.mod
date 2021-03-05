@@ -6,20 +6,22 @@ module github.com/trustbloc/agent-sdk
 go 1.15
 
 require (
+	github.com/VictoriaMetrics/fastcache v1.5.8 // indirect
 	github.com/btcsuite/btcd v0.21.0-beta // indirect
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
-	github.com/hyperledger/aries-framework-go v0.1.6-0.20210304035610-cb1ce0da0c3b
-	github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20210303194824-a55a12f8d063 // indirect
+	github.com/hyperledger/aries-framework-go v0.1.6-0.20210305213256-1b30fec59b51
+	github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20210305211919-90001416b848 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v0.0.0-20210303194824-a55a12f8d063
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc v0.0.0-20210303194824-a55a12f8d063
-	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20210302153503-0e00e248f14d
-	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210302153503-0e00e248f14d
+	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20210305213256-1b30fec59b51
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210305213256-1b30fec59b51
 	github.com/igor-pavlenko/httpsignatures-go v0.0.21
 	github.com/jinzhu/copier v0.2.5 // indirect
+	github.com/kawamuray/jsonpath v0.0.0-20210127151053-2ab0d7f0a6ad // indirect
 	github.com/kilic/bls12-381 v0.1.0 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
@@ -30,8 +32,11 @@ require (
 	github.com/sirupsen/logrus v1.7.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect
+	github.com/tidwall/pretty v1.1.0 // indirect
+	github.com/tidwall/sjson v1.1.5 // indirect
 	github.com/trustbloc/edge-core v0.1.6-0.20210224175343-275d0e0370c4
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
-	golang.org/x/sys v0.0.0-20210301091718-77cc2087c03b // indirect
+	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110 // indirect
+	golang.org/x/sys v0.0.0-20210305215415-5cdee2b1b5a0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
