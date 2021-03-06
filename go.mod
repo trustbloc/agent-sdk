@@ -13,11 +13,10 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
 	github.com/hyperledger/aries-framework-go v0.1.6-0.20210304035610-cb1ce0da0c3b
-	github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20210303194824-a55a12f8d063 // indirect
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v0.0.0-20210303194824-a55a12f8d063
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc v0.0.0-20210303194824-a55a12f8d063
 	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20210302153503-0e00e248f14d
-	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210302153503-0e00e248f14d
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210305213256-1b30fec59b51
 	github.com/igor-pavlenko/httpsignatures-go v0.0.21
 	github.com/jinzhu/copier v0.2.5 // indirect
 	github.com/kilic/bls12-381 v0.1.0 // indirect
