@@ -10,8 +10,8 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.0
 	github.com/gorilla/mux v1.8.0
 	github.com/hyperledger/aries-framework-go v0.1.6-0.20210305213256-1b30fec59b51
-	github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20210305211919-90001416b848
-	github.com/hyperledger/aries-framework-go-ext/component/storage/mysql v0.0.0-20210305211919-90001416b848
+	github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20210305233053-d3d22c802c12
+	github.com/hyperledger/aries-framework-go-ext/component/storage/mysql v0.0.0-20210305233053-d3d22c802c12
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc v0.0.0-20210303194824-a55a12f8d063
 	github.com/hyperledger/aries-framework-go/component/storage/leveldb v0.0.0-20210305213256-1b30fec59b51
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20210305213256-1b30fec59b51
