@@ -78,6 +78,7 @@ jobs:
           echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
           echo '@trustbloc:registry=https://npm.pkg.github.com' >> ~/.npmrc
           export npm_config_prefix=~/.npm-prefix
+          echo '127.0.0.1 static-file-server-js' | sudo tee -a /etc/hosts
           make aries-js-bdd
         env:
           DOCKER_PASSWORD: $(DOCKER_PASSWORD)
