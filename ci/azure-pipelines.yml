@@ -116,7 +116,7 @@ jobs:
           docker push ${AGENT_SDK_PKG}:${AGENT_SDK_TAG}
           cd ./cmd/agent-js-worker
           sed -i 's/"version": "0.1.0"/"version": "'$NPM_PKG_TAG'"/g' package.json
-          sed -i 's#"name": "@trustbloc/agent-sdk"#"name": "@'${NPM_PKG_NAME}'"#g' package.json
+          sed -i 's#"name": "@trustbloc/agent-sdk-web"#"name": "@'${NPM_PKG_NAME}'"#g' package.json
           sed -i 's#"url": "git://github.com/trustbloc/agent-sdk.git"#"url": "git://github.com/'${NPM_PKG_REPO}'.git"#g' package.json
           npm install
           npm publish
