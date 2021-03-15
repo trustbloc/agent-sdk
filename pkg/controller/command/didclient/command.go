@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc"
@@ -51,6 +52,8 @@ const (
 
 	// p256KeyType EC P-256 key type.
 	p256KeyType = "P256"
+
+	didParts = 3
 )
 
 const (
@@ -229,8 +232,19 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 		return command.NewExecuteError(CreateDIDErrorCode, err)
 	}
 
+	didSplit := strings.Split(docResolution.DIDDocument.ID, ":")
+
+	if len(didSplit) < didParts {
+		return command.NewExecuteError(CreateDIDErrorCode,
+			fmt.Errorf("did parts less than %d", didParts))
+	}
+
+	discoverableDID := strings.ReplaceAll(string(bytes),
+		fmt.Sprintf("%s:%s:%s", didSplit[0], didSplit[1], didSplit[2]),
+		fmt.Sprintf("%s:%s:%s", didSplit[0], didSplit[1], c.domain))
+
 	command.WriteNillableResponse(rw, &CreateDIDResponse{
-		DID: bytes,
+		DID: []byte(discoverableDID),
 	}, logger)
 
 	logutil.LogDebug(logger, CommandName, CreateTrustBlocDIDCommandMethod, successString)

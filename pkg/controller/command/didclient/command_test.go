@@ -223,11 +223,10 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 	ecPubKeyBytes := elliptic.Marshal(ecPrivKey.PublicKey.Curve, ecPrivKey.PublicKey.X, ecPrivKey.PublicKey.Y)
 
-	c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: &did.Doc{ID: "1"}}}
-
 	var b bytes.Buffer
 
 	t.Run("test success create did with Ed25519 key", func(t *testing.T) {
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: &did.Doc{ID: "did:ex:123"}}}
 		// ED key
 		r, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
 			{
@@ -258,7 +257,33 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		err = json.Unmarshal(resp.DID, &didMap)
 		require.NoError(t, err)
 
-		require.Equal(t, "1", didMap["id"])
+		require.Equal(t, "did:ex:domain", didMap["id"])
+	})
+
+	t.Run("test wrong did parts", func(t *testing.T) {
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: &did.Doc{ID: "1"}}}
+		// ED key
+		r, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+			{
+				KeyType:  ed25519KeyType,
+				Value:    base64.RawURLEncoding.EncodeToString(pubKey),
+				Recovery: true,
+			},
+			{
+				KeyType: p256KeyType,
+				Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
+				Update:  true,
+			},
+			{
+				ID: "key1", Type: "key1", KeyType: "Ed25519",
+				Value: base64.RawURLEncoding.EncodeToString([]byte("value")),
+			},
+		}})
+		require.NoError(t, err)
+
+		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(r))
+		require.Error(t, cmdErr)
+		require.Contains(t, cmdErr.Error(), "did parts less than 3")
 	})
 }
 
