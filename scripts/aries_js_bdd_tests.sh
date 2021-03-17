@@ -20,7 +20,7 @@ npm install
 npm link
 cd $root
 
-git clone -b main https://github.com/hyperledger/aries-framework-go $framework_dir
+git clone -b debug_bdd_tests https://github.com/aholovko/aries-framework-go.git $framework_dir
 cd $framework_dir || exit 1
 
 git checkout ${ARIES_FRAMEWORK_COMMIT}
@@ -50,11 +50,13 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   sed -i '' -e "s/Aries.Framework/Agent.Framework/" $working_dir/test/common.js
   sed -i '' -e "s/db-namespace/indexedDB-namespace/" $working_dir/test/common.js
   sed -i '' -e "s/\"log-level\": \"debug\",/\"log-level\": \"debug\",\"storageType\": \"indexedDB\",/" $working_dir/test/common.js
+  sed -i '' -e "s/10000/20000/" $working_dir/test/common.js
   sed -i '' -e "s/15000/20000/" $working_dir/karma.conf.js
 else
   sed -i -e "s/Aries.Framework/Agent.Framework/" $working_dir/test/common.js
   sed -i -e "s/db-namespace/indexedDB-namespace/" $working_dir/test/common.js
   sed -i -e "s/\"log-level\": \"debug\",/\"log-level\": \"debug\",\"storageType\": \"indexedDB\",/" $working_dir/test/common.js
+  sed -i -e "s/10000/20000/" $working_dir/test/common.js
   sed -i -e "s/15000/20000/" $working_dir/karma.conf.js
 fi
 
