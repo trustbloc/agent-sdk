@@ -149,7 +149,7 @@ Note: this applies if you are running in the browser.
 
 `agent-js-worker` loads some assets at runtime: the web assembly binary and a couple of JS scripts. These assets are
 located in the `dist/assets` directory (if you `npm install` it, you'll find them in
-`./node_modules/@trustbloc/agent-sdk/dist/assets`).
+`./node_modules/@trustbloc/agent-sdk-web/dist/assets`).
 
 Things that need to work if you are to use `agent-js-worker` on the client side:
 

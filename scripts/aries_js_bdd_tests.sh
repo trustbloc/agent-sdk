@@ -35,13 +35,13 @@ make sidetree-cli
 
 cd test/aries-js-worker || exit 1
 npm install
-npm link @trustbloc/agent-sdk
+npm link @trustbloc/agent-sdk-web
 cd $root || exit 1
 
-cp $working_dir/node_modules/@trustbloc/agent-sdk/dist/assets/agent-js-worker.wasm.gz $working_dir/node_modules/@trustbloc/agent-sdk/dist/assets/aries-js-worker.wasm.gz
-mv $working_dir/node_modules/@trustbloc/agent-sdk/dist/rest/agent.js $working_dir/node_modules/@trustbloc/agent-sdk/dist/rest/aries.js
-mv $working_dir/node_modules/@trustbloc/agent-sdk/dist/web/agent.js $working_dir/node_modules/@trustbloc/agent-sdk/dist/web/aries.js
-mv $working_dir/node_modules/@trustbloc/agent-sdk $working_dir/node_modules/@trustbloc/aries-framework-go
+cp $working_dir/node_modules/@trustbloc/agent-sdk-web/dist/assets/agent-js-worker.wasm.gz $working_dir/node_modules/@trustbloc/agent-sdk-web/dist/assets/aries-js-worker.wasm.gz
+mv $working_dir/node_modules/@trustbloc/agent-sdk-web/dist/rest/agent.js $working_dir/node_modules/@trustbloc/agent-sdk-web/dist/rest/aries.js
+mv $working_dir/node_modules/@trustbloc/agent-sdk-web/dist/web/agent.js $working_dir/node_modules/@trustbloc/agent-sdk-web/dist/web/aries.js
+mv $working_dir/node_modules/@trustbloc/agent-sdk-web $working_dir/node_modules/@trustbloc/aries-framework-go
 mv $working_dir/node_modules/@trustbloc $working_dir/node_modules/@hyperledger
 
 echo "gunzip public/aries-framework-go/assets/agent-js-worker.wasm.gz" >> $working_dir/scripts/setup_assets.sh
@@ -49,12 +49,12 @@ echo "gunzip public/aries-framework-go/assets/agent-js-worker.wasm.gz" >> $worki
 if [[ "$OSTYPE" == "darwin"* ]]; then
   sed -i '' -e "s/Aries.Framework/Agent.Framework/" $working_dir/test/common.js
   sed -i '' -e "s/db-namespace/indexedDB-namespace/" $working_dir/test/common.js
-  sed -i '' -e "s/\"log-level\": \"debug\",/\"log-level\": \"debug\",\"storageType\": \"indexedDB\",/" $working_dir/test/common.js
+  sed -i '' -e "s/\"log-level\": environment.LOG_LEVEL,/\"log-level\": \"debug\",\"storageType\": \"indexedDB\",/" $working_dir/test/common.js
   sed -i '' -e "s/15000/20000/" $working_dir/karma.conf.js
 else
   sed -i -e "s/Aries.Framework/Agent.Framework/" $working_dir/test/common.js
   sed -i -e "s/db-namespace/indexedDB-namespace/" $working_dir/test/common.js
-  sed -i -e "s/\"log-level\": \"debug\",/\"log-level\": \"debug\",\"storageType\": \"indexedDB\",/" $working_dir/test/common.js
+  sed -i -e "s/\"log-level\": environment.LOG_LEVEL,/\"log-level\": \"debug\",\"storageType\": \"indexedDB\",/" $working_dir/test/common.js
   sed -i -e "s/15000/20000/" $working_dir/karma.conf.js
 fi
 
