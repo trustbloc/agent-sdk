@@ -972,7 +972,7 @@ func prepareJWEEncrypter(opts *agentStartOpts, kmsStorageProvider storage.Provid
 		return nil, fmt.Errorf("failed to unmarshal JWE public key bytes to an EC public key object: %w", err)
 	}
 
-	jweEncrypter, err := jose.NewJWEEncrypt(jose.A256GCM, jose.DIDCommEncType, "", nil,
+	jweEncrypter, err := jose.NewJWEEncrypt(jose.A256GCM, "application/didcomm-encrypted+json", "application/didcomm-plain+json", "", nil, // nolint: lll
 		[]*cryptoapi.PublicKey{ecPubKey}, crypto)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create JWE encrypter: %w", err)
