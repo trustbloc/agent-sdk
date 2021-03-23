@@ -15,6 +15,7 @@ require (
 	github.com/hyperledger/aries-framework-go v0.1.7-0.20210323102127-50be9f1bad08
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc v0.0.0-20210306194409-6e4c5d622fbc
 	github.com/hyperledger/aries-framework-go/component/storage/edv v0.0.0-20210310140909-2ae2d7df101e
+	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20210310140909-2ae2d7df101e
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20210320144851-40976de98ccf
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210320144851-40976de98ccf
 	github.com/mitchellh/mapstructure v1.3.3
