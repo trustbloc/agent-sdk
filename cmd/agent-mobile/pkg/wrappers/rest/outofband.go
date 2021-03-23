@@ -4,7 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package rest // nolint: dupl
+package rest
 
 import (
 	"github.com/hyperledger/aries-framework-go/pkg/controller/command/outofband"
@@ -21,19 +21,9 @@ type OutOfBand struct {
 	Token string
 }
 
-// CreateRequest creates and saves an Out-Of-Band request message.
-func (oob *OutOfBand) CreateRequest(request *models.RequestEnvelope) *models.ResponseEnvelope {
-	return oob.createRespEnvelope(request, outofband.CreateRequest)
-}
-
 // CreateInvitation creates and saves an out-of-band invitation.
 func (oob *OutOfBand) CreateInvitation(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return oob.createRespEnvelope(request, outofband.CreateInvitation)
-}
-
-// AcceptRequest from another agent and return the ID of a new connection record.
-func (oob *OutOfBand) AcceptRequest(request *models.RequestEnvelope) *models.ResponseEnvelope {
-	return oob.createRespEnvelope(request, outofband.AcceptRequest)
 }
 
 // AcceptInvitation from another agent and return the ID of the new connection records.

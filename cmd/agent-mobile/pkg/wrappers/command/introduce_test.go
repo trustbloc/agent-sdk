@@ -105,19 +105,19 @@ func TestIntroduce_SendProposalWithOOBRequest(t *testing.T) {
 		i := getIntroduceController(t)
 
 		fakeHandler := mockCommandRunner{data: []byte(`{"piid":"a13832dc-88b8-4714-b697-e5410d23abe2"}`)}
-		i.handlers[cmdintroduce.SendProposalWithOOBRequest] = fakeHandler.exec
+		i.handlers[cmdintroduce.SendProposalWithOOBInvitation] = fakeHandler.exec
 
 		reqData := fmt.Sprintf(`{
 	"recipient": {
 			"my_did": "did:mydid:123",
 			"their_did": "gopher1:example:001"
 	},
-	"request":	{
+	"invitation":	{
 			"@type": "%s"
 	}
-}`, outofband.RequestMsgType)
+}`, outofband.InvitationMsgType)
 		req := &models.RequestEnvelope{Payload: []byte(reqData)}
-		resp := i.SendProposalWithOOBRequest(req)
+		resp := i.SendProposalWithOOBInvitation(req)
 		require.NotNil(t, resp)
 		require.Nil(t, resp.Error)
 		require.Equal(t, `{"piid":"a13832dc-88b8-4714-b697-e5410d23abe2"}`, string(resp.Payload))
@@ -151,14 +151,14 @@ func TestIntroduce_AcceptProposalWithOOBRequest(t *testing.T) {
 		i := getIntroduceController(t)
 
 		fakeHandler := mockCommandRunner{data: []byte(``)}
-		i.handlers[cmdintroduce.AcceptProposalWithOOBRequest] = fakeHandler.exec
+		i.handlers[cmdintroduce.AcceptProposalWithOOBInvitation] = fakeHandler.exec
 
 		reqData := `{
-	"request": {},
+	"invitation": {},
 	"piid": "a13832dc-88b8-4714-b697-e5410d23abe2"
 }`
 		req := &models.RequestEnvelope{Payload: []byte(reqData)}
-		resp := i.AcceptProposalWithOOBRequest(req)
+		resp := i.AcceptProposalWithOOBInvitation(req)
 		require.NotNil(t, resp)
 		require.Nil(t, resp.Error)
 		require.Equal(t, "", string(resp.Payload))
@@ -188,15 +188,15 @@ func TestIntroduce_AcceptRequestWithPublicOOBRequest(t *testing.T) {
 		i := getIntroduceController(t)
 
 		fakeHandler := mockCommandRunner{data: []byte(``)}
-		i.handlers[cmdintroduce.AcceptRequestWithPublicOOBRequest] = fakeHandler.exec
+		i.handlers[cmdintroduce.AcceptRequestWithPublicOOBInvitation] = fakeHandler.exec
 
 		reqData := `{
-	"request": {},
+	"invitation": {},
 	"piid": "a13832dc-88b8-4714-b697-e5410d23abe2",
 	"to": {}
 }`
 		req := &models.RequestEnvelope{Payload: []byte(reqData)}
-		resp := i.AcceptRequestWithPublicOOBRequest(req)
+		resp := i.AcceptRequestWithPublicOOBInvitation(req)
 		require.NotNil(t, resp)
 		require.Nil(t, resp.Error)
 		require.Equal(t, "", string(resp.Payload))
