@@ -239,10 +239,11 @@ func (c *Command) CreateInvitation(rw io.Writer, req io.Reader) command.Error {
 		return command.NewValidationError(InvalidRequestErrorCode, err)
 	}
 
-	invitation, err := c.outOfBand.CreateInvitation(request.Protocols,
+	invitation, err := c.outOfBand.CreateInvitation(
+		request.Service,
+		outofband.WithHandshakeProtocols(request.Protocols...),
 		outofband.WithGoal(request.Goal, request.GoalCode),
 		outofband.WithLabel(request.Label),
-		outofband.WithServices(request.Service...),
 		outofband.WithRouterConnections(connections[rand.Intn(len(connections))])) //nolint: gosec
 	if err != nil {
 		logutil.LogError(logger, CommandName, CreateInvitation, err.Error())
