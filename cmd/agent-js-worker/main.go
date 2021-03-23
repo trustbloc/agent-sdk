@@ -39,6 +39,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto/primitive/composite/keyio"
 	webcrypto "github.com/hyperledger/aries-framework-go/pkg/crypto/webkms"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/messaging/msghandler"
+	"github.com/hyperledger/aries-framework-go/pkg/didcomm/packer"
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
@@ -972,7 +973,7 @@ func prepareJWEEncrypter(opts *agentStartOpts, kmsStorageProvider storage.Provid
 		return nil, fmt.Errorf("failed to unmarshal JWE public key bytes to an EC public key object: %w", err)
 	}
 
-	jweEncrypter, err := jose.NewJWEEncrypt(jose.A256GCM, "application/didcomm-encrypted+json", "application/didcomm-plain+json", "", nil, // nolint: lll
+	jweEncrypter, err := jose.NewJWEEncrypt(jose.A256GCM, packer.EnvelopeEncodingTypeV2, "", "", nil,
 		[]*cryptoapi.PublicKey{ecPubKey}, crypto)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create JWE encrypter: %w", err)
