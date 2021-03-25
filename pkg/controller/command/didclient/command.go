@@ -24,6 +24,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	ariesjose "github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
+	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/peer"
 	"github.com/trustbloc/edge-core/pkg/log"
 
@@ -72,6 +73,7 @@ const (
 type Provider interface {
 	VDRegistry() vdr.Registry
 	Service(id string) (interface{}, error)
+	KMS() kms.KeyManager
 }
 
 type didBlocClient interface {
@@ -114,6 +116,7 @@ func New(domain string, p Provider) (*Command, error) {
 		vdrRegistry:    p.VDRegistry(),
 		mediatorClient: mClient,
 		mediatorSvc:    mediatorSvc,
+		keyManager:     p.KMS(),
 	}, nil
 }
 
@@ -124,6 +127,7 @@ type Command struct {
 	vdrRegistry    vdr.Registry
 	mediatorClient mediatorClient
 	mediatorSvc    mediatorservice.ProtocolService
+	keyManager     kms.KeyManager
 }
 
 // GetHandlers returns list of all commands supported by this controller command.
@@ -288,11 +292,28 @@ func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //n
 		return command.NewExecuteError(CreateDIDErrorCode, err)
 	}
 
+	// TODO - key type should be configurable
+	keyID, keyBytes, err := c.keyManager.CreateAndExportPubKeyBytes(kms.ED25519Type)
+	if err != nil {
+		logutil.LogError(logger, CommandName, CreatePeerDIDCommandMethod, err.Error())
+
+		return command.NewExecuteError(CreateDIDErrorCode, err)
+	}
+
 	docResolution, err := c.vdrRegistry.Create(
-		peer.DIDMethod, &did.Doc{Service: []did.Service{{
-			ServiceEndpoint: config.Endpoint(),
-			RoutingKeys:     config.Keys(),
-		}}},
+		peer.DIDMethod,
+		&did.Doc{
+			Service: []did.Service{{
+				ServiceEndpoint: config.Endpoint(),
+				RoutingKeys:     config.Keys(),
+			}},
+			VerificationMethod: []did.VerificationMethod{*did.NewVerificationMethodFromBytes(
+				"#"+keyID,
+				"Ed25519VerificationKey2018",
+				"",
+				keyBytes,
+			)},
+		},
 	)
 	if err != nil {
 		logutil.LogError(logger, CommandName, CreatePeerDIDCommandMethod, err.Error())

@@ -13,6 +13,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	mockprotocol "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
+	mockkms "github.com/hyperledger/aries-framework-go/pkg/mock/kms"
 	mockvdr "github.com/hyperledger/aries-framework-go/pkg/mock/vdr"
 	"github.com/stretchr/testify/require"
 
@@ -457,6 +459,38 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 
 		require.Error(t, cmdErr)
 		require.Contains(t, cmdErr.Error(), "sample-error-3")
+	})
+
+	t.Run("test error while creating verification method", func(t *testing.T) {
+		c, err := New("domain", getMockProvider())
+		require.NoError(t, err)
+
+		c.vdrRegistry = &mockvdr.MockVDRegistry{CreateValue: &did.Doc{
+			Context: []string{"https://w3id.org/did/v1"},
+			Service: []did.Service{
+				{
+					ID:              uuid.New().String(),
+					Type:            didCommServiceType,
+					ServiceEndpoint: "http://router.com",
+				},
+			},
+		}}
+
+		c.mediatorClient = &mockMediatorClient{
+			GetConfigFunc: func(connID string) (*mediatorsvc.Config, error) {
+				return &mediatorsvc.Config{}, nil
+			},
+		}
+
+		c.keyManager = &mockkms.KeyManager{CrAndExportPubKeyErr: errors.New("test error")}
+
+		var b bytes.Buffer
+
+		cmdErr := c.CreatePeerDID(&b, bytes.NewBufferString(`{
+			"routerConnectionID" : "abcd-sample-id"
+		}`))
+		require.NotNil(t, cmdErr)
+		require.Contains(t, cmdErr.Error(), "test error")
 	})
 }
 
