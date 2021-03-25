@@ -22,7 +22,6 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
-	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	mockprotocol "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
 	mockvdr "github.com/hyperledger/aries-framework-go/pkg/mock/vdr"
@@ -466,8 +465,7 @@ type mockDIDClient struct {
 	createDIDErr   error
 }
 
-func (m *mockDIDClient) Create(keyManager kms.KeyManager, didDoc *did.Doc,
-	opts ...vdr.DIDMethodOption) (*did.DocResolution, error) {
+func (m *mockDIDClient) Create(didDoc *did.Doc, opts ...vdr.DIDMethodOption) (*did.DocResolution, error) {
 	return m.createDIDValue, m.createDIDErr
 }
 

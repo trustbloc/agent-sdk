@@ -24,7 +24,6 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	ariesjose "github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
-	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/peer"
 	"github.com/trustbloc/edge-core/pkg/log"
 
@@ -76,7 +75,7 @@ type Provider interface {
 }
 
 type didBlocClient interface {
-	Create(keyManager kms.KeyManager, did *did.Doc, opts ...vdr.DIDMethodOption) (*did.DocResolution, error)
+	Create(did *did.Doc, opts ...vdr.DIDMethodOption) (*did.DocResolution, error)
 }
 
 // mediatorClient is client interface for mediator.
@@ -218,7 +217,7 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 		}
 	}
 
-	docResolution, err := c.didBlocClient.Create(nil, &didDoc, didMethodOpt...)
+	docResolution, err := c.didBlocClient.Create(&didDoc, didMethodOpt...)
 	if err != nil {
 		logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, err.Error())
 

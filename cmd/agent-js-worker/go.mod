@@ -12,8 +12,8 @@ require (
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/tink/go v1.5.0
 	github.com/google/uuid v1.2.0
-	github.com/hyperledger/aries-framework-go v0.1.7-0.20210323132929-a0e436ad8e81
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc v0.0.0-20210306194409-6e4c5d622fbc
+	github.com/hyperledger/aries-framework-go v0.1.7-0.20210324213044-074644c18933
+	github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc v0.0.0-20210325134531-84a30b2ecacb
 	github.com/hyperledger/aries-framework-go/component/storage/edv v0.0.0-20210310140909-2ae2d7df101e
 	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20210310140909-2ae2d7df101e
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20210320144851-40976de98ccf
@@ -22,7 +22,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect
 	github.com/trustbloc/agent-sdk v0.0.0-00010101000000-000000000000
-	github.com/trustbloc/edge-core v0.1.7-0.20210310142750-7eb11997c4a9
+	github.com/trustbloc/edge-core v0.1.7-0.20210324113338-e0047bbbfdff
 	github.com/trustbloc/kms v0.1.7-0.20210323140543-8c8c56dac24b
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
 	golang.org/x/sys v0.0.0-20210305230114-8fe3ee5dd75b // indirect
