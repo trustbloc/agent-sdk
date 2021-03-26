@@ -921,7 +921,7 @@ func prepareEncryptedFormatter(opts *agentStartOpts, kmsStorageProvider storage.
 
 	jweDecrypter := jose.NewJWEDecrypt(nil, cryptoImpl, kmsImpl)
 
-	return edv.NewEncryptedFormatter(jweEncrypter, jweDecrypter, macCrypto), nil
+	return edv.NewEncryptedFormatter(jweEncrypter, jweDecrypter, macCrypto, edv.WithDeterministicDocumentIDs()), nil
 }
 
 func prepareMACCrypto(opts *agentStartOpts, kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager,
