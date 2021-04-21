@@ -17,8 +17,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
-	"github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc"
 	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
 	mediatorservice "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
@@ -88,7 +88,7 @@ type mediatorClient interface {
 
 // New returns new DID Exchange controller command instance.
 func New(domain string, p Provider) (*Command, error) {
-	client, err := trustbloc.New(nil, trustbloc.WithDomain(domain))
+	client, err := orb.New(nil, orb.WithDomain(domain))
 	if err != nil {
 		return nil, err
 	}
@@ -169,16 +169,18 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 		}
 
 		if v.Recovery {
-			didMethodOpt = append(didMethodOpt, vdr.WithOption(trustbloc.RecoveryPublicKeyOpt, k))
+			didMethodOpt = append(didMethodOpt, vdr.WithOption(orb.RecoveryPublicKeyOpt, k))
 
 			continue
 		}
 
 		if v.Update {
-			didMethodOpt = append(didMethodOpt, vdr.WithOption(trustbloc.UpdatePublicKeyOpt, k))
+			didMethodOpt = append(didMethodOpt, vdr.WithOption(orb.UpdatePublicKeyOpt, k))
 
 			continue
 		}
+
+		didMethodOpt = append(didMethodOpt, vdr.WithOption(orb.AnchorOriginOpt, request.AnchorOrigin))
 
 		jwk, errJWK := ariesjose.JWKFromPublicKey(k)
 		if errJWK != nil {
