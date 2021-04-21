@@ -26,7 +26,7 @@ import (
 	"github.com/google/tink/go/keyset"
 	"github.com/google/tink/go/subtle/random"
 	"github.com/google/uuid"
-	"github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc"
+	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go/component/storage/edv"
 	"github.com/hyperledger/aries-framework-go/component/storage/indexeddb"
 	"github.com/hyperledger/aries-framework-go/component/storageutil/batchedstore"
@@ -520,7 +520,7 @@ func startOpts(payload map[string]interface{}) (*agentStartOpts, error) {
 	return opts, nil
 }
 
-func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) ([]vdr.VDR, error) {
+func createVDRs(resolvers []string, trustblocDomain string) ([]vdr.VDR, error) {
 	const numPartsResolverOption = 2
 	// set maps resolver to its methods
 	// e.g the set of ["trustbloc@http://resolver.com", "v1@http://resolver.com"] will be
@@ -564,9 +564,8 @@ func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) (
 		VDRs[order[url]] = resolverVDR
 	}
 
-	blocVDR, err := trustbloc.New(nil,
-		trustbloc.WithDomain(trustblocDomain),
-		trustbloc.WithResolverURL(trustblocResolver),
+	blocVDR, err := orb.New(nil,
+		orb.WithDomain(trustblocDomain),
 	)
 	if err != nil {
 		return nil, err
@@ -608,7 +607,7 @@ func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 		return nil, fmt.Errorf("unexpected failure while adding storage: %w", err)
 	}
 
-	VDRs, err := createVDRs(startOpts.HTTPResolvers, startOpts.BlocDomain, startOpts.TrustblocResolver)
+	VDRs, err := createVDRs(startOpts.HTTPResolvers, startOpts.BlocDomain)
 	if err != nil {
 		return nil, err
 	}

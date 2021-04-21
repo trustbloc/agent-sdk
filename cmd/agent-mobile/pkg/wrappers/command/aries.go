@@ -14,7 +14,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc"
+	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 	"github.com/hyperledger/aries-framework-go/pkg/common/log"
 	"github.com/hyperledger/aries-framework-go/pkg/controller"
@@ -132,7 +132,7 @@ func prepareFrameworkOptions(opts *config.Options, // nolint: gocyclo
 		options = append(options, aries.WithStoreProvider(mem.NewProvider()))
 	}
 
-	VDRs, err := createVDRs(opts.HTTPResolvers, opts.TrustblocDomain, opts.TrustblocResolver)
+	VDRs, err := createVDRs(opts.HTTPResolvers, opts.TrustblocDomain)
 	if err != nil {
 		return nil, err
 	}
@@ -386,7 +386,7 @@ func (a *Aries) GetBlindedRoutingController() (api.BlindedRoutingController, err
 	return &BlindedRouting{handlers: handlers}, nil
 }
 
-func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) ([]ariesvdr.VDR, error) {
+func createVDRs(resolvers []string, trustblocDomain string) ([]ariesvdr.VDR, error) {
 	const numPartsResolverOption = 2
 	// set maps resolver to its methods
 	// e.g the set of ["trustbloc@http://resolver.com", "v1@http://resolver.com"] will be
@@ -430,9 +430,8 @@ func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) (
 		VDRs[order[url]] = resolverVDR
 	}
 
-	blocVDR, err := trustbloc.New(nil,
-		trustbloc.WithDomain(trustblocDomain),
-		trustbloc.WithResolverURL(trustblocResolver),
+	blocVDR, err := orb.New(nil,
+		orb.WithDomain(trustblocDomain),
 	)
 	if err != nil {
 		return nil, err

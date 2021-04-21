@@ -20,7 +20,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb"
 	"github.com/hyperledger/aries-framework-go-ext/component/storage/mysql"
-	"github.com/hyperledger/aries-framework-go-ext/component/vdr/trustbloc"
+	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go/component/storage/leveldb"
 	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 	"github.com/hyperledger/aries-framework-go/pkg/common/log"
@@ -564,7 +564,7 @@ func getUserSetVars(cmd *cobra.Command, flagName, envKey string, isOptional bool
 		"It must be set via either command line or environment variable", flagName)
 }
 
-func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) ([]vdr.VDR, error) {
+func createVDRs(resolvers []string, trustblocDomain string) ([]vdr.VDR, error) {
 	const numPartsResolverOption = 2
 	// set maps resolver to its methods
 	// e.g the set of ["trustbloc@http://resolver.com", "v1@http://resolver.com"] will be
@@ -608,9 +608,8 @@ func createVDRs(resolvers []string, trustblocDomain, trustblocResolver string) (
 		VDRs[order[url]] = resolverVDR
 	}
 
-	blocVDR, err := trustbloc.New(nil,
-		trustbloc.WithDomain(trustblocDomain),
-		trustbloc.WithResolverURL(trustblocResolver),
+	blocVDR, err := orb.New(nil,
+		orb.WithDomain(trustblocDomain),
 	)
 	if err != nil {
 		return nil, err
@@ -818,7 +817,7 @@ func createAriesAgent(parameters *agentParameters) (*context.Provider, error) {
 
 	opts = append(opts, inboundTransportOpt...)
 
-	VDRs, err := createVDRs(parameters.httpResolvers, parameters.trustblocDomain, parameters.trustblocResolver)
+	VDRs, err := createVDRs(parameters.httpResolvers, parameters.trustblocDomain)
 	if err != nil {
 		return nil, err
 	}
