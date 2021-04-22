@@ -30,8 +30,8 @@ type Operation struct {
 }
 
 // New returns new DID client rest instance.
-func New(ctx didclient.Provider, domain string) (*Operation, error) {
-	client, err := didclient.New(domain, ctx)
+func New(ctx didclient.Provider, domain, didAnchorOrigin string) (*Operation, error) {
+	client, err := didclient.New(domain, didAnchorOrigin, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize did-client command: %w", err)
 	}

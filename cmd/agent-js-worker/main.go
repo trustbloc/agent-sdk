@@ -138,6 +138,7 @@ type agentStartOpts struct {
 	EDVBatchSize         int         `json:"edvBatchSize"`
 	CacheSize            int         `json:"cacheSize"`
 	OPSKMSCapability     string      `json:"opsKMSCapability,omitempty"` // TODO should remove this
+	DidAnchorOrigin      string      `json:"didAnchorOrigin"`
 }
 
 type userConfig struct {
@@ -387,7 +388,8 @@ func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
 func getAgentHandlers(ctx *context.Provider,
 	r controllercmd.MessageHandler, opts *agentStartOpts) ([]commandHandler, error) {
 	handlers, err := agentctrl.GetCommandHandlers(ctx, agentctrl.WithBlocDomain(opts.BlocDomain),
-		agentctrl.WithMessageHandler(r), agentctrl.WithNotifier(&jsNotifier{}))
+		agentctrl.WithDidAnchorOrigin(opts.DidAnchorOrigin), agentctrl.WithMessageHandler(r),
+		agentctrl.WithNotifier(&jsNotifier{}))
 	if err != nil {
 		return nil, err
 	}

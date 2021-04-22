@@ -9,7 +9,7 @@ go 1.15
 require (
 	github.com/google/uuid v1.2.0
 	github.com/hyperledger/aries-framework-go v0.1.7-0.20210330153939-7ec3a2c4697c
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.0.0-20210415184514-aa162c522bc1
+	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.0.0-20210422102350-1c5d6f027647
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20210320144851-40976de98ccf
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210409151411-eeeb8508bd87
 	github.com/hyperledger/aries-framework-go/test/component v0.0.0-20210409151411-eeeb8508bd87

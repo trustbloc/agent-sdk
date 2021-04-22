@@ -28,10 +28,11 @@ import (
 const wsPath = "/ws"
 
 type allOpts struct {
-	blocDomain  string
-	msgHandler  ariescmd.MessageHandler
-	notifier    ariescmd.Notifier
-	webhookURLs []string
+	blocDomain      string
+	didAnchorOrigin string
+	msgHandler      ariescmd.MessageHandler
+	notifier        ariescmd.Notifier
+	webhookURLs     []string
 }
 
 // Opt represents a controller option.
@@ -41,6 +42,13 @@ type Opt func(opts *allOpts)
 func WithBlocDomain(blocDomain string) Opt {
 	return func(opts *allOpts) {
 		opts.blocDomain = blocDomain
+	}
+}
+
+// WithDidAnchorOrigin is an option allowing for the did anchor origin.
+func WithDidAnchorOrigin(origin string) Opt {
+	return func(opts *allOpts) {
+		opts.didAnchorOrigin = origin
 	}
 }
 
@@ -79,7 +87,7 @@ func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, 
 	}
 
 	// did client command operation.
-	didClientCmd, err := didclientcmd.New(cmdOpts.blocDomain, ctx)
+	didClientCmd, err := didclientcmd.New(cmdOpts.blocDomain, cmdOpts.didAnchorOrigin, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize DID client: %w", err)
 	}
@@ -125,7 +133,7 @@ func GetRESTHandlers(ctx *context.Provider, opts ...Opt) ([]rest.Handler, error)
 	}
 
 	// DID Client REST operation.
-	didClientOp, err := didclient.New(ctx, restOpts.blocDomain)
+	didClientOp, err := didclient.New(ctx, restOpts.blocDomain, restOpts.didAnchorOrigin)
 	if err != nil {
 		return nil, err
 	}
