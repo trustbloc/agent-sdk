@@ -87,7 +87,7 @@ type mediatorClient interface {
 }
 
 // New returns new DID Exchange controller command instance.
-func New(domain string, p Provider) (*Command, error) {
+func New(domain, didAnchorOrigin string, p Provider) (*Command, error) {
 	client, err := orb.New(nil, orb.WithDomain(domain))
 	if err != nil {
 		return nil, err
@@ -111,23 +111,25 @@ func New(domain string, p Provider) (*Command, error) {
 	}
 
 	return &Command{
-		didBlocClient:  client,
-		domain:         domain,
-		vdrRegistry:    p.VDRegistry(),
-		mediatorClient: mClient,
-		mediatorSvc:    mediatorSvc,
-		keyManager:     p.KMS(),
+		didBlocClient:   client,
+		domain:          domain,
+		vdrRegistry:     p.VDRegistry(),
+		mediatorClient:  mClient,
+		mediatorSvc:     mediatorSvc,
+		keyManager:      p.KMS(),
+		didAnchorOrigin: didAnchorOrigin,
 	}, nil
 }
 
 // Command is controller command for DID Exchange.
 type Command struct {
-	didBlocClient  didBlocClient
-	domain         string
-	vdrRegistry    vdr.Registry
-	mediatorClient mediatorClient
-	mediatorSvc    mediatorservice.ProtocolService
-	keyManager     kms.KeyManager
+	didBlocClient   didBlocClient
+	domain          string
+	vdrRegistry     vdr.Registry
+	mediatorClient  mediatorClient
+	mediatorSvc     mediatorservice.ProtocolService
+	keyManager      kms.KeyManager
+	didAnchorOrigin string
 }
 
 // GetHandlers returns list of all commands supported by this controller command.
@@ -180,8 +182,6 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 			continue
 		}
 
-		didMethodOpt = append(didMethodOpt, vdr.WithOption(orb.AnchorOriginOpt, request.AnchorOrigin))
-
 		jwk, errJWK := ariesjose.JWKFromPublicKey(k)
 		if errJWK != nil {
 			logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, errJWK.Error())
@@ -222,6 +222,8 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 			}
 		}
 	}
+
+	didMethodOpt = append(didMethodOpt, vdr.WithOption(orb.AnchorOriginOpt, c.didAnchorOrigin))
 
 	docResolution, err := c.didBlocClient.Create(&didDoc, didMethodOpt...)
 	if err != nil {

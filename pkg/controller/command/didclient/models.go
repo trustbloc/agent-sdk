@@ -12,8 +12,7 @@ import "encoding/json"
 // This is used for creating trustbloc DID
 //
 type CreateBlocDIDRequest struct {
-	PublicKeys   []PublicKey `json:"publicKeys,omitempty"`
-	AnchorOrigin string      `json:"anchorOrigin,omitempty"`
+	PublicKeys []PublicKey `json:"publicKeys,omitempty"`
 }
 
 // CreatePeerDIDRequest model
