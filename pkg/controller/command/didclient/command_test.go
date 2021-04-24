@@ -258,7 +258,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		err = json.Unmarshal(resp.DID, &didMap)
 		require.NoError(t, err)
 
-		require.Equal(t, "did:ex:domain", didMap["id"])
+		require.Equal(t, "did:ex:domain:123", didMap["id"])
 	})
 
 	t.Run("test wrong did parts", func(t *testing.T) {

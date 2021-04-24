@@ -247,7 +247,7 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 	}
 
 	discoverableDID := strings.ReplaceAll(string(bytes),
-		fmt.Sprintf("%s:%s:%s", didSplit[0], didSplit[1], didSplit[2]),
+		fmt.Sprintf("%s:%s", didSplit[0], didSplit[1]),
 		fmt.Sprintf("%s:%s:%s", didSplit[0], didSplit[1], c.domain))
 
 	command.WriteNillableResponse(rw, &CreateDIDResponse{
