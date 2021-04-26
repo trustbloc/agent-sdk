@@ -22,6 +22,8 @@ const (
 )
 
 func getBlindedRoutingController(t *testing.T) *BlindedRouting {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NotNil(t, a)
 	require.NoError(t, err)

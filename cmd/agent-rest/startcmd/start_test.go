@@ -88,6 +88,8 @@ func TestStartCmdContents(t *testing.T) {
 
 func checkFlagPropertiesCorrect(t *testing.T, cmd *cobra.Command, flagName,
 	flagShorthand, flagUsage, expectedVal string) {
+	t.Helper()
+
 	flag := cmd.Flag(flagName)
 
 	require.NotNil(t, flag)
@@ -149,6 +151,8 @@ type requestTestParams struct {
 }
 
 func runRequestTests(t *testing.T, tests []requestTestParams) {
+	t.Helper()
+
 	for _, tt := range tests {
 		resp, err := http.DefaultClient.Do(tt.r)
 		if err != nil {
@@ -178,8 +182,9 @@ func runRequestTests(t *testing.T, tests []requestTestParams) {
 	}
 }
 
-//nolint:funlen
 func validateRequests(t *testing.T, testHostURL, authorizationHdr, testInboundHostURL string) {
+	t.Helper()
+
 	newreq := func(method, url string, body io.Reader, contentType string) *http.Request {
 		r, err := http.NewRequestWithContext(context.Background(), method, url, body)
 
@@ -227,6 +232,8 @@ func validateRequests(t *testing.T, testHostURL, authorizationHdr, testInboundHo
 }
 
 func validateUnauthorized(t *testing.T, testHostURL, authorizationHdr string) {
+	t.Helper()
+
 	newreq := func(method, url string, body io.Reader, contentType string) *http.Request {
 		r, err := http.NewRequestWithContext(context.Background(), method, url, body)
 
@@ -894,11 +901,15 @@ func TestCreateVDRs(t *testing.T) {
 }
 
 func TestCmd_getUserSetVars(t *testing.T) {
+	t.Helper()
+
 	_, err := getUserSetVars(&cobra.Command{}, "unknown", "unknown", false)
 	require.EqualError(t, err, " unknown not set. It must be set via either command line or environment variable")
 }
 
 func waitForServerToStart(t *testing.T, host, inboundHost string) {
+	t.Helper()
+
 	if err := listenFor(host); err != nil {
 		t.Fatal(err)
 	}

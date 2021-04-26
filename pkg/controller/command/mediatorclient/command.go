@@ -139,7 +139,7 @@ func (c *Command) GetHandlers() []command.Handler {
 }
 
 // Connect connects agent to given router endpoint.
-func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:funlen, gocyclo
+func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:funlen
 	var request ConnectionRequest
 
 	err := json.NewDecoder(req).Decode(&request)

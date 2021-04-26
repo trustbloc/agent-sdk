@@ -29,6 +29,8 @@ type restOperation interface {
 
 // LookupHandler looks up for handler for given path.
 func LookupHandler(t *testing.T, op restOperation, path string) rest.Handler {
+	t.Helper()
+
 	handlers := op.GetRESTHandlers()
 	require.NotEmpty(t, handlers)
 
@@ -80,6 +82,8 @@ func SendRequestToHandler(handler rest.Handler, requestBody io.Reader, path stri
 
 // VerifyError verifies given error in response.
 func VerifyError(t *testing.T, expectedCode command.Code, expectedMsg string, data []byte) {
+	t.Helper()
+
 	// Parser generic error response
 	errResponse := struct {
 		Code    int    `json:"code"`

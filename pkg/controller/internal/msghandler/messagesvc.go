@@ -69,7 +69,14 @@ func (m *MessageService) Accept(msgType string, purpose []string) bool {
 }
 
 // HandleInbound is inbound handler for this message service.
-func (m *MessageService) HandleInbound(msg service.DIDCommMsg, myDID, theirDID string) (string, error) {
+func (m *MessageService) HandleInbound(msg service.DIDCommMsg, ctx service.DIDCommContext) (string, error) {
+	var myDID, theirDID string
+
+	if ctx != nil {
+		myDID = ctx.MyDID()
+		theirDID = ctx.TheirDID()
+	}
+
 	topic := struct {
 		Message  interface{} `json:"message"`
 		MyDID    string      `json:"mydid"`

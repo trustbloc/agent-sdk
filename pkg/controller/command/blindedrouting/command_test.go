@@ -107,7 +107,10 @@ func TestCommand_SendDIDDocRequest(t *testing.T) {
 					replyMsg, e := service.ParseDIDCommMsgMap([]byte(fmt.Sprintf(replyMsgStr, mockMessenger.GetLastID())))
 					require.NoError(t, e)
 
-					_, e = registrar.Services()[0].HandleInbound(replyMsg, "sampleDID", "sampleTheirDID")
+					_, e = registrar.Services()[0].HandleInbound(replyMsg, &sdkmockprotocol.MockDIDCommContext{
+						MyDIDValue:    "sampleDID",
+						TheirDIDValue: "sampleTheirDID",
+					})
 					require.NoError(t, e)
 
 					break
@@ -180,7 +183,10 @@ func TestCommand_SendRegisterRouteRequest(t *testing.T) {
 					replyMsg, e := service.ParseDIDCommMsgMap([]byte(fmt.Sprintf(replyMsgStr, mockMessenger.GetLastID())))
 					require.NoError(t, e)
 
-					_, e = registrar.Services()[0].HandleInbound(replyMsg, "sampleDID", "sampleTheirDID")
+					_, e = registrar.Services()[0].HandleInbound(replyMsg, &sdkmockprotocol.MockDIDCommContext{
+						MyDIDValue:    "sampleDID",
+						TheirDIDValue: "sampleTheirDID",
+					})
 					require.NoError(t, e)
 
 					break

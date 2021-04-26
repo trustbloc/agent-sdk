@@ -40,6 +40,8 @@ const (
 )
 
 func getMediatorClientController(t *testing.T) *MediatorClient {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NotNil(t, a)
 	require.NoError(t, err)

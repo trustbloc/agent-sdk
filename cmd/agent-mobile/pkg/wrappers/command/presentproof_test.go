@@ -16,6 +16,8 @@ import (
 )
 
 func getPresentProofController(t *testing.T) *PresentProof {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NotNil(t, a)
 	require.NoError(t, err)

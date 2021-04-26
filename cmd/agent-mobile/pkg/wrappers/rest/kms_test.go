@@ -17,6 +17,8 @@ import (
 )
 
 func getKMSController(t *testing.T) *KMS {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NotNil(t, a)
 	require.NoError(t, err)

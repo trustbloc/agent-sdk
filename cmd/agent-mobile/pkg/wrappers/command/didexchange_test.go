@@ -22,6 +22,8 @@ const (
 )
 
 func getDIDExchangeController(t *testing.T) *DIDExchange {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NotNil(t, a)
 	require.NoError(t, err)

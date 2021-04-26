@@ -182,7 +182,7 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 			continue
 		}
 
-		jwk, errJWK := ariesjose.JWKFromPublicKey(k)
+		jwk, errJWK := ariesjose.JWKFromKey(k)
 		if errJWK != nil {
 			logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, errJWK.Error())
 

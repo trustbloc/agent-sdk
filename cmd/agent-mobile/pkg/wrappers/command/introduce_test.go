@@ -40,6 +40,8 @@ func getAgent() (*Aries, error) {
 }
 
 func getIntroduceController(t *testing.T) *Introduce {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NotNil(t, a)
 	require.NoError(t, err)

@@ -132,7 +132,7 @@ func TestOperation_Connect(t *testing.T) {
 			},
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{ConnID: sampleConnID},
 			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
-				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ string, _ []string) (s string, e error) {
+				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ outofbandsvc.Options) (s string, e error) {
 					return sampleConnID, nil
 				},
 			},
@@ -159,7 +159,7 @@ func TestOperation_Connect(t *testing.T) {
 			mediatorsvc.Coordination:   &mockroute.MockMediatorSvc{},
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
 			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
-				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ string, _ []string) (s string, e error) {
+				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ outofbandsvc.Options) (s string, e error) {
 					return "", fmt.Errorf(sampleErr)
 				},
 			},
@@ -254,7 +254,10 @@ func TestOperation_SendCreateConnectionRequest(t *testing.T) {
 					replyMsg, e := service.ParseDIDCommMsgMap([]byte(fmt.Sprintf(replyMsgStr, mockmsgr.GetLastID())))
 					require.NoError(t, e)
 
-					_, e = registrar.Services()[0].HandleInbound(replyMsg, "sampleDID", "sampleTheirDID")
+					_, e = registrar.Services()[0].HandleInbound(replyMsg, &sdkmockprotocol.MockDIDCommContext{
+						MyDIDValue:    "sampleDID",
+						TheirDIDValue: "sampleTheirDID",
+					})
 					require.NoError(t, e)
 
 					break

@@ -89,6 +89,8 @@ const (
 )
 
 func getVerifiableController(t *testing.T) *Verifiable {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NotNil(t, a)
 	require.NoError(t, err)

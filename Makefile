@@ -6,7 +6,7 @@
 GOBIN_PATH             = $(abspath .)/build/bin
 ARIES_AGENT_REST_PATH=cmd/agent-rest
 ARIES_AGENT_MOBILE_PATH=cmd/agent-mobile
-ARIES_FRAMEWORK_COMMIT=7ec3a2c4697c512726ffaa4143e56491405dd828
+ARIES_FRAMEWORK_COMMIT=3974f670872364cf53ee3f14ca311a1b1e2d2ced
 PROJECT_ROOT = github.com/trustbloc/agent-sdk
 OPENAPI_SPEC_PATH=build/rest/openapi/spec
 OPENAPI_DOCKER_IMG=quay.io/goswagger/swagger
@@ -18,7 +18,7 @@ REPO_IMAGE_NAME   ?= trustbloc
 DOCKER_AGENT_NAME ?= agent-sdk-server
 
 ALPINE_VER ?= 3.12
-GO_VER ?= 1.15
+GO_VER ?= 1.16
 
 .PHONY: all
 all: clean checks unit-test unit-test-wasm agent-rest agent-server-docker bdd-test

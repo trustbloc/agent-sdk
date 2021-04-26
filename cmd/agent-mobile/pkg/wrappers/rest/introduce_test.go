@@ -46,6 +46,8 @@ func (client *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 func getIntroduceController(t *testing.T) *Introduce {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NoError(t, err)
 	require.NotNil(t, a)

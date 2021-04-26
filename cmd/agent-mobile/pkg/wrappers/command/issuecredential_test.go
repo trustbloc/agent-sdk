@@ -20,6 +20,8 @@ const (
 )
 
 func getIssueCredentialController(t *testing.T) *IssueCredential {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NotNil(t, a)
 	require.NoError(t, err)
