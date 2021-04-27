@@ -22,6 +22,8 @@ const (
 )
 
 func getMediatorController(t *testing.T) *Mediator {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NotNil(t, a)
 	require.NoError(t, err)

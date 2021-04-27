@@ -17,6 +17,8 @@ import (
 )
 
 func getMessagingController(t *testing.T) *Messaging {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NotNil(t, a)
 	require.NoError(t, err)

@@ -9,7 +9,7 @@ import "encoding/json"
 
 // CreateBlocDIDRequest model
 //
-// This is used for creating trustbloc DID
+// This is used for creating trustbloc DID.
 //
 type CreateBlocDIDRequest struct {
 	PublicKeys []PublicKey `json:"publicKeys,omitempty"`
@@ -17,7 +17,7 @@ type CreateBlocDIDRequest struct {
 
 // CreatePeerDIDRequest model
 //
-// This is used for creating peer DID
+// This is used for creating peer DID.
 //
 type CreatePeerDIDRequest struct {
 	RouterConnectionID string `json:"routerConnectionID,omitempty"`

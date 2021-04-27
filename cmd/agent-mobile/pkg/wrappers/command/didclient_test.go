@@ -20,6 +20,8 @@ import (
 )
 
 func getDIDClient(t *testing.T) *DIDClient {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NotNil(t, a)
 	require.NoError(t, err)

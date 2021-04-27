@@ -24,6 +24,8 @@ const (
 )
 
 func getOutOfBandController(t *testing.T) *OutOfBand {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NotNil(t, a)
 	require.NoError(t, err)

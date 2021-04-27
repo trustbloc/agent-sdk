@@ -27,6 +27,8 @@ const (
 )
 
 func getVDRController(t *testing.T) *VDR {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NotNil(t, a)
 	require.NoError(t, err)

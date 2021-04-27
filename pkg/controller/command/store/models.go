@@ -10,7 +10,7 @@ import "github.com/hyperledger/aries-framework-go/spi/storage"
 
 // PutRequest model
 //
-// This is used for putting data in the store
+// This is used for putting data in the store.
 //
 type PutRequest struct {
 	Key   string        `json:"key"`
@@ -20,7 +20,7 @@ type PutRequest struct {
 
 // GetRequest model
 //
-// This is used for getting data (value or tags) from the store
+// This is used for getting data (value or tags) from the store.
 //
 type GetRequest struct {
 	Key string `json:"key"`
@@ -53,7 +53,7 @@ type QueryResponse struct {
 
 // DeleteRequest model
 //
-// This is used for deleting data from the store
+// This is used for deleting data from the store.
 //
 type DeleteRequest struct {
 	Key string `json:"key"`

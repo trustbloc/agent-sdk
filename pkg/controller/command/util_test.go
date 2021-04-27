@@ -20,8 +20,7 @@ func Test_WriteNillableResponse(t *testing.T) {
 	command.WriteNillableResponse(&mockWriter{}, nil, log.New("util-test"))
 }
 
-type mockWriter struct {
-}
+type mockWriter struct{}
 
 func (m *mockWriter) Write(_ []byte) (n int, err error) {
 	return 0, nil

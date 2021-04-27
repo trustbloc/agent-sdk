@@ -374,7 +374,7 @@ func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
 			exec: func(rw io.Writer, req io.Reader) error {
 				e := handle(rw, req)
 				if e != nil {
-					return fmt.Errorf("code: %+v, message: %s", e.Code(), e.Error())
+					return fmt.Errorf("code: %+v, message: %w", e.Code(), e)
 				}
 
 				return nil
@@ -405,7 +405,7 @@ func getAgentHandlers(ctx *context.Provider,
 			exec: func(rw io.Writer, req io.Reader) error {
 				e := handle(rw, req)
 				if e != nil {
-					return fmt.Errorf("code: %+v, message: %s", e.Code(), e.Error())
+					return fmt.Errorf("code: %+v, message: %w", e.Code(), e)
 				}
 
 				return nil
@@ -1106,8 +1106,7 @@ func setLogLevel(logLevel string) error {
 }
 
 // jsNotifier notifies about all incoming events.
-type jsNotifier struct {
-}
+type jsNotifier struct{}
 
 // Notify is mock implementation of webhook notifier Notify().
 func (n *jsNotifier) Notify(topic string, message []byte) error {

@@ -97,6 +97,8 @@ func getAgent() (*Aries, error) {
 }
 
 func getVerifiableController(t *testing.T) *Verifiable {
+	t.Helper()
+
 	a, err := getAgent()
 	require.NoError(t, err)
 	require.NotNil(t, a)
