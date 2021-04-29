@@ -85,6 +85,8 @@ type Provider interface {
 	ProtocolStateStorageProvider() storage.Provider
 	VDRegistry() vdr.Registry
 	Messenger() service.Messenger
+	KeyType() kms.KeyType
+	KeyAgreementType() kms.KeyType
 }
 
 // Command is controller command for mediator client.
