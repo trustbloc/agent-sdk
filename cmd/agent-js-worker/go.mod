@@ -17,6 +17,7 @@ require (
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20210427144858-06fb8b7d2d30
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210422133815-2ef2d99cb692
 	github.com/mitchellh/mapstructure v1.3.3
+	github.com/piprate/json-gold v0.4.0
 	github.com/stretchr/testify v1.7.0
 	github.com/trustbloc/agent-sdk v0.0.0-00010101000000-000000000000
 	github.com/trustbloc/edge-core v0.1.7-0.20210429084532-c385778b4d8b

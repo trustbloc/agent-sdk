@@ -43,6 +43,7 @@ import (
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jsonld"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
@@ -55,6 +56,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/key"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/mitchellh/mapstructure"
+	"github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/edge-core/pkg/log"
 	kmszcap "github.com/trustbloc/kms/pkg/restapi/kms/operation"
 
@@ -588,11 +590,19 @@ func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 		options = append(options, aries.WithTransportReturnRoute(startOpts.TransportReturnRoute))
 	}
 
-	// indexedDBProvider used by localKMS only.
+	// indexedDBProvider used by localKMS and JSON-LD document loader.
 	indexedDBProvider, err := createIndexedDBStorage(startOpts)
 	if err != nil {
 		return nil, fmt.Errorf("unexpected failure while creating IndexDB storage provider: %w", err)
 	}
+
+	loader, err := jsonld.NewDocumentLoader(indexedDBProvider,
+		jsonld.WithRemoteDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)))
+	if err != nil {
+		return nil, fmt.Errorf("create document loader: %w", err)
+	}
+
+	options = append(options, aries.WithJSONLDDocumentLoader(loader))
 
 	var (
 		kmsImpl    kms.KeyManager
