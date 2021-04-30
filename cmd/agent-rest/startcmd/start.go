@@ -30,12 +30,14 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport"
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jsonld"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/defaults"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
+	"github.com/piprate/json-gold/ld"
 	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 
@@ -794,7 +796,7 @@ func startAgent(parameters *agentParameters) error {
 	return nil
 }
 
-func createAriesAgent(parameters *agentParameters) (*context.Provider, error) {
+func createAriesAgent(parameters *agentParameters) (*context.Provider, error) { //nolint:funlen
 	var opts []aries.Option
 
 	storePro, err := createStoreProviders(parameters)
@@ -803,6 +805,14 @@ func createAriesAgent(parameters *agentParameters) (*context.Provider, error) {
 	}
 
 	opts = append(opts, aries.WithStoreProvider(storePro))
+
+	loader, err := jsonld.NewDocumentLoader(storePro,
+		jsonld.WithRemoteDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)))
+	if err != nil {
+		return nil, fmt.Errorf("create document loader: %w", err)
+	}
+
+	opts = append(opts, aries.WithJSONLDDocumentLoader(loader))
 
 	if parameters.transportReturnRoute != "" {
 		opts = append(opts, aries.WithTransportReturnRoute(parameters.transportReturnRoute))
