@@ -16,6 +16,7 @@ require (
 	github.com/hyperledger/aries-framework-go/component/storage/leveldb v0.0.0-20210420181654-2df0b3b56a63
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20210427144858-06fb8b7d2d30
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210422133815-2ef2d99cb692
+	github.com/piprate/json-gold v0.4.0
 	github.com/rs/cors v1.7.0
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0

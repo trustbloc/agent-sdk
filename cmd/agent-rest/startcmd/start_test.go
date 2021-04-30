@@ -333,18 +333,25 @@ func TestStartCmdWithoutInboundHostArg(t *testing.T) {
 func TestStartCmd(t *testing.T) {
 	t.Run("invalid inbound internal host option", func(t *testing.T) {
 		_, err := createAriesAgent(&agentParameters{
-			dbParam:              &dbParam{dbType: "leveldb"},
+			dbParam:              &dbParam{dbType: "leveldb", prefix: "db1"},
 			inboundHostInternals: []string{"1@2@3"},
 		})
+		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid inbound host option")
 	})
 
 	t.Run("invalid inbound external host option", func(t *testing.T) {
 		_, err := createAriesAgent(&agentParameters{
-			dbParam:              &dbParam{dbType: "leveldb"},
+			dbParam:              &dbParam{dbType: "leveldb", prefix: "db2"},
 			inboundHostExternals: []string{"1@2@3"},
 		})
+		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid inbound host option")
+	})
+
+	t.Cleanup(func() {
+		require.NoError(t, os.RemoveAll("db1-jsonldcontexts"))
+		require.NoError(t, os.RemoveAll("db2-jsonldcontexts"))
 	})
 }
 
