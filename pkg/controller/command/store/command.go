@@ -147,13 +147,13 @@ func (c *Command) Query(rw io.Writer, req io.Reader) command.Error {
 		return command.NewValidationError(InvalidRequestErrorCode, err)
 	}
 
-	var pageSizeOption storage.QueryOption
+	var options []storage.QueryOption
 
 	if request.PageSize > 0 {
-		pageSizeOption = storage.WithPageSize(request.PageSize)
+		options = append(options, storage.WithPageSize(request.PageSize))
 	}
 
-	records, err := c.store.Query(request.Expression, pageSizeOption)
+	records, err := c.store.Query(request.Expression, options...)
 	if err != nil {
 		logutil.LogError(logger, CommandName, QueryCommandMethod, err.Error())
 

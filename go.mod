@@ -13,6 +13,7 @@ require (
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.0.0-20210430213153-6c349de21198
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v0.0.0-20210430213153-6c349de21198
 	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20210429205242-c5e97865879c
+	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20210429205242-c5e97865879c // indirect
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210429205242-c5e97865879c
 	github.com/igor-pavlenko/httpsignatures-go v0.0.23
 	github.com/stretchr/testify v1.7.0
