@@ -34,6 +34,7 @@ import (
 	arieslog "github.com/hyperledger/aries-framework-go/pkg/common/log"
 	ariesctrl "github.com/hyperledger/aries-framework-go/pkg/controller"
 	controllercmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
+	vcwalletcmd "github.com/hyperledger/aries-framework-go/pkg/controller/command/vcwallet"
 	cryptoapi "github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto/primitive/composite/keyio"
@@ -114,6 +115,7 @@ type result struct {
 }
 
 // agentStartOpts contains opts for starting agent.
+// nolint:lll
 type agentStartOpts struct {
 	Label                string      `json:"agent-default-label"`
 	HTTPResolvers        []string    `json:"http-resolver-url"`
@@ -123,23 +125,23 @@ type agentStartOpts struct {
 	LogLevel             string      `json:"log-level"`
 	StorageType          string      `json:"storageType"`
 	IndexedDBNamespace   string      `json:"indexedDB-namespace"`
-	EDVServerURL         string      `json:"edvServerURL"`
-	EDVVaultID           string      `json:"edvVaultID"`
-	EDVCapability        string      `json:"edvCapability,omitempty"`
+	EDVServerURL         string      `json:"edvServerURL"`            // TODO to be removed/refined after universal wallet migration
+	EDVVaultID           string      `json:"edvVaultID"`              // TODO to be removed/refined after universal wallet migration
+	EDVCapability        string      `json:"edvCapability,omitempty"` // TODO to be removed/refined after universal wallet migration
 	BlocDomain           string      `json:"blocDomain"`
 	TrustblocResolver    string      `json:"trustbloc-resolver"`
 	AuthzKeyStoreURL     string      `json:"authzKeyStoreURL,omitempty"`
-	OpsKeyStoreURL       string      `json:"opsKeyStoreURL,omitempty"`
-	EDVOpsKIDURL         string      `json:"edvOpsKIDURL,omitempty"`
-	EDVHMACKIDURL        string      `json:"edvHMACKIDURL,omitempty"`
-	KMSType              string      `json:"kmsType"`
+	OpsKeyStoreURL       string      `json:"opsKeyStoreURL,omitempty"` // TODO to be removed/refined after universal wallet migration
+	EDVOpsKIDURL         string      `json:"edvOpsKIDURL,omitempty"`   // TODO to be removed/refined after universal wallet migration
+	EDVHMACKIDURL        string      `json:"edvHMACKIDURL,omitempty"`  // TODO to be removed/refined after universal wallet migration
+	KMSType              string      `json:"kmsType"`                  // TODO to be removed/refined after universal wallet migration
 	UserConfig           *userConfig `json:"userConfig,omitempty"`
 	UseEDVCache          bool        `json:"useEDVCache"`
 	EDVClearCache        string      `json:"edvClearCache"`
 	UseEDVBatch          bool        `json:"useEDVBatch"`
 	EDVBatchSize         int         `json:"edvBatchSize"`
 	CacheSize            int         `json:"cacheSize"`
-	OPSKMSCapability     string      `json:"opsKMSCapability,omitempty"` // TODO should remove this
+	OPSKMSCapability     string      `json:"opsKMSCapability,omitempty"` // TODO to be removed/refined after universal wallet migration
 	DidAnchorOrigin      string      `json:"didAnchorOrigin"`
 }
 
@@ -360,7 +362,14 @@ type commandHandler struct {
 func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
 	opts *agentStartOpts) ([]commandHandler, error) {
 	handlers, err := ariesctrl.GetCommandHandlers(ctx, ariesctrl.WithMessageHandler(r),
-		ariesctrl.WithDefaultLabel(opts.Label), ariesctrl.WithNotifier(&jsNotifier{}))
+		ariesctrl.WithDefaultLabel(opts.Label), ariesctrl.WithNotifier(&jsNotifier{}),
+		ariesctrl.WithWalletConfiguration(&vcwalletcmd.Config{
+			WebKMSCacheSize:                  opts.CacheSize,
+			EDVReturnFullDocumentsOnQuery:    true,
+			EDVBatchEndpointExtensionEnabled: true,
+			WebKMSAuthSigner:                 newWebKMSHttpHeaderSigner(opts),
+			EdvAuthSigner:                    newEDVHTTPHeaderSigner(opts),
+		}))
 	if err != nil {
 		return nil, err
 	}
@@ -1153,4 +1162,57 @@ func postInitMsg() {
 	}
 
 	js.Global().Call(handleResultFn, string(out))
+}
+
+// newWebKMSHttpHeaderSigner returns new  zcap based http header signer for vc wallet webkms header.
+func newWebKMSHttpHeaderSigner(opts *agentStartOpts) *webKMSHTTPHeaderSigner {
+	return &webKMSHTTPHeaderSigner{
+		zcapSVC: zcapld.New(opts.AuthzKeyStoreURL, opts.UserConfig.AccessToken, opts.UserConfig.SecretShare),
+	}
+}
+
+// webKMSHTTPHeaderSigner is zcap based http header signer for vc wallet webkms header.
+type webKMSHTTPHeaderSigner struct {
+	zcapSVC *zcapld.Service
+}
+
+// SignHeader signs HTTP header based on zcap.
+func (w *webKMSHTTPHeaderSigner) SignHeader(req *http.Request, capability []byte) (*http.Header, error) {
+	if len(capability) != 0 {
+		invocationAction, err := kmszcap.CapabilityInvocationAction(req)
+		if err != nil {
+			return nil, fmt.Errorf("webkms: failed to determine the capability's invocation action: %w", err)
+		}
+
+		return w.zcapSVC.SignHeader(req, capability, invocationAction)
+	}
+
+	return &req.Header, nil
+}
+
+// newEDVHTTPHeaderSigner returns new  zcap based http header signer for vc wallet EDV header.
+func newEDVHTTPHeaderSigner(opts *agentStartOpts) *webKMSHTTPHeaderSigner {
+	return &webKMSHTTPHeaderSigner{
+		zcapSVC: zcapld.New(opts.AuthzKeyStoreURL, opts.UserConfig.AccessToken, opts.UserConfig.SecretShare),
+	}
+}
+
+// EDVHTTPHeaderSigner is zcap based http header signer for vc wallet edv header.
+type EDVHTTPHeaderSigner struct {
+	zcapSVC *zcapld.Service
+}
+
+// SignHeader signs HTTP header based on zcap.
+func (w *EDVHTTPHeaderSigner) SignHeader(req *http.Request, capability []byte) (*http.Header, error) {
+	if len(capability) != 0 {
+		action := "write"
+
+		if req.Method == http.MethodGet {
+			action = "read"
+		}
+
+		return w.zcapSVC.SignHeader(req, capability, action)
+	}
+
+	return &req.Header, nil
 }
