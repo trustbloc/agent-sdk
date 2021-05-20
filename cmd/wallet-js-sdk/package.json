@@ -36,5 +36,8 @@
     "webpack-cli": "^4.7.0",
     "webpack-dev-server": "^3.11.2",
     "webpack-merge": "^5.7.3"
+  },
+  "dependencies": {
+    "@trustbloc-cicd/agent-sdk-web": "^0.1.7-snapshot-62e6e4e"
   }
 }
