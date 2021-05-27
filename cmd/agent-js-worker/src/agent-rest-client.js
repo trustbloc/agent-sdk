@@ -427,6 +427,12 @@ const pkgs = {
             path: "/blindedrouting/send-router-registration",
             method: "POST",
         }
+    },
+    context: {
+        Add: {
+            path: "/context/add",
+            method: "POST",
+        },
     }
 }
 
