@@ -34,14 +34,14 @@ import (
 
 func TestNew(t *testing.T) {
 	t.Run("test success", func(t *testing.T) {
-		c, err := New("domain", "origin", getMockProvider())
+		c, err := New("domain", "origin", "", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		require.NotNil(t, c.GetHandlers())
 	})
 
 	t.Run("test no coordination service error", func(t *testing.T) {
-		c, err := New("domain", "origin", &mockprotocol.MockProvider{
+		c, err := New("domain", "origin", "", &mockprotocol.MockProvider{
 			ServiceErr: fmt.Errorf("sample-error"),
 		})
 		require.Error(t, err)
@@ -50,7 +50,7 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("test invalid coordination service error", func(t *testing.T) {
-		c, err := New("domain", "origin", &mockprotocol.MockProvider{
+		c, err := New("domain", "origin", "", &mockprotocol.MockProvider{
 			ServiceMap: map[string]interface{}{
 				mediatorsvc.Coordination: "xyz",
 			},
@@ -63,7 +63,7 @@ func TestNew(t *testing.T) {
 
 func TestCommand_CreateBlocDID(t *testing.T) {
 	t.Run("test error from request", func(t *testing.T) {
-		c, err := New("domain", "origin", getMockProvider())
+		c, err := New("domain", "origin", "", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -78,7 +78,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 	})
 
 	t.Run("bad didDoc", func(t *testing.T) {
-		c, err := New("domain", "origin", getMockProvider())
+		c, err := New("domain", "origin", "", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -104,7 +104,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 	})
 
 	t.Run("test error unsupported purpose", func(t *testing.T) {
-		c, err := New("domain", "origin", getMockProvider())
+		c, err := New("domain", "origin", "", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -129,7 +129,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 	})
 
 	t.Run("test error from create did", func(t *testing.T) {
-		c, err := New("domain", "origin", getMockProvider())
+		c, err := New("domain", "origin", "", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -161,7 +161,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 	})
 
 	t.Run("test recovery key not supported", func(t *testing.T) {
-		c, err := New("domain", "origin", getMockProvider())
+		c, err := New("domain", "origin", "", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -189,7 +189,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 	})
 
 	t.Run("test error from did base64 decode", func(t *testing.T) {
-		c, err := New("domain", "origin", getMockProvider())
+		c, err := New("domain", "origin", "", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -212,7 +212,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		require.Contains(t, cmdErr.Error(), "illegal base64 data")
 	})
 
-	c, err := New("domain", "origin", getMockProvider())
+	c, err := New("domain", "origin", "", getMockProvider())
 	require.NoError(t, err)
 	require.NotNil(t, c)
 
@@ -264,7 +264,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 func TestCommand_CreatePeerDID(t *testing.T) {
 	t.Run("test error from request", func(t *testing.T) {
-		c, err := New("domain", "origin", getMockProvider())
+		c, err := New("domain", "origin", "", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -282,7 +282,7 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 	})
 
 	t.Run("success (registered route)", func(t *testing.T) {
-		c, err := New("domain", "origin", getMockProvider())
+		c, err := New("domain", "origin", "", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -326,7 +326,7 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 	})
 
 	t.Run("success (default)", func(t *testing.T) {
-		c, err := New("domain", "origin", getMockProvider())
+		c, err := New("domain", "origin", "", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -365,7 +365,7 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 	})
 
 	t.Run("test error while creating peer DID", func(t *testing.T) {
-		c, err := New("domain", "origin", getMockProvider())
+		c, err := New("domain", "origin", "", getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -436,7 +436,7 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 	})
 
 	t.Run("test error while creating verification method", func(t *testing.T) {
-		c, err := New("domain", "origin", getMockProvider())
+		c, err := New("domain", "origin", "", getMockProvider())
 		require.NoError(t, err)
 
 		c.vdrRegistry = &mockvdr.MockVDRegistry{CreateValue: &did.Doc{

@@ -143,6 +143,7 @@ type agentStartOpts struct {
 	CacheSize            int         `json:"cacheSize"`
 	OPSKMSCapability     string      `json:"opsKMSCapability,omitempty"` // TODO to be removed/refined after universal wallet migration
 	DidAnchorOrigin      string      `json:"didAnchorOrigin"`
+	SidetreeToken        string      `json:"sidetreeToken"`
 }
 
 type userConfig struct {
@@ -399,7 +400,8 @@ func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
 func getAgentHandlers(ctx *context.Provider,
 	r controllercmd.MessageHandler, opts *agentStartOpts) ([]commandHandler, error) {
 	handlers, err := agentctrl.GetCommandHandlers(ctx, agentctrl.WithBlocDomain(opts.BlocDomain),
-		agentctrl.WithDidAnchorOrigin(opts.DidAnchorOrigin), agentctrl.WithMessageHandler(r),
+		agentctrl.WithDidAnchorOrigin(opts.DidAnchorOrigin), agentctrl.WithSidetreeToken(opts.SidetreeToken),
+		agentctrl.WithMessageHandler(r),
 		agentctrl.WithNotifier(&jsNotifier{}))
 	if err != nil {
 		return nil, err

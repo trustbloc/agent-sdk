@@ -30,6 +30,7 @@ const wsPath = "/ws"
 type allOpts struct {
 	blocDomain      string
 	didAnchorOrigin string
+	sidetreeToken   string
 	msgHandler      ariescmd.MessageHandler
 	notifier        ariescmd.Notifier
 	webhookURLs     []string
@@ -49,6 +50,13 @@ func WithBlocDomain(blocDomain string) Opt {
 func WithDidAnchorOrigin(origin string) Opt {
 	return func(opts *allOpts) {
 		opts.didAnchorOrigin = origin
+	}
+}
+
+// WithSidetreeToken is an option allowing for the sidetree token.
+func WithSidetreeToken(token string) Opt {
+	return func(opts *allOpts) {
+		opts.sidetreeToken = token
 	}
 }
 
@@ -87,7 +95,7 @@ func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, 
 	}
 
 	// did client command operation.
-	didClientCmd, err := didclientcmd.New(cmdOpts.blocDomain, cmdOpts.didAnchorOrigin, ctx)
+	didClientCmd, err := didclientcmd.New(cmdOpts.blocDomain, cmdOpts.didAnchorOrigin, cmdOpts.sidetreeToken, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize DID client: %w", err)
 	}
@@ -133,7 +141,7 @@ func GetRESTHandlers(ctx *context.Provider, opts ...Opt) ([]rest.Handler, error)
 	}
 
 	// DID Client REST operation.
-	didClientOp, err := didclient.New(ctx, restOpts.blocDomain, restOpts.didAnchorOrigin)
+	didClientOp, err := didclient.New(ctx, restOpts.blocDomain, restOpts.didAnchorOrigin, restOpts.sidetreeToken)
 	if err != nil {
 		return nil, err
 	}

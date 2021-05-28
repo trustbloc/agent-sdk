@@ -84,8 +84,8 @@ type mediatorClient interface {
 }
 
 // New returns new DID Exchange controller command instance.
-func New(domain, didAnchorOrigin string, p Provider) (*Command, error) {
-	client, err := orb.New(nil, orb.WithDomain(domain))
+func New(domain, didAnchorOrigin, token string, p Provider) (*Command, error) {
+	client, err := orb.New(nil, orb.WithDomain(domain), orb.WithAuthToken(token))
 	if err != nil {
 		return nil, err
 	}
