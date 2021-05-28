@@ -8,20 +8,19 @@ go 1.16
 
 require (
 	github.com/btcsuite/btcd v0.21.0-beta
-	github.com/google/tink/go v1.5.0
+	github.com/google/tink/go v1.6.1-0.20210519071714-58be99b3c4d0
 	github.com/google/uuid v1.2.0
-	github.com/hyperledger/aries-framework-go v0.1.7-0.20210517160459-a72f856f36b8
+	github.com/hyperledger/aries-framework-go v0.1.7-0.20210526123422-eec182deab9a
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.0.0-20210517231016-de60084e8513
-	github.com/hyperledger/aries-framework-go/component/storage/edv v0.0.0-20210507165908-d8529097d7a0
+	github.com/hyperledger/aries-framework-go/component/storage/edv v0.0.0-20210520055214-ae429bb89bf7
 	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20210429205242-c5e97865879c
-	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20210507165908-d8529097d7a0
-	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210507165908-d8529097d7a0
+	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20210520055214-ae429bb89bf7
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210520055214-ae429bb89bf7
 	github.com/mitchellh/mapstructure v1.3.3
-	github.com/piprate/json-gold v0.4.0
 	github.com/stretchr/testify v1.7.0
 	github.com/trustbloc/agent-sdk v0.0.0-00010101000000-000000000000
-	github.com/trustbloc/edge-core v0.1.7-0.20210429222332-96b987820e63
-	github.com/trustbloc/kms v0.1.7-0.20210430171137-77ee09acc581
+	github.com/trustbloc/edge-core v0.1.7-0.20210527163745-994ae929f957
+	github.com/trustbloc/kms v0.1.7-0.20210527174658-019e1bcabd9c
 )
 
 replace github.com/trustbloc/agent-sdk => ../..

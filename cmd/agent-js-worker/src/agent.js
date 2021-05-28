@@ -1208,6 +1208,24 @@ const Agent = function(opts) {
                 return invoke(aw, pending, this.pkgname, "Flush", {}, "timeout while flushing data")
             },
         },
+        /**
+         * JSON-LD context management API.
+         *
+         * Refer to [OpenAPI spec](docs/rest/openapi_spec.md#generate-openapi-spec) for
+         * input params and output return json values.
+         */
+        context: {
+            pkgname: "context",
+
+            /**
+             * Adds JSON-LD contexts to the underlying storage.
+             *
+             * @returns {Promise<Object>}
+             */
+            add: async function (req) {
+                return invoke(aw, pending, this.pkgname, "Add", req, "timeout while adding contexts")
+            },
+        },
     }
 
     // start aries worker
