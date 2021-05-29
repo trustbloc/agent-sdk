@@ -10,7 +10,7 @@ Run `npm install` in this directory. The output bundles will be placed in `dist/
 
 # Test
 
-- TODO
+Run `npm test` in this directory. 
 
 # Dev
 

@@ -4,20 +4,15 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-/*
-Copyright SecureKey Technologies Inc. All Rights Reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
-
-
 import {POST_STATE, waitForEvent} from "../util/event.js";
+import axios from 'axios';
 
 const STATE_COMPLETED = 'completed'
 const DID_EXCHANGE_STATES_TOPIC = 'didexchange_states'
 const STATE_COMPLETE_MSG_TOPIC = 'didexchange-state-complete'
 const STATE_COMPLETE_MSG_TYPE = 'https://trustbloc.dev/didexchange/1.0/state-complete'
 const DEFAULT_LABEL = 'agent-default-label'
+const ROUTER_CREATE_INVITATION_PATH = `/didcomm/invitation`
 
 /**
  * DIDExchange provides aries DID exchange features.
@@ -30,23 +25,25 @@ export class DIDExchange {
         this.agent = agent
     }
 
-    async connect(invitation, {waitForCompletion = ''} = {}) {
+    async connect(invitation, {waitForCompletion = '', label = ''} = {}) {
         let conn = await this.agent.outofband.acceptInvitation({
-            my_label: DEFAULT_LABEL,
+            my_label: label ? label : DEFAULT_LABEL,
             invitation: invitation,
-            router_connections: await getMediatorConnections(this.agent, {single:true}),
+            router_connections: await getMediatorConnections(this.agent, {single: true}),
         })
 
-        let connID = conn['connection_id']
+        let connectionID = conn['connection_id']
 
-        await waitForEvent(this.agent, {
+        let checked = await waitForEvent(this.agent, {
             type: POST_STATE,
             stateID: STATE_COMPLETED,
-            connectionID: connID,
             topic: DID_EXCHANGE_STATES_TOPIC,
+            connectionID
         })
 
-        const record = await this.agent.didexchange.queryConnectionByID({id: connID})
+        console.log('go connection completed event for connection', connectionID)
+
+        const record = await this.agent.didexchange.queryConnectionByID({id: connectionID})
 
         if (waitForCompletion) {
             this.agent.messaging.registerService({
@@ -93,5 +90,32 @@ export async function getMediatorConnections(agent, {single} = {}) {
     return resp.connections.join(",");
 }
 
+/**
+ * Get DID Invitation from edge router.
+ *
+ * @param endpoint edge router endpoint
+ */
+export const createInvitationFromRouter = async (endpoint) => {
+    let response = await axios.get(`${endpoint}${ROUTER_CREATE_INVITATION_PATH}`)
+    return response.data.invitation
+}
 
 
+/**
+ * Connect given agent to edge mediator/router.
+ *
+ * @param agent trustbloc agent
+ * @param endpoint edge router endpoint
+ */
+export async function connectToMediator(agent, mediatorEndpoint) {
+    let resp = await agent.mediatorclient.connect({
+        myLabel: 'agent-default-label',
+        invitation: await createInvitationFromRouter(mediatorEndpoint)
+    })
+
+    if (resp.connectionID) {
+        console.log("router registered successfully!", resp.connectionID)
+    } else {
+        console.log("router was not registered!")
+    }
+}

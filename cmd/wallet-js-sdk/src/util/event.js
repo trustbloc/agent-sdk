@@ -15,7 +15,7 @@ export function waitForEvent(agent, {
     timeout = DEFAULT_TIMEOUT,
     timeoutError = DEFAULT_TIMEOUT_ERR,
     topic = DEFAULT_TOPIC,
-    type, stateID, connectionID} = {}) {
+    type, stateID, connectionID, callback = () => {}} = {}) {
 
 
     return new Promise((resolve, reject) => {
@@ -38,6 +38,9 @@ export function waitForEvent(agent, {
                 }
 
                 stop()
+
+                callback(payload)
+
                 resolve(payload)
             } catch (e) {
                 stop()
