@@ -5,4 +5,5 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 export  {UniversalWallet, createWalletProfile, updateWalletProfile} from "./universal/vc-wallet"
-export  {DIDExchange, getMediatorConnections} from "./didcomm/connect"
+export  {DIDExchange, getMediatorConnections, connectToMediator, createInvitationFromRouter} from "./didcomm/connect"
+export {waitForEvent} from "./util/event"

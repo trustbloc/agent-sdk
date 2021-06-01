@@ -5,7 +5,11 @@
   "main": "dist/wallet-sdk.min.js",
   "browser": "dist/wallet-sdk.min.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:setup": "bash scripts/setup_test.sh setup",
+    "test:start": "karma start --single-run",
+    "test:dev": "karma start --browsers=Chrome",
+    "test:teardown": "bash scripts/setup_test.sh teardown",
+    "test": "npm run test:setup && npm run test:start; npm run test:teardown",
     "dev": "webpack --config webpack.dev.js",
     "build": "cp -p ../../LICENSE . && webpack --config webpack.prod.js",
     "prepare": "npm run build"
@@ -30,7 +34,17 @@
     "url": "git://github.com/trustbloc/agent-sdk.git"
   },
   "devDependencies": {
+    "@trustbloc-cicd/agent-sdk-web": "^0.1.7-snapshot-97d5b75",
+    "chai": "^4.3.4",
     "html-webpack-plugin": "^5.3.1",
+    "karma": "^6.3.2",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-mocha": "^2.0.1",
+    "karma-sourcemap-loader": "^0.3.8",
+    "karma-spec-reporter": "^0.0.32",
+    "karma-webpack": "^5.0.0",
+    "mocha": "^8.4.0",
     "terser-webpack-plugin": "^5.1.2",
     "webpack": "^5.37.0",
     "webpack-cli": "^4.7.0",
@@ -38,6 +52,6 @@
     "webpack-merge": "^5.7.3"
   },
   "dependencies": {
-    "@trustbloc-cicd/agent-sdk-web": "^0.1.7-snapshot-62e6e4e"
+    "axios": "^0.20.0"
   }
 }
