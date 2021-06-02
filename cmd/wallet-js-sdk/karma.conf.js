@@ -11,10 +11,12 @@ module.exports = function (config) {
         frameworks: ['mocha', 'chai', 'webpack'],
         files: [
             {pattern: "public/agent-js-worker/assets/*", included: false},
+            {pattern: "test/**/*.ini", included: true},
             {pattern: "test/specs/**/*.spec.js", type: "module"},
         ],
         preprocessors: {
-            'test/specs/**/*.spec.js': ['webpack', 'sourcemap']
+            'test/specs/**/*.spec.js': ['webpack', 'sourcemap'],
+            'test/**/*.ini': ['ini2js']
         },
         webpack: webpackConfig,
         reporters: ['spec'],
@@ -33,7 +35,7 @@ module.exports = function (config) {
             }
         },
         client: {
-            captureConsole: true,
+            captureConsole: false,
             mocha: {
                 timeout: 30000
             }

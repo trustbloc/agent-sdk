@@ -17,8 +17,8 @@ const REQUESTED_STATE = "requested"
 let alice, bob
 
 before(async function () {
-    alice = await loadFrameworks({name: ALICE_LABEL, logLevel: 'debug'})
-    bob = await loadFrameworks({name: BOB_LABEL, logLevel: 'debug'})
+    alice = await loadFrameworks({name: ALICE_LABEL})
+    bob = await loadFrameworks({name: BOB_LABEL})
 });
 
 after(function () {
@@ -65,8 +65,6 @@ describe('running connect test 123', async function () {
             expect.fail(e);
         }
     });
-
-
 
     it('alice connects to bob', async function () {
         try {
