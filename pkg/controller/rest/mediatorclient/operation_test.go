@@ -130,7 +130,10 @@ func TestOperation_Connect(t *testing.T) {
 				RouterEndpoint: sampleRouterEndpoint,
 				RoutingKeys:    []string{sampleRoutingKeys},
 			},
-			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{ConnID: sampleConnID},
+			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{
+				ConnID:             sampleConnID,
+				MockDIDExchangeSvc: &mockdidexchange.MockDIDExchangeSvc{},
+			},
 			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
 				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ outofbandsvc.Options) (s string, e error) {
 					return sampleConnID, nil
@@ -156,8 +159,10 @@ func TestOperation_Connect(t *testing.T) {
 
 	t.Run("test failed connect", func(t *testing.T) {
 		prov := newMockProvider(map[string]interface{}{
-			mediatorsvc.Coordination:   &mockroute.MockMediatorSvc{},
-			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
+			mediatorsvc.Coordination: &mockroute.MockMediatorSvc{},
+			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{
+				MockDIDExchangeSvc: &mockdidexchange.MockDIDExchangeSvc{},
+			},
 			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
 				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ outofbandsvc.Options) (s string, e error) {
 					return "", fmt.Errorf(sampleErr)

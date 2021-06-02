@@ -106,11 +106,13 @@ export const createInvitationFromRouter = async (endpoint) => {
  *
  * @param agent trustbloc agent
  * @param endpoint edge router endpoint
+ * @param wait for did exchange state complete message
  */
-export async function connectToMediator(agent, mediatorEndpoint) {
+export async function connectToMediator(agent, mediatorEndpoint, {waitForStateComplete = true} = {}) {
     let resp = await agent.mediatorclient.connect({
         myLabel: 'agent-default-label',
-        invitation: await createInvitationFromRouter(mediatorEndpoint)
+        invitation: await createInvitationFromRouter(mediatorEndpoint),
+        stateCompleteMessageType: waitForStateComplete ? STATE_COMPLETE_MSG_TYPE : ''
     })
 
     if (resp.connectionID) {

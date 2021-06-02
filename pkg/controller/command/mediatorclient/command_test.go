@@ -179,7 +179,10 @@ func TestCommand_Connect(t *testing.T) {
 				RouterEndpoint: sampleRouterEndpoint,
 				RoutingKeys:    []string{sampleRoutingKeys},
 			},
-			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{ConnID: sampleConnID},
+			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{
+				ConnID:             sampleConnID,
+				MockDIDExchangeSvc: &mockdidexchange.MockDIDExchangeSvc{},
+			},
 			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
 				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ outofbandsvc.Options) (s string, e error) {
 					return sampleConnID, nil
@@ -331,7 +334,10 @@ func TestCommand_Connect(t *testing.T) {
 					return fmt.Errorf(sampleErr)
 				},
 			},
-			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{ConnID: sampleConnID},
+			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{
+				ConnID:             sampleConnID,
+				MockDIDExchangeSvc: &mockdidexchange.MockDIDExchangeSvc{},
+			},
 			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
 				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ outofbandsvc.Options) (s string, e error) {
 					return sampleConnID, nil
@@ -358,8 +364,9 @@ func TestCommand_Connect(t *testing.T) {
 				RoutingKeys:    []string{sampleRoutingKeys},
 			},
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{
-				ConnID: sampleConnID,
-				State:  didexchangesvc.StateIDRequested,
+				ConnID:             sampleConnID,
+				State:              didexchangesvc.StateIDRequested,
+				MockDIDExchangeSvc: &mockdidexchange.MockDIDExchangeSvc{},
 			},
 			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
 				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ outofbandsvc.Options) (s string, e error) {

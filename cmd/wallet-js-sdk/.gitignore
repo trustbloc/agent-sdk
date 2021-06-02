@@ -7,7 +7,6 @@
 dist/
 node_modules/
 public/
-test/fixtures/keys/
 
 # ignore copy of license file from project's root directory that is copied
 # here during 'npm run build'

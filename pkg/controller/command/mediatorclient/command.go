@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/hyperledger/aries-framework-go/pkg/client/didexchange"
 	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/client/messaging"
@@ -70,6 +71,9 @@ const (
 	// timeout constants.
 	didExchangeTimeOut = 120 * time.Second
 	sendMsgTimeOut     = 120 * time.Second
+
+	// mediator connector queue buffer.
+	msgEventBufferSize = 10
 
 	// message types.
 	createConnRequestMsgType  = "https://trustbloc.dev/blinded-routing/1.0/create-conn-req"
@@ -141,7 +145,7 @@ func (c *Command) GetHandlers() []command.Handler {
 }
 
 // Connect connects agent to given router endpoint.
-func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:funlen
+func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:funlen,gocyclo
 	var request ConnectionRequest
 
 	err := json.NewDecoder(req).Decode(&request)
@@ -161,7 +165,7 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:
 
 	var statusCh chan service.StateMsg
 
-	if request.StateCompleteMessageType != "" {
+	if request.StateCompleteMessageType != "" { //nolint:nestif
 		notificationCh = make(chan messaging.NotificationPayload)
 
 		err = c.msgHandler.Register(msghandler.NewMessageService(stateCompleteTopic, request.StateCompleteMessageType,
@@ -179,7 +183,7 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:
 			}
 		}()
 	} else {
-		statusCh = make(chan service.StateMsg)
+		statusCh = make(chan service.StateMsg, msgEventBufferSize)
 
 		err = c.didExchange.RegisterMsgEvent(statusCh)
 		if err != nil {
@@ -187,6 +191,13 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:
 
 			return command.NewExecuteError(ConnectMediatorError, err)
 		}
+
+		defer func() {
+			e := c.didExchange.UnregisterMsgEvent(statusCh)
+			if e != nil {
+				logger.Warnf("Failed to unregister msg event: %w", e)
+			}
+		}()
 	}
 
 	connID, err := c.outOfBand.AcceptInvitation(request.Invitation, request.MyLabel)
