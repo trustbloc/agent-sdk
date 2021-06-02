@@ -57,6 +57,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/key"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/mitchellh/mapstructure"
+	"github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/edge-core/pkg/log"
 	kmszcap "github.com/trustbloc/kms/pkg/restapi/kms/operation"
 
@@ -606,7 +607,8 @@ func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 		return nil, fmt.Errorf("unexpected failure while creating IndexDB storage provider: %w", err)
 	}
 
-	loader, err := jsonld.NewDocumentLoader(indexedDBProvider)
+	loader, err := jsonld.NewDocumentLoader(indexedDBProvider,
+		jsonld.WithRemoteDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)))
 	if err != nil {
 		return nil, fmt.Errorf("create document loader: %w", err)
 	}
