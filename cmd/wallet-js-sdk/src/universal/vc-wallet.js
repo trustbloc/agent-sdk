@@ -4,6 +4,16 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+// Supported content type from this UniversalWallet.
+export const contentTypes = {
+    COLLECTION: "collection",
+    CREDENTIAL: "credential",
+    DID_RESOLUTION_RESPONSE: "didResolutionResponse",
+    METADATA: "metadata",
+    CONNECTION: "connection",
+    KEY: "key",
+}
+
 /**
  * UniversalWallet is universal wallet SDK built on top aries universal wallet controller (vcwallet).
  *
@@ -21,7 +31,7 @@ export class UniversalWallet {
      * @param user -  unique wallet user identifier, the one used to create wallet profile.
      *
      */
-    constructor({agent = '', user = ''} = {}) {
+    constructor({agent, user} = {}) {
         this.agent = agent
         this.user = user
     }
@@ -41,8 +51,8 @@ export class UniversalWallet {
      *
      * @returns {Promise<Object>} - 'object.token' - auth token subsequent use of wallet features.
      */
-    async open({localKMSPassphrase = '', webKMSAuth = {}, edvUnlocks = {}} = {}) {
-        return await this.agent.vcwallet.open({user: this.user, localKMSPassphrase, webKMSAuth, edvUnlocks})
+    async open({localKMSPassphrase, webKMSAuth, edvUnlocks} = {}) {
+        return await this.agent.vcwallet.open({userID: this.user, localKMSPassphrase, webKMSAuth, edvUnlocks})
     }
 
     /**
@@ -51,7 +61,7 @@ export class UniversalWallet {
      * @returns {Promise<Object>} - 'object.closed' -  bool flag false if token is not found or already expired for this wallet user.
      */
     async close() {
-        return await this.agent.vcwallet.close({user: this.user})
+        return await this.agent.vcwallet.close({userID: this.user})
     }
 
     /**
@@ -65,8 +75,8 @@ export class UniversalWallet {
      *
      * @returns {Promise<Object>} - empty promise or an error if adding content to wallet store fails.
      */
-    async add({auth = '', contentType = '', content = {}, collectionID = ''} = {}) {
-        return await this.agent.vcwallet.add({user: this.user, auth, contentType, collectionID, content})
+    async add({auth, contentType, content = {}, collectionID} = {}) {
+        return await this.agent.vcwallet.add({userID: this.user, auth, contentType, collectionID, content})
     }
 
     /**
@@ -80,7 +90,7 @@ export class UniversalWallet {
      * @returns {Promise<Object>} - empty promise or an error if operation fails.
      */
     async remove({auth = '', contentType = '', contentID = ''} = {}) {
-        return await this.agent.vcwallet.remove({user: this.user, auth, contentType, contentID})
+        return await this.agent.vcwallet.remove({userID: this.user, auth, contentType, contentID})
     }
 
     /**
@@ -94,7 +104,7 @@ export class UniversalWallet {
      * @returns {Promise<Object>} - promise containing content or an error if operation fails.
      */
     async get({auth = '', contentType = '', contentID = ''} = {}) {
-        return await this.agent.vcwallet.get({user: this.user, auth, contentType, contentID})
+        return await this.agent.vcwallet.get({userID: this.user, auth, contentType, contentID})
     }
 
     /**
@@ -107,8 +117,8 @@ export class UniversalWallet {
      *
      * @returns {Promise<Object>} - promise containing response contents or an error if operation fails.
      */
-    async getAll({auth = '', contentType = '', collectionID = ''} = {}) {
-        return await this.agent.vcwallet.getAll({user: this.user, auth, contentType, collectionID})
+    async getAll({auth, contentType, collectionID} = {}) {
+        return await this.agent.vcwallet.getAll({userID: this.user, auth, contentType, collectionID})
     }
 
     /**
@@ -121,7 +131,7 @@ export class UniversalWallet {
      * @returns {Promise<Object>} - promise of presentation(s) containing credential results or an error if operation fails.
      */
     async query({auth = '', query = {}} = {}) {
-        return await this.agent.vcwallet.query({user: this.user, auth, query})
+        return await this.agent.vcwallet.query({userID: this.user, auth, query})
     }
 
     /**
@@ -148,7 +158,7 @@ export class UniversalWallet {
      * @returns {Promise<Object>} - promise of credential issued or an error if operation fails.
      */
     async issue({auth = '', credential = {}, proofOptions = {}} = {}) {
-        return await this.agent.vcwallet.issue({user: this.user, auth, credential, proofOptions})
+        return await this.agent.vcwallet.issue({userID: this.user, auth, credential, proofOptions})
     }
 
     /**
@@ -178,7 +188,7 @@ export class UniversalWallet {
      */
     async prove({auth = '', storedCredentials = {}, rawCredentials = {}, presentation = {}, proofOptions = {}} = {}) {
         return await this.agent.vcwallet.prove({
-            user: this.user,
+            userID: this.user,
             auth,
             storedCredentials,
             rawCredentials,
@@ -200,7 +210,7 @@ export class UniversalWallet {
      */
     async verify({auth = '', storedCredentialID = {}, rawCredential = {}, presentation = {}} = {}) {
         return await this.agent.vcwallet.verify({
-            user: this.user,
+            userID: this.user,
             auth,
             storedCredentialID,
             rawCredential,
@@ -223,11 +233,28 @@ export class UniversalWallet {
      */
     async derive({auth = '', storedCredentialID = {}, rawCredential = {}, deriveOption = {}} = {}) {
         return await this.agent.vcwallet.derive({
-            user: this.user,
+            userID: this.user,
             auth,
             storedCredentialID,
             rawCredential,
             deriveOption
+        })
+    }
+
+    /**
+     *  creates a key pair from wallet.
+     *
+     *  @param {Object} request
+     *  @param {string} request.auth -  authorization token for performing this wallet operation.
+     *  @param {string} request.keyType - type of the key to be created, refer aries kms for supported key types.
+     *
+     * @returns {Promise<Object>} - promise of derived credential or error if operation fails.
+     */
+    async createKeyPair({auth, keyType} = {}) {
+        return await this.agent.vcwallet.createKeyPair({
+            userID: this.user,
+            auth,
+            keyType
         })
     }
 }
@@ -245,7 +272,7 @@ export class UniversalWallet {
  *
  * @returns {Promise<Object>} - empty promise or error if operation fails.
  */
-export async function createWalletProfile(agent, userID, {localKMSPassphrase = '', keyStoreURL = '', edvConfiguration = {}} = {}) {
+export async function createWalletProfile(agent, userID, {localKMSPassphrase, keyStoreURL, edvConfiguration} = {}) {
     return await agent.vcwallet.createProfile({userID, localKMSPassphrase, keyStoreURL, edvConfiguration})
 }
 
@@ -266,6 +293,6 @@ export async function createWalletProfile(agent, userID, {localKMSPassphrase = '
  *
  * @returns {Promise<Object>} - empty promise or error if operation fails.
  */
-export async function updateWalletProfile(agent, userID, {localKMSPassphrase = '', keyStoreURL = '', edvConfiguration = {}} = {}) {
+export async function updateWalletProfile(agent, userID, {localKMSPassphrase, keyStoreURL, edvConfiguration} = {}) {
     return await agent.vcwallet.updateProfile({userID, localKMSPassphrase, keyStoreURL, edvConfiguration})
 }

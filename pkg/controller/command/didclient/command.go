@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
@@ -47,10 +48,10 @@ const (
 	didCommServiceType = "did-communication"
 
 	// ed25519KeyType defines ed25119 key type.
-	ed25519KeyType = "Ed25519"
+	ed25519KeyType = "ed25519"
 
 	// p256KeyType EC P-256 key type.
-	p256KeyType = "P256"
+	p256KeyType = "p256"
 )
 
 const (
@@ -229,16 +230,7 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 		return command.NewExecuteError(CreateDIDErrorCode, err)
 	}
 
-	bytes, err := docResolution.DIDDocument.JSONBytes()
-	if err != nil {
-		logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, err.Error())
-
-		return command.NewExecuteError(CreateDIDErrorCode, err)
-	}
-
-	command.WriteNillableResponse(rw, &CreateDIDResponse{
-		DID: bytes,
-	}, logger)
+	command.WriteNillableResponse(rw, docResolution, logger)
 
 	logutil.LogDebug(logger, CommandName, CreateTrustBlocDIDCommandMethod, successString)
 
@@ -246,7 +238,7 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 }
 
 func getKey(keyType string, value []byte) (interface{}, error) {
-	switch keyType {
+	switch strings.ToLower(keyType) {
 	case ed25519KeyType:
 		return ed25519.PublicKey(value), nil
 	case p256KeyType:
@@ -328,16 +320,7 @@ func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //n
 		}
 	}
 
-	bytes, err := docResolution.DIDDocument.JSONBytes()
-	if err != nil {
-		logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, err.Error())
-
-		return command.NewExecuteError(CreateDIDErrorCode, err)
-	}
-
-	command.WriteNillableResponse(rw, &CreateDIDResponse{
-		DID: bytes,
-	}, logger)
+	command.WriteNillableResponse(rw, docResolution, logger)
 
 	logutil.LogDebug(logger, CommandName, CreateTrustBlocDIDCommandMethod, successString)
 

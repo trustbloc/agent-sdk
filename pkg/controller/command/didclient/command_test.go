@@ -32,6 +32,26 @@ import (
 	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 )
 
+//nolint:lll
+const sampleDoc = `{
+  "@context": ["https://www.w3.org/ns/did/v1","https://w3id.org/did/v2"],
+  "id": "did:peer:21tDAKCERh95uGgKbJNHYp",
+  "verificationMethod": [
+    {
+      "id": "did:peer:123456789abcdefghi#keys-1",
+      "type": "Secp256k1VerificationKey2018",
+      "controller": "did:peer:123456789abcdefghi",
+      "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+    },
+    {
+      "id": "did:peer:123456789abcdefghw#key2",
+      "type": "RsaVerificationKey2018",
+      "controller": "did:peer:123456789abcdefghw",
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAryQICCl6NZ5gDKrnSztO\n3Hy8PEUcuyvg/ikC+VcIo2SFFSf18a3IMYldIugqqqZCs4/4uVW3sbdLs/6PfgdX\n7O9D22ZiFWHPYA2k2N744MNiCD1UE+tJyllUhSblK48bn+v1oZHCM0nYQ2NqUkvS\nj+hwUU3RiWl7x3D2s9wSdNt7XUtW05a/FXehsPSiJfKvHJJnGOX0BgTvkLnkAOTd\nOrUZ/wK69Dzu4IvrN4vs9Nes8vbwPa/ddZEzGR0cQMt0JBkhk9kU/qwqUseP1QRJ\n5I1jR4g8aYPL/ke9K35PxZWuDp3U0UPAZ3PjFAh+5T+fc7gzCs9dPzSHloruU+gl\nFQIDAQAB\n-----END PUBLIC KEY-----"
+    }
+  ]
+}`
+
 func TestNew(t *testing.T) {
 	t.Run("test success", func(t *testing.T) {
 		c, err := New("domain", "origin", "", getMockProvider())
@@ -98,9 +118,8 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 		var b bytes.Buffer
 		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBufferString("{}"))
-		require.Error(t, cmdErr)
-		require.Equal(t, CreateDIDErrorCode, cmdErr.Code())
-		require.Equal(t, command.ExecuteError, cmdErr.Type())
+		require.Empty(t, b.Bytes())
+		require.NoError(t, cmdErr)
 	})
 
 	t.Run("test error unsupported purpose", func(t *testing.T) {
@@ -227,7 +246,10 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 	var b bytes.Buffer
 
 	t.Run("test success create did with Ed25519 key", func(t *testing.T) {
-		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: &did.Doc{ID: "did:ex:123"}}}
+		didDoc, err := did.ParseDocument([]byte(sampleDoc))
+		require.NoError(t, err)
+
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
 		// ED key
 		r, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
 			{
@@ -250,15 +272,10 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(r))
 		require.NoError(t, cmdErr)
 
-		resp := &CreateDIDResponse{}
-		err = json.NewDecoder(&b).Decode(&resp)
+		docRes, err := did.ParseDocumentResolution(b.Bytes())
 		require.NoError(t, err)
-
-		var didMap map[string]string
-		err = json.Unmarshal(resp.DID, &didMap)
-		require.NoError(t, err)
-
-		require.Equal(t, "did:ex:123", didMap["id"])
+		require.NotEmpty(t, docRes)
+		require.Equal(t, "did:peer:21tDAKCERh95uGgKbJNHYp", docRes.DIDDocument.ID)
 	})
 }
 
@@ -289,6 +306,7 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 		routerEndpoint := "http://router.com"
 		keys := []string{"abc", "xyz"}
 		c.vdrRegistry = &mockvdr.MockVDRegistry{CreateValue: &did.Doc{
+			ID:      uuid.NewString(),
 			Context: []string{"https://w3id.org/did/v1"},
 			Service: []did.Service{
 				{
@@ -315,14 +333,10 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 		}`))
 		require.Nil(t, cmdErr)
 
-		resp := &CreateDIDResponse{}
-		err = json.NewDecoder(&b).Decode(&resp)
+		resp, err := did.ParseDocumentResolution(b.Bytes())
 		require.NoError(t, err)
-
-		var didMap map[string]interface{}
-		err = json.Unmarshal(resp.DID, &didMap)
-		require.NoError(t, err)
-		require.NotEmpty(t, didMap["service"])
+		require.NotEmpty(t, resp.DIDDocument)
+		require.NotEmpty(t, resp.Context)
 	})
 
 	t.Run("success (default)", func(t *testing.T) {
@@ -331,6 +345,7 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 		require.NotNil(t, c)
 
 		c.vdrRegistry = &mockvdr.MockVDRegistry{CreateValue: &did.Doc{
+			ID:      uuid.NewString(),
 			Context: []string{"https://w3id.org/did/v1"},
 			Service: []did.Service{
 				{
@@ -354,14 +369,10 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 		}`))
 		require.Nil(t, cmdErr)
 
-		resp := &CreateDIDResponse{}
-		err = json.NewDecoder(&b).Decode(&resp)
+		resp, err := did.ParseDocumentResolution(b.Bytes())
 		require.NoError(t, err)
-
-		var didMap map[string]interface{}
-		err = json.Unmarshal(resp.DID, &didMap)
-		require.NoError(t, err)
-		require.NotEmpty(t, didMap["service"])
+		require.NotEmpty(t, resp.DIDDocument)
+		require.NotEmpty(t, resp.Context)
 	})
 
 	t.Run("test error while creating peer DID", func(t *testing.T) {

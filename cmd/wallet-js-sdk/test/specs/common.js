@@ -5,8 +5,14 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import * as Agent from "@trustbloc/agent-sdk-web"
+var uuid = require('uuid/v4')
+
+export const DIDEXCHANGE_STATE_TOPIC = "didexchange_states"
+export const POST_STATE = "post_state"
+export const DIDEXCHANGE_STATE_REQUESTED = "requested"
 
 export const testConfig = window.__ini__ ? window.__ini__['test/fixtures/config.ini'] : {}
+testConfig.walletUserPassphrase = uuid()
 console.debug('test configuration:', JSON.stringify(testConfig, null, 2))
 const {agentStartupOpts} = testConfig
 

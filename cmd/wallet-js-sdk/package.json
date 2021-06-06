@@ -34,8 +34,9 @@
     "url": "git://github.com/trustbloc/agent-sdk.git"
   },
   "devDependencies": {
-    "@trustbloc-cicd/agent-sdk-web": "^0.1.7-snapshot-97d5b75",
+    "@trustbloc-cicd/agent-sdk-web": "../agent-js-worker",
     "chai": "^4.3.4",
+    "chai-as-promised": "^7.1.1",
     "html-webpack-plugin": "^5.3.1",
     "karma": "^6.3.2",
     "karma-chai": "^0.1.0",
@@ -49,10 +50,10 @@
     "terser-webpack-plugin": "^5.1.2",
     "webpack": "^5.37.0",
     "webpack-cli": "^4.7.0",
-    "webpack-dev-server": "^3.11.2",
+    "webpack-dev-server": "^3.7.2",
     "webpack-merge": "^5.7.3"
   },
   "dependencies": {
-    "axios": "^0.20.0"
+    "axios": "^0.21.1"
   }
 }

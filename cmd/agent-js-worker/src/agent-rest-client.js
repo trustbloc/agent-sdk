@@ -394,6 +394,64 @@ const pkgs = {
             method: "POST",
         }
     },
+    vcwallet: {
+        CreateProfile: {
+            path: "/vcwallet/create-profile",
+            method: "POST",
+        },
+        UpdateProfile: {
+            path: "/vcwallet/update-profile",
+            method: "POST",
+        },
+        Open: {
+            path: "/vcwallet/open",
+            method: "POST",
+        },
+        Close: {
+            path: "/vcwallet/close",
+            method: "POST",
+        },
+        Add: {
+            path: "/vcwallet/add",
+            method: "POST",
+        },
+        Remove: {
+            path: "/vcwallet/remove",
+            method: "POST",
+        },
+        Get: {
+            path: "/vcwallet/get",
+            method: "POST",
+        },
+        GetAll: {
+            path: "/vcwallet/getall",
+            method: "POST",
+        },
+        Query: {
+            path: "/vcwallet/query",
+            method: "POST",
+        },
+        Issue: {
+            path: "/vcwallet/issue",
+            method: "POST",
+        },
+        Prove: {
+            path: "/vcwallet/prove",
+            method: "POST",
+        },
+        Verify: {
+            path: "/vcwallet/verify",
+            method: "POST",
+        },
+        Derive: {
+            path: "/vcwallet/derive",
+            method: "POST",
+        },
+        CreateKeyPair: {
+            path: "/vcwallet/create-key-pair",
+            method: "POST",
+        },
+    },
     didclient: {
         CreateTrustBlocDID: {
             path: "/didclient/create-trustbloc-did",

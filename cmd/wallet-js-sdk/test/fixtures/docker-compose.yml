@@ -24,3 +24,20 @@ services:
       - ${EDGE_ROUTER_WS_INBOUND_PORT}:${EDGE_ROUTER_WS_INBOUND_PORT}
     entrypoint: ""
     command: /bin/sh -c "hub-router start"
+
+  sidetree:
+    container_name: testnet.orb.local
+    image: ${SIDETREE_MOCK_IMAGE}:${SIDETREE_MOCK_IMAGE_TAG}
+    environment:
+      - SIDETREE_MOCK_TLS_CERTIFICATE=/etc/sidetree/tls/ec-pubCert.pem
+      - SIDETREE_MOCK_TLS_KEY=/etc/sidetree/tls/ec-key.pem
+      - SIDETREE_MOCK_HOST=0.0.0.0
+      - SIDETREE_MOCK_PORT=443
+      - SIDETREE_MOCK_DID_NAMESPACE=did:orb
+      - SIDETREE_MOCK_DID_ALIASES=did:orb:testnet.orb.local
+      - SIDETREE_MOCK_EXTERNAL_ENDPOINT=https://testnet.orb.local
+      - SIDETREE_MOCK_WELLKNOWN_PATH=did-orb
+    ports:
+      - 443:443
+    volumes:
+      - ./keys/tls:/etc/sidetree/tls

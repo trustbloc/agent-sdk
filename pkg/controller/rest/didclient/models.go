@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package didclient
 
 import (
+	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
 )
 
@@ -43,5 +45,5 @@ type createPeerDIDRequest struct { // nolint: unused,deadcode
 // swagger:response createDIDResp
 type createDIDResp struct { // nolint: unused,deadcode
 	// in: body
-	Response didclient.CreateDIDResponse
+	Response *did.DocResolution
 }
