@@ -5,14 +5,11 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import {expect} from "chai";
-import {loadFrameworks, testConfig} from "../common";
+import {loadFrameworks, testConfig, DIDEXCHANGE_STATE_TOPIC, POST_STATE, DIDEXCHANGE_STATE_REQUESTED} from "../common";
 import {connectToMediator, DIDExchange, getMediatorConnections, waitForEvent} from "../../../src";
 
 const ALICE_LABEL = "alice-agent"
 const BOB_LABEL = "bob-agent"
-const DIDEX_STATE_TOPIC = "didexchange_states"
-const POST_STATE = "post_state"
-const REQUESTED_STATE = "requested"
 
 let alice, bob
 
@@ -26,7 +23,7 @@ after(function () {
     bob ? bob.destroy() : ''
 });
 
-describe('running connect test 123', async function () {
+describe('running DIDComm connection tests', async function () {
     it('alice connected to mediator', async function () {
         try {
             await connectToMediator(alice, testConfig.mediatorEndPoint)
@@ -84,9 +81,9 @@ describe('running connect test 123', async function () {
 
 async function acceptExchangeRequest(agent) {
     return waitForEvent(agent, {
-        stateID: 'requested',
+        stateID: DIDEXCHANGE_STATE_REQUESTED,
         type: POST_STATE,
-        topic: DIDEX_STATE_TOPIC,
+        topic: DIDEXCHANGE_STATE_TOPIC,
         callback: async (payload) => {
             await agent.didexchange.acceptExchangeRequest({
                 id: payload.Properties.connectionID,

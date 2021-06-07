@@ -25,6 +25,7 @@ export class DIDExchange {
         this.agent = agent
     }
 
+    //TODO save connection in wallet store
     async connect(invitation, {waitForCompletion = '', label = ''} = {}) {
         let conn = await this.agent.outofband.acceptInvitation({
             my_label: label ? label : DEFAULT_LABEL,
