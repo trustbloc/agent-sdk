@@ -6,8 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import {expect} from "chai";
 import {loadFrameworks, testConfig} from "../common";
-import {connectToMediator, createWalletProfile, getMediatorConnections, UniversalWallet} from "../../../src";
-import {DIDManager} from "../../../src/didmanager/didmanager";
+import {connectToMediator, createWalletProfile, getMediatorConnections, UniversalWallet, DIDManager} from "../../../src";
 
 const RICK_USER = 'rick-agent'
 const keyType = 'ED25519'
@@ -68,7 +67,7 @@ describe('DID Manager tests', async function () {
 
     it('rick lists all DIDs from wallet', async function () {
         let didManager = new DIDManager({agent: rick, user: RICK_USER})
-        let results = await didManager.getAllDIDs({auth})
-        expect(Object.keys(results.contents)).to.have.lengthOf(3)
+        let {contents} = await didManager.getAllDIDs({auth})
+        expect(Object.keys(contents)).to.have.lengthOf(3)
     })
 })
