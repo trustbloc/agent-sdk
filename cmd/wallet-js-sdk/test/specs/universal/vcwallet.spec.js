@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import chai, {expect} from "chai";
 
-import {loadFrameworks, testConfig} from "../common";
+import {loadFrameworks, testConfig, getJSONTestData} from "../common";
 import {contentTypes, createWalletProfile, UniversalWallet} from "../../../src";
 import chaiAsPromised from 'chai-as-promised';
 
@@ -17,21 +17,12 @@ chai.use(chaiAsPromised);
 const WALLET_USER = 'wallet-user'
 const keyType = 'ED25519'
 const signatureType = 'Ed25519VerificationKey2018'
-const sampleMetadata = {
-    "@context": ["https://w3id.org/wallet/v1"],
-    "id": "did:example:123456789abcdefghi",
-    "type": "Person",
-    "name": "John Smith",
-    "image": "https://via.placeholder.com/150",
-    "description": "Professional software developer for Acme Corp.",
-    "tags": ["professional", "person"],
-    "correlation": ["4058a72a-9523-11ea-bb37-0242ac130002"]
-}
 
-let walletAgent
+let walletAgent, sampleMetadata
 
 before(async function () {
     walletAgent = await loadFrameworks({name: WALLET_USER})
+    sampleMetadata = getJSONTestData('wallet-metadata.json')
 });
 
 after(function () {

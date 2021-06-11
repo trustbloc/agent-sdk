@@ -38,7 +38,18 @@ describe('DID Manager tests', async function () {
 
     it('rick creates trustbloc DID in wallet', async function () {
         let didManager = new DIDManager({agent: rick, user: RICK_USER})
-        await didManager.createTrustBlocDID({auth})
+        let did = await didManager.createTrustBlocDID(auth)
+        expect(did).to.not.empty
+    })
+
+    it('user creates BLS12381G2 TrustBloc DID in wallet', async function () {
+        let didManager = new DIDManager({agent: rick, user: RICK_USER})
+        let didBBS = await didManager.createTrustBlocDID(auth, {
+            purposes: ["assertionMethod", "authentication"],
+            keyType: 'BLS12381G2',
+            signatureType: 'Bls12381G2Key2020'
+        })
+        expect(didBBS).to.not.empty
     })
 
     it('rick connects to mediator', async function () {
@@ -68,6 +79,6 @@ describe('DID Manager tests', async function () {
     it('rick lists all DIDs from wallet', async function () {
         let didManager = new DIDManager({agent: rick, user: RICK_USER})
         let {contents} = await didManager.getAllDIDs({auth})
-        expect(Object.keys(contents)).to.have.lengthOf(3)
+        expect(Object.keys(contents)).to.have.lengthOf(4)
     })
 })

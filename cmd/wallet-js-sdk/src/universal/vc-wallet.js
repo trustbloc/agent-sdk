@@ -41,13 +41,13 @@ export class UniversalWallet {
      * returns a authorization token to be used for performing wallet operations.
      *
      *  @param {Object} options
-     *  @param {string} options.localKMSPassphrase - (optional) passphrase for local kms for key operations.
+     *  @param {String} options.localKMSPassphrase - (optional) passphrase for local kms for key operations.
      *  @param {Object} options.webKMSAuth - (optional) WebKMSAuth for authorizing access to web/remote kms.
-     *  @param {string} options.webKMSAuth.authToken - (optional) Http header 'authorization' bearer token to be used.
-     *  @param {string} options.webKMSAuth.capability - (optional) Capability if ZCAP sign header feature to be used for authorizing access.
+     *  @param {String} options.webKMSAuth.authToken - (optional) Http header 'authorization' bearer token to be used.
+     *  @param {String} options.webKMSAuth.capability - (optional) Capability if ZCAP sign header feature to be used for authorizing access.
      *  @param {Object} options.edvUnlocks - (optional) for authorizing access to wallet's EDV content store.
-     *  @param {string} options.edvUnlocks.authToken - (optional) Http header 'authorization' bearer token to be used.
-     *  @param {string} options.edvUnlocks.capability - (optional) Capability if ZCAP sign header feature to be used for authorizing access.
+     *  @param {String} options.edvUnlocks.authToken - (optional) Http header 'authorization' bearer token to be used.
+     *  @param {String} options.edvUnlocks.capability - (optional) Capability if ZCAP sign header feature to be used for authorizing access.
      *
      * @returns {Promise<Object>} - 'object.token' - auth token subsequent use of wallet features.
      */
@@ -68,10 +68,10 @@ export class UniversalWallet {
      * Adds given content to wallet content store.
      *
      *  @param {Object} request
-     *  @param {string} request.auth -  authorization token for performing this wallet operation.
+     *  @param {String} request.auth -  authorization token for performing this wallet operation.
      *  @param {Object} request.contentType - type of the content to be added to the wallet, refer aries vc wallet for supported types.
-     *  @param {string} request.content - content to be added wallet store.
-     *  @param {string} request.collectionID - (optional) ID of the wallet collection to which the content should belong.
+     *  @param {String} request.content - content to be added wallet store.
+     *  @param {String} request.collectionID - (optional) ID of the wallet collection to which the content should belong.
      *
      * @returns {Promise<Object>} - empty promise or an error if adding content to wallet store fails.
      */
@@ -83,9 +83,9 @@ export class UniversalWallet {
      * remove given content from wallet content store.
      *
      *  @param {Object} request
-     *  @param {string} request.auth -  authorization token for performing this wallet operation.
+     *  @param {String} request.auth -  authorization token for performing this wallet operation.
      *  @param {Object} request.contentType - type of the content to be removed from the wallet.
-     *  @param {string} request.contentID - id of the content to be removed from wallet.
+     *  @param {String} request.contentID - id of the content to be removed from wallet.
      *
      * @returns {Promise<Object>} - empty promise or an error if operation fails.
      */
@@ -97,9 +97,9 @@ export class UniversalWallet {
      *  gets wallet content by ID from wallet content store.
      *
      *  @param {Object} request
-     *  @param {string} request.auth -  authorization token for performing this wallet operation.
+     *  @param {String} request.auth -  authorization token for performing this wallet operation.
      *  @param {Object} request.contentType - type of the content to be removed from the wallet.
-     *  @param {string} request.contentID - id of the content to be returned from wallet.
+     *  @param {String} request.contentID - id of the content to be returned from wallet.
      *
      * @returns {Promise<Object>} - promise containing content or an error if operation fails.
      */
@@ -111,9 +111,9 @@ export class UniversalWallet {
      *  gets all wallet contents from wallet content store for given type.
      *
      *  @param {Object} request
-     *  @param {string} request.auth -  authorization token for performing this wallet operation.
+     *  @param {String} request.auth -  authorization token for performing this wallet operation.
      *  @param {Object} request.contentType - type of the contents to be returned from wallet.
-     *  @param {string} request.collectionID - id of the collection on which the response contents to be filtered.
+     *  @param {String} request.collectionID - id of the collection on which the response contents to be filtered.
      *
      * @returns {Promise<Object>} - promise containing response contents or an error if operation fails.
      */
@@ -125,7 +125,7 @@ export class UniversalWallet {
      *  runs credential queries against wallet credential contents.
      *
      *  @param {Object} request
-     *  @param {string} request.auth -  authorization token for performing this wallet operation.
+     *  @param {String} request.auth -  authorization token for performing this wallet operation.
      *  @param {Object} request.query - credential query, refer: https://w3c-ccg.github.io/vp-request-spec/#format
      *
      * @returns {Promise<Object>} - promise of presentation(s) containing credential results or an error if operation fails.
@@ -137,56 +137,61 @@ export class UniversalWallet {
     /**
      *  runs credential queries against wallet credential contents.
      *
-     *  @param {Object} request
-     *  @param {string} request.auth -  authorization token for performing this wallet operation.
-     *  @param {Object} request.credential -  credential to be signed from wallet.
-     *  @param {Object} request.proofOptions - proof options for issuing credential.
-     *  @param {string} request.proofOptions.controller -  DID to be used for signing.
-     *  @param {string} request.proofOptions.verificationMethod - (optional) VerificationMethod is the URI of the verificationMethod used for the proof.
+     *  @param {String} auth -  authorization token for performing this wallet operation.
+     *  @param {Object} credential -  credential to be signed from wallet.
+     *  @param {Object} proofOptions - proof options for issuing credential.
+     *  @param {String} proofOptions.controller -  DID to be used for signing.
+     *  @param {String} proofOptions.verificationMethod - (optional) VerificationMethod is the URI of the verificationMethod used for the proof.
      *  By default, Controller public key matching 'assertion' for issue or 'authentication' for prove functions.
-     *  @param {string} request.proofOptions.created - (optional) Created date of the proof.
+     *  @param {String} proofOptions.created - (optional) Created date of the proof.
      *  By default, current system time will be used.
-     *  @param {string} request.proofOptions.domain - (optional) operational domain of a digital proof.
+     *  @param {String} proofOptions.domain - (optional) operational domain of a digital proof.
      *  By default, domain will not be part of proof.
-     *  @param {string} request.proofOptions.challenge - (optional) random or pseudo-random value option authentication.
+     *  @param {String} proofOptions.challenge - (optional) random or pseudo-random value option authentication.
      *  By default, challenge will not be part of proof.
-     *  @param {string} request.proofOptions.proofType - (optional) signature type used for signing.
+     *  @param {String} proofOptions.proofType - (optional) signature type used for signing.
      *  By default, proof will be generated in Ed25519Signature2018 format.
-     *  @param {string} request.proofOptions.proofRepresentation - (optional) type of proof data expected ( "proofValue" or "jws").
+     *  @param {String} proofOptions.proofRepresentation - (optional) type of proof data expected ( "proofValue" or "jws").
      *  By default, 'proofValue' will be used.
      *
      * @returns {Promise<Object>} - promise of credential issued or an error if operation fails.
      */
-    async issue({auth = '', credential = {}, proofOptions = {}} = {}) {
-        return await this.agent.vcwallet.issue({userID: this.user, auth, credential, proofOptions})
+    async issue(auth = '', credential = {}, proofOptions = {}) {
+        return await this.agent.vcwallet.issue({
+            userID: this.user,
+            auth,
+            credential,
+            proofOptions
+        })
     }
 
     /**
      *  produces a Verifiable Presentation from wallet.
      *
-     *  @param {Object} request
-     *  @param {string} request.auth -  authorization token for performing this wallet operation.
-     *  @param {Array<string>} request.storedCredentials - (optional) ids of the credentials already saved in wallet content store.
-     *  @param {Array<Object>} request.rawCredentials - (optional) list of raw credentials to be presented.
-     *  @param {Object} request.presentation - (optional) presentation to be proved.
-     *  @param {Object} request.proofOptions - proof options for issuing credential.
-     *  @param {string} request.proofOptions.controller -  DID to be used for signing.
-     *  @param {string} request.proofOptions.verificationMethod - (optional) VerificationMethod is the URI of the verificationMethod used for the proof.
+     *  @param {String} auth -  authorization token for performing this wallet operation.
+     *  @param {Object} credentialOptions - credential/presentations to verify..
+     *  @param {Array<string>} credentialOptions.storedCredentials - (optional) ids of the credentials already saved in wallet content store.
+     *  @param {Array<Object>} credentialOptions.rawCredentials - (optional) list of raw credentials to be presented.
+     *  @param {Object} credentialOptions.presentation - (optional) presentation to be proved.
+     *  @param {Object} proofOptions - proof options for issuing credential.
+     *  @param {String} proofOptions.controller -  DID to be used for signing.
+     *  @param {String} proofOptions.verificationMethod - (optional) VerificationMethod is the URI of the verificationMethod used for the proof.
      *  By default, Controller public key matching 'assertion' for issue or 'authentication' for prove functions.
-     *  @param {string} request.proofOptions.created - (optional) Created date of the proof.
+     *  @param {String} proofOptions.created - (optional) Created date of the proof.
      *  By default, current system time will be used.
-     *  @param {string} request.proofOptions.domain - (optional) operational domain of a digital proof.
+     *  @param {String} proofOptions.domain - (optional) operational domain of a digital proof.
      *  By default, domain will not be part of proof.
-     *  @param {string} request.proofOptions.challenge - (optional) random or pseudo-random value option authentication.
+     *  @param {String} proofOptions.challenge - (optional) random or pseudo-random value option authentication.
      *  By default, challenge will not be part of proof.
-     *  @param {string} request.proofOptions.proofType - (optional) signature type used for signing.
+     *  @param {String} proofOptions.proofType - (optional) signature type used for signing.
      *  By default, proof will be generated in Ed25519Signature2018 format.
-     *  @param {string} request.proofOptions.proofRepresentation - (optional) type of proof data expected ( "proofValue" or "jws").
+     *  @param {String} proofOptions.proofRepresentation - (optional) type of proof data expected ( "proofValue" or "jws").
      *  By default, 'proofValue' will be used.
      *
      * @returns {Promise<Object>} - promise of signed presentation or an error if operation fails.
      */
-    async prove({auth = '', storedCredentials = {}, rawCredentials = {}, presentation = {}, proofOptions = {}} = {}) {
+    async prove(auth = '', {storedCredentials = [], rawCredentials = [], presentation = {}} = {},
+                proofOptions = {}) {
         return await this.agent.vcwallet.prove({
             userID: this.user,
             auth,
@@ -200,15 +205,15 @@ export class UniversalWallet {
     /**
      *  verifies credential/presentation from wallet.
      *
-     *  @param {Object} request
-     *  @param {string} request.auth -  authorization token for performing this wallet operation.
-     *  @param {string} request.storedCredentialID - (optional) id of the credential already saved in wallet content store.
-     *  @param {Object} request.rawCredential - (optional) credential to be verified.
-     *  @param {Object} request.presentation - (optional) presentation to be verified.
+     *  @param {String} auth -  authorization token for performing this wallet operation.
+     *  @param {String} verificationOption - credential/presentation to be verified.
+     *  @param {String} verificationOption.storedCredentialID - (optional) id of the credential already saved in wallet content store.
+     *  @param {Object} verificationOption.rawCredential - (optional) credential to be verified.
+     *  @param {Object} verificationOption.presentation - (optional) presentation to be verified.
      *
      * @returns {Promise<Object>} - promise of verification result(bool) and error containing cause if verification fails.
      */
-    async verify({auth = '', storedCredentialID = {}, rawCredential = {}, presentation = {}} = {}) {
+    async verify(auth = '', {storedCredentialID = '', rawCredential = {}, presentation = {}} = {}) {
         return await this.agent.vcwallet.verify({
             userID: this.user,
             auth,
@@ -221,17 +226,19 @@ export class UniversalWallet {
     /**
      *  derives a credential from wallet.
      *
-     *  @param {Object} request
-     *  @param {string} request.auth -  authorization token for performing this wallet operation.
-     *  @param {string} request.storedCredentialID - (optional) id of the credential already saved in wallet content store.
-     *  @param {Object} request.rawCredential - (optional) credential to be derived.
-     *  @param {Object} request.deriveOption - derive options.
-     *  @param {Object} request.deriveOption.frame -  JSON-LD frame used for derivation.
-     *  @param {string} request.deriveOption.nonce - (optional) to prove uniqueness or freshness of the proof..
+     *  @param {String} auth -  authorization token for performing this wallet operation.
+     *
+     *  @param {String} credentialOption - credential to be dervied.
+     *  @param {String} credentialOption.storedCredentialID - (optional) id of the credential already saved in wallet content store.
+     *  @param {Object} credentialOption.rawCredential - (optional) credential to be derived.
+     *
+     *  @param {Object} deriveOption - derive options.
+     *  @param {Object} deriveOption.frame -  JSON-LD frame used for derivation.
+     *  @param {String} deriveOption.nonce - (optional) to prove uniqueness or freshness of the proof..
      *
      * @returns {Promise<Object>} - promise of derived credential or error if operation fails.
      */
-    async derive({auth = '', storedCredentialID = {}, rawCredential = {}, deriveOption = {}} = {}) {
+    async derive(auth = '', {storedCredentialID = '', rawCredential = {}}, deriveOption = {}) {
         return await this.agent.vcwallet.derive({
             userID: this.user,
             auth,
@@ -245,8 +252,8 @@ export class UniversalWallet {
      *  creates a key pair from wallet.
      *
      *  @param {Object} request
-     *  @param {string} request.auth -  authorization token for performing this wallet operation.
-     *  @param {string} request.keyType - type of the key to be created, refer aries kms for supported key types.
+     *  @param {String} request.auth -  authorization token for performing this wallet operation.
+     *  @param {String} request.keyType - type of the key to be created, refer aries kms for supported key types.
      *
      * @returns {Promise<Object>} - promise of derived credential or error if operation fails.
      */
@@ -264,10 +271,10 @@ export class UniversalWallet {
  *
  *  @param {Object} agent - aries agent
  *  @param {String} userID - unique identifier of user for which the profile is being created.
- *  @param {string} profileOptions -  options for creating profile.
- *  @param {string} profileOptions.localKMSPassphrase - (optional) passphrase for local kms for key operations. If provided then localkms will be used for this wallet profile's key operations.
- *  @param {string} profileOptions.keyStoreURL - (optional) key store URL for web/remote kms. If provided then webkms will be used for this wallet profile's key operations.
- *  @param {string} profileOptions.edvConfiguration - (optional) EDV configuration if profile wants to use EDV as a wallet content store.
+ *  @param {String} profileOptions -  options for creating profile.
+ *  @param {String} profileOptions.localKMSPassphrase - (optional) passphrase for local kms for key operations. If provided then localkms will be used for this wallet profile's key operations.
+ *  @param {String} profileOptions.keyStoreURL - (optional) key store URL for web/remote kms. If provided then webkms will be used for this wallet profile's key operations.
+ *  @param {String} profileOptions.edvConfiguration - (optional) EDV configuration if profile wants to use EDV as a wallet content store.
  *  By Default, aries context storage provider will be used.
  *
  * @returns {Promise<Object>} - empty promise or error if operation fails.
@@ -285,10 +292,10 @@ export async function createWalletProfile(agent, userID, {localKMSPassphrase, ke
  *
  *  @param {Object} agent - aries agent
  *  @param {String} userID - unique identifier of user for which the profile is being created.
- *  @param {string} profileOptions -  options for creating profile.
- *  @param {string} profileOptions.localKMSPassphrase - (optional) passphrase for local kms for key operations. If provided then localkms will be used for this wallet profile's key operations.
- *  @param {string} profileOptions.keyStoreURL - (optional) key store URL for web/remote kms. If provided then webkms will be used for this wallet profile's key operations.
- *  @param {string} profileOptions.edvConfiguration - (optional) EDV configuration if profile wants to use EDV as a wallet content store.
+ *  @param {String} profileOptions -  options for creating profile.
+ *  @param {String} profileOptions.localKMSPassphrase - (optional) passphrase for local kms for key operations. If provided then localkms will be used for this wallet profile's key operations.
+ *  @param {String} profileOptions.keyStoreURL - (optional) key store URL for web/remote kms. If provided then webkms will be used for this wallet profile's key operations.
+ *  @param {String} profileOptions.edvConfiguration - (optional) EDV configuration if profile wants to use EDV as a wallet content store.
  *  By Default, aries context storage provider will be used.
  *
  * @returns {Promise<Object>} - empty promise or error if operation fails.
