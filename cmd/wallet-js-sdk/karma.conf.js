@@ -12,11 +12,13 @@ module.exports = function (config) {
         files: [
             {pattern: "public/agent-js-worker/assets/*", included: false},
             {pattern: "test/**/*.ini", included: true},
+            {pattern: "test/testdata/*", included: true},
             {pattern: "test/specs/**/*.spec.js", type: "module"},
         ],
         preprocessors: {
             'test/specs/**/*.spec.js': ['webpack', 'sourcemap'],
-            'test/**/*.ini': ['ini2js']
+            'test/**/*.ini': ['ini2js'],
+            'test/fixtures/testdata/*': ['file-fixtures']
         },
         webpack: webpackConfig,
         reporters: ['spec'],

@@ -20,6 +20,7 @@ import (
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
 	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
+	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 	mediatorservice "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	ariesjose "github.com/hyperledger/aries-framework-go/pkg/doc/jose"
@@ -52,6 +53,12 @@ const (
 
 	// p256KeyType EC P-256 key type.
 	p256KeyType = "p256"
+
+	// p384KeyType EC P-384 key type.
+	p384KeyType = "p384"
+
+	// BLS12381G2KeyType BLS12381G2 key type.
+	BLS12381G2KeyType = "bls12381g2"
 )
 
 const (
@@ -245,6 +252,12 @@ func getKey(keyType string, value []byte) (interface{}, error) {
 		x, y := elliptic.Unmarshal(elliptic.P256(), value)
 
 		return &ecdsa.PublicKey{X: x, Y: y, Curve: elliptic.P256()}, nil
+	case p384KeyType:
+		x, y := elliptic.Unmarshal(elliptic.P384(), value)
+
+		return &ecdsa.PublicKey{X: x, Y: y, Curve: elliptic.P384()}, nil
+	case BLS12381G2KeyType:
+		return bbs12381g2pub.UnmarshalPublicKey(value)
 	default:
 		return nil, fmt.Errorf("invalid key type: %s", keyType)
 	}

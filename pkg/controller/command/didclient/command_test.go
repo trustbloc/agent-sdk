@@ -11,11 +11,14 @@ import (
 	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
+
+	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
@@ -243,7 +246,16 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 	ecPubKeyBytes := elliptic.Marshal(ecPrivKey.PublicKey.Curve, ecPrivKey.PublicKey.X, ecPrivKey.PublicKey.Y)
 
-	var b bytes.Buffer
+	ec384PrivKey, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+	require.NoError(t, err)
+
+	ec384PubKeyBytes := elliptic.Marshal(ec384PrivKey.PublicKey.Curve, ec384PrivKey.PublicKey.X, ec384PrivKey.PublicKey.Y)
+
+	bbsPubKey, _, err := bbs12381g2pub.GenerateKeyPair(sha256.New, nil)
+	require.NoError(t, err)
+
+	bbsPubKeyBytes, err := bbsPubKey.Marshal()
+	require.NoError(t, err)
 
 	t.Run("test success create did with Ed25519 key", func(t *testing.T) {
 		didDoc, err := did.ParseDocument([]byte(sampleDoc))
@@ -269,6 +281,76 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		}})
 		require.NoError(t, err)
 
+		var b bytes.Buffer
+		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(r))
+		require.NoError(t, cmdErr)
+
+		docRes, err := did.ParseDocumentResolution(b.Bytes())
+		require.NoError(t, err)
+		require.NotEmpty(t, docRes)
+		require.Equal(t, "did:peer:21tDAKCERh95uGgKbJNHYp", docRes.DIDDocument.ID)
+	})
+
+	t.Run("test success create did with ecdsa p384 key", func(t *testing.T) {
+		didDoc, err := did.ParseDocument([]byte(sampleDoc))
+		require.NoError(t, err)
+
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
+		// ED key
+		r, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+			{
+				KeyType:  ed25519KeyType,
+				Value:    base64.RawURLEncoding.EncodeToString(pubKey),
+				Recovery: true,
+			},
+			{
+				KeyType: p256KeyType,
+				Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
+				Update:  true,
+			},
+			{
+				KeyType: p384KeyType,
+				Value:   base64.RawURLEncoding.EncodeToString(ec384PubKeyBytes),
+			},
+		}})
+		require.NoError(t, err)
+
+		var b bytes.Buffer
+		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(r))
+		require.NoError(t, cmdErr)
+
+		docRes, err := did.ParseDocumentResolution(b.Bytes())
+		require.NoError(t, err)
+		require.NotEmpty(t, docRes)
+		require.Equal(t, "did:peer:21tDAKCERh95uGgKbJNHYp", docRes.DIDDocument.ID)
+	})
+
+	t.Run("test success create did with BLS12381G2 key", func(t *testing.T) {
+		didDoc, err := did.ParseDocument([]byte(sampleDoc))
+		require.NoError(t, err)
+
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
+		// ED key
+		r, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+			{
+				KeyType:  ed25519KeyType,
+				Value:    base64.RawURLEncoding.EncodeToString(pubKey),
+				Recovery: true,
+			},
+			{
+				KeyType: p256KeyType,
+				Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
+				Update:  true,
+			},
+			{
+				ID:      "key1",
+				KeyType: BLS12381G2KeyType,
+				Value:   base64.RawURLEncoding.EncodeToString(bbsPubKeyBytes),
+			},
+		}})
+		require.NoError(t, err)
+
+		var b bytes.Buffer
 		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(r))
 		require.NoError(t, cmdErr)
 

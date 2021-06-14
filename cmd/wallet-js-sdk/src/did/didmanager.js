@@ -44,11 +44,11 @@ export class DIDManager {
      *
      * @returns {Promise} - empty promise or an error if operation fails..
      */
-    async createTrustBlocDID({auth, keyType = DEFAULT_KEY_TYPE, signatureType = DEFAULT_SIGNATURE_TYPE, collection} = {}) {
+    async createTrustBlocDID(auth, {keyType = DEFAULT_KEY_TYPE, signatureType = DEFAULT_SIGNATURE_TYPE, purposes = ["authentication"], collection} = {}) {
         const [keySet, recoveryKeySet, updateKeySet] = await Promise.all([
             this.wallet.createKeyPair({auth, keyType}),
-            this.wallet.createKeyPair({auth, keyType}),
-            this.wallet.createKeyPair({auth, keyType}),
+            this.wallet.createKeyPair({auth, keyType: DEFAULT_KEY_TYPE}),
+            this.wallet.createKeyPair({auth, keyType: DEFAULT_KEY_TYPE}),
         ])
 
         const createDIDRequest = {
@@ -58,20 +58,20 @@ export class DIDManager {
                 value: keySet.publicKey,
                 encoding: "Jwk",
                 keyType: keyType,
-                purposes: ["authentication"]
+                purposes: purposes
             }, {
                 id: recoveryKeySet.keyID,
-                type: signatureType,
+                type: DEFAULT_SIGNATURE_TYPE,
                 value: recoveryKeySet.publicKey,
                 encoding: "Jwk",
-                keyType: keyType,
+                keyType: DEFAULT_KEY_TYPE,
                 recovery: true
             }, {
                 id: updateKeySet.keyID,
-                type: signatureType,
+                type: DEFAULT_SIGNATURE_TYPE,
                 value: updateKeySet.publicKey,
                 encoding: "Jwk",
-                keyType: keyType,
+                keyType: DEFAULT_KEY_TYPE,
                 update: true
             }
             ]
@@ -82,7 +82,9 @@ export class DIDManager {
 
         await this.saveDID({auth, content, collection})
 
-        console.debug('created and saved TrustBloc DID successfully')
+        console.debug('created and saved TrustBloc DID successfully', content.DIDDocument.id)
+
+        return content.DIDDocument.id
     }
 
     /**

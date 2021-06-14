@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import * as Agent from "@trustbloc/agent-sdk-web"
+
 var uuid = require('uuid/v4')
 
 export const DIDEXCHANGE_STATE_TOPIC = "didexchange_states"
@@ -15,6 +16,16 @@ export const testConfig = window.__ini__ ? window.__ini__['test/fixtures/config.
 testConfig.walletUserPassphrase = uuid()
 console.debug('test configuration:', JSON.stringify(testConfig, null, 2))
 const {agentStartupOpts} = testConfig
+
+// loads testdata from fixtures and returns string response.
+export function getTestData(filename) {
+    return window.__FIXTURES__[`test/fixtures/testdata/${filename}`]
+}
+
+// loads testdata from fixtures and returns JSON parsed response.
+export function getJSONTestData(filename) {
+    return JSON.parse(window.__FIXTURES__[`test/fixtures/testdata/${filename}`])
+}
 
 // loadFrameworks loads agent instance
 export async function loadFrameworks({name = 'user-agent', logLevel = ''} = {}) {
@@ -27,5 +38,24 @@ export async function loadFrameworks({name = 'user-agent', logLevel = ''} = {}) 
     }
 
     return new Agent.Framework(agentOpts)
+}
+
+export function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export const retryWithDelay = async (
+    fn, retries = 3, interval = 50,
+    finalErr = Error('retries exhausted.')
+) => {
+    try {
+        await fn()
+    } catch (err) {
+        if (retries <= 0) {
+            return Promise.reject(finalErr);
+        }
+        await wait(interval)
+        return retryWithDelay(fn, (retries - 1), interval, finalErr);
+    }
 }
 

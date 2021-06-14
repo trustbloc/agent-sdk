@@ -91,7 +91,7 @@ export class WalletUser {
      * locks wallet by invalidating previously issued wallet auth.
      * Wallet has to be unlocked again to perform any future wallet operations.
      *
-     * @returns {Promise<Object>} - 'object.closed' -  bool flag false if token is not found or already expired for this wallet user.
+     * @returns {Promise<Object{closed}>} -  bool flag false if token is not found or already expired for this wallet user.
      */
     async lock() {
         return await this.wallet.close({userID: this.user})
@@ -160,7 +160,7 @@ export class WalletUser {
      *
      *  @param {string} auth - authorization token for wallet operations.
      *
-     *  @returns {Promise<Object>} - empty promise or error if operation fails.
+     *  @returns {Promise<Object{content}>} - promise containing preference metadata or error if operation fails.
      */
     async getPreferences(auth) {
         return await this.wallet.get({
@@ -188,7 +188,7 @@ export class WalletUser {
      *  @param {string} auth - authorization token for wallet operations.
      *  @param {string} contentID - ID of the metadata to be read from wallet content store.
      *
-     *  @returns {Promise<Object>} - empty promise or error if operation fails.
+     *  @returns {Promise<Object{content}>} result.content - promise containing metadata or error if operation fails.
      */
     async getMetadata(auth, contentID) {
         return await this.wallet.get({auth, contentType: contentTypes.METADATA, contentID})
@@ -199,7 +199,7 @@ export class WalletUser {
      *
      *  @param {string} auth - authorization token for wallet operations.
      *
-     *  @returns {Promise<Object>} - empty promise or error if operation fails.
+     *  @returns {Promise<Object{contents}>} result.contents - promise containing result or error if operation fails.
      */
     async getAllMetadata(auth) {
         return await this.wallet.getAll({auth, contentType: contentTypes.METADATA})
