@@ -207,4 +207,16 @@ export class CredentialManager {
             rawCredential
         }, {frame, nonce})
     }
+
+    /**
+     *  runs credential queries in wallet.
+     *
+     *  @param {String} auth -  authorization token for performing this wallet operation.
+     *  @param {Object} query - list of credential queries, any types of supported query types can be mixed.
+     *
+     * @returns {Promise<Object>} - promise of presentation(s) containing credential results or an error if operation fails.
+     */
+    async query(auth = '', query = []) {
+        return await this.wallet.query(auth, query)
+    }
 }

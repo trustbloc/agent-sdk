@@ -6,26 +6,38 @@ SPDX-License-Identifier: Apache-2.0
 
 import {expect} from "chai";
 
-import {loadFrameworks, retryWithDelay, testConfig, getJSONTestData} from "../common";
+import {getJSONTestData, loadFrameworks, retryWithDelay, testConfig} from "../common";
 import {CredentialManager, DIDManager, WalletUser} from "../../../src";
 
 var uuid = require('uuid/v4')
 
 const WALLET_USER = 'smith-agent'
+const WALLET_QUERY_USER = 'smith-query-agent'
 const VC_ISSUER = 'vc-issuer-agent'
 
 
-let walletUserAgent, issuer, sampleVC1, sampleVC2, sampleVCBBS, sampleFrameDoc
+let walletUserAgent, issuer, sampleUDC, samplePRC, sampleUDCBBS, sampleFrameDoc
 
 before(async function () {
+    this.timeout(0)
     walletUserAgent = await loadFrameworks({name: WALLET_USER})
     issuer = await loadFrameworks({name: VC_ISSUER})
 
-    // load sampel VCs from testdata
-    sampleVC1 = getJSONTestData('udc-vc.json')
-    sampleVC2 = getJSONTestData('prc-vc.json')
-    sampleVCBBS = getJSONTestData('udc-bbs-vc.json')
+    // load sample VCs from testdata
+    let udcVC = getJSONTestData('udc-vc.json')
+    let prcVC = getJSONTestData('prc-vc.json')
+    sampleUDCBBS = getJSONTestData('udc-bbs-vc.json')
     sampleFrameDoc = getJSONTestData('udc-frame.json')
+
+    // issue sample credentials
+    let [vc1, vc2] = await issueCredential(issuer, udcVC, prcVC)
+    expect(vc1.id).to.not.empty
+    expect(vc1.credentialSubject).to.not.empty
+    expect(vc2.id).to.not.empty
+    expect(vc2.credentialSubject).to.not.empty
+
+    sampleUDC = vc1
+    samplePRC = vc2
 });
 
 after(function () {
@@ -51,37 +63,23 @@ describe('Credential Manager Tests', async function () {
         auth = authResponse.token
     })
 
-    let credentials
-    it('issuer issues credentials', async function () {
-        this.timeout(0)
-        credentials = await issueCredential(issuer, sampleVC1, sampleVC2)
-
-        expect(credentials).to.not.empty
-        expect(credentials).to.have.lengthOf(2)
-
-        for (let credential of credentials) {
-            expect(credential.id).to.not.empty
-            expect(credential.credentialSubject).to.not.empty
-        }
-    })
-
 
     it('user saves a credential into wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        await credentialManager.save(auth, credentials[0])
+        await credentialManager.save(auth, sampleUDC)
     })
 
     it('user saves a BBS credential into wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        await credentialManager.save(auth, sampleVCBBS)
+        await credentialManager.save(auth, sampleUDCBBS)
     })
 
     it('user saves a credential into wallet by verifying', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        await credentialManager.save(auth, credentials[1], {verify: true})
+        await credentialManager.save(auth, samplePRC, {verify: true})
     })
 
     it('user gets all credentials from wallet', async function () {
@@ -90,20 +88,19 @@ describe('Credential Manager Tests', async function () {
         let {contents} = await credentialManager.getAll(auth)
         expect(contents).to.not.empty
         expect(Object.keys(contents)).to.have.lengthOf(3)
-        console.log('saved credentials', Object.keys(contents))
     })
 
     it('user gets a credential from wallet by id', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        let {content} = await credentialManager.get(auth, credentials[0].id)
+        let {content} = await credentialManager.get(auth, sampleUDC.id)
         expect(content).to.not.empty
     })
 
     it('user removes a credential from wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        await credentialManager.remove(auth, credentials[1].id)
+        await credentialManager.remove(auth, samplePRC.id)
         let {contents} = await credentialManager.getAll(auth)
         expect(contents).to.not.empty
         expect(Object.keys(contents)).to.have.lengthOf(2)
@@ -120,7 +117,7 @@ describe('Credential Manager Tests', async function () {
     it('user issues a credential from wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        let {credential} = await credentialManager.issue(auth, credentials[1], {controller: did})
+        let {credential} = await credentialManager.issue(auth, samplePRC, {controller: did})
         expect(credential).to.not.empty
         expect(credential.proof).to.not.empty
         expect(credential.proof).to.have.lengthOf(2)
@@ -129,7 +126,7 @@ describe('Credential Manager Tests', async function () {
     it('user verifies a credential stored in wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        let {verified, error} = await credentialManager.verify(auth, {storedCredentialID: credentials[0].id})
+        let {verified, error} = await credentialManager.verify(auth, {storedCredentialID: sampleUDC.id})
         expect(verified).to.be.true
         expect(error).to.be.undefined
     })
@@ -137,7 +134,7 @@ describe('Credential Manager Tests', async function () {
     it('user verifies a raw credential from wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        let {verified, error} = await credentialManager.verify(auth, {rawCredential: credentials[0]})
+        let {verified, error} = await credentialManager.verify(auth, {rawCredential: sampleUDC})
         expect(verified).to.be.true
         expect(error).to.be.undefined
     })
@@ -145,7 +142,7 @@ describe('Credential Manager Tests', async function () {
     it('user verifies a tampered raw credential from wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        let tampered = JSON.parse(JSON.stringify(credentials[0]))
+        let tampered = JSON.parse(JSON.stringify(sampleUDC))
         tampered.credentialSubject.name = 'Mr.Fake'
         let {verified, error} = await credentialManager.verify(auth, {rawCredential: tampered})
         expect(verified).to.not.true
@@ -155,8 +152,8 @@ describe('Credential Manager Tests', async function () {
     it('user presents credential from wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
         let {presentation} = await credentialManager.present(auth, {
-            rawCredentials: [credentials[1]],
-            storedCredentials: [credentials[0].id]
+            rawCredentials: [samplePRC],
+            storedCredentials: [sampleUDC.id]
         }, {controller: did})
         expect(presentation).to.not.empty
         expect(presentation.verifiableCredential).to.not.empty
@@ -166,7 +163,7 @@ describe('Credential Manager Tests', async function () {
     it('user derives a stored credential from wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        let {credential}  = await credentialManager.derive(auth, {storedCredentialID: sampleVCBBS.id}, {
+        let {credential} = await credentialManager.derive(auth, {storedCredentialID: sampleUDCBBS.id}, {
             frame: sampleFrameDoc, nonce: uuid()
         })
         expect(credential).to.not.empty
@@ -177,12 +174,177 @@ describe('Credential Manager Tests', async function () {
     it('user derives a raw credential from wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        let {credential} = await credentialManager.derive(auth, {rawCredential: sampleVCBBS}, {
+        let {credential} = await credentialManager.derive(auth, {rawCredential: sampleUDCBBS}, {
             frame: sampleFrameDoc, nonce: uuid()
         })
         expect(credential).to.not.empty
         expect(credential.credentialSubject).to.not.empty
         expect(credential.proof).to.not.empty
+    })
+})
+
+describe('Credential Query Tests', async function () {
+    it('user creates his wallet profile', async function () {
+        let walletUser = new WalletUser({agent: walletUserAgent, user: WALLET_QUERY_USER})
+
+        await walletUser.createWalletProfile({localKMSPassphrase: testConfig.walletUserPassphrase})
+    })
+
+    let auth
+    it('user opens his wallet', async function () {
+        let walletUser = new WalletUser({agent: walletUserAgent, user: WALLET_QUERY_USER})
+
+        let authResponse = await walletUser.unlock({localKMSPassphrase: testConfig.walletUserPassphrase})
+
+        expect(authResponse.token).to.not.empty
+
+        auth = authResponse.token
+    })
+
+
+    it('user saves a credential into wallet', async function () {
+        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_QUERY_USER})
+
+        await credentialManager.save(auth, sampleUDC)
+        await credentialManager.save(auth, samplePRC)
+        await credentialManager.save(auth, sampleUDCBBS)
+
+        let {contents} = await credentialManager.getAll(auth)
+        expect(contents).to.not.empty
+        expect(Object.keys(contents)).to.have.lengthOf(3)
+    })
+
+    it('user performs DIDAuth in wallet', async function () {
+        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_QUERY_USER})
+
+        let {results} = await credentialManager.query(auth, [{
+            "type": "DIDAuth",
+        }])
+
+        expect(results).to.have.lengthOf(1)
+        expect(results[0].verifiableCredential).to.have.lengthOf(0)
+    })
+
+    it('user performs QueryByExample in wallet', async function () {
+        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_QUERY_USER})
+
+        let {results} = await credentialManager.query(auth, [{
+            "type": "QueryByExample",
+            "credentialQuery": [{
+                "reason": "Please present your valid degree certificate.",
+                "example": {
+                    "@context": ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"],
+                    "type": ["UniversityDegreeCredential"],
+                    "trustedIssuer": [
+                        {"issuer": "urn:some:required:issuer"},
+                        {
+                            "required": true,
+                            "issuer": "did:example:76e12ec712ebc6f1c221ebfeb1f"
+                        }
+                    ],
+                    "credentialSubject": {"id": "did:example:ebfeb1f712ebc6f1c276e12ec21"}
+                }
+            }]
+        }])
+
+        expect(results).to.have.lengthOf(1)
+        expect(results[0].verifiableCredential).to.have.lengthOf(2)
+    })
+
+    it('user performs QueryByFrame in wallet', async function () {
+        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_QUERY_USER})
+
+        let {results} = await credentialManager.query(auth, [{
+            "type": "QueryByFrame",
+            "credentialQuery": [{
+                "reason": "Please provide your Passport details.",
+                "frame": {
+                    "@context": ["https://www.w3.org/2018/credentials/v1", "https://w3id.org/citizenship/v1", "https://w3id.org/security/bbs/v1"],
+                    "type": ["VerifiableCredential", "PermanentResidentCard"],
+                    "@explicit": true,
+                    "identifier": {},
+                    "issuer": {},
+                    "issuanceDate": {},
+                    "credentialSubject": {"@explicit": true, "name": {}, "spouse": {}}
+                },
+                "trustedIssuer": [{"issuer": "did:example:76e12ec712ebc6f1c221ebfeb1f", "required": true}],
+                "required": true
+            }]
+        }])
+
+        expect(results).to.have.lengthOf(1)
+        expect(results[0].verifiableCredential).to.have.lengthOf(1)
+    })
+
+    it('user performs PresentationExchange in wallet', async function () {
+        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_QUERY_USER})
+
+        let {results} = await credentialManager.query(auth, [{
+            "type": "PresentationExchange",
+            "credentialQuery": [{
+                "id": "22c77155-edf2-4ec5-8d44-b393b4e4fa38",
+                "input_descriptors": [{
+                    "id": "20b073bb-cede-4912-9e9d-334e5702077b",
+                    "schema": [{"uri": "https://www.w3.org/2018/credentials/v1#VerifiableCredential"}],
+                    "constraints": {"fields": [{"path": ["$.credentialSubject.familyName"]}]}
+                }]
+            }]
+        }])
+
+        expect(results).to.have.lengthOf(1)
+        expect(results[0].verifiableCredential).to.have.lengthOf(1)
+    })
+
+    it('user performs mixed query in wallet - PresentationExchange, QueryByFrame, QueryByExample ', async function () {
+        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_QUERY_USER})
+
+        let {results} = await credentialManager.query(auth, [{
+            "type": "PresentationExchange",
+            "credentialQuery": [{
+                "id": "22c77155-edf2-4ec5-8d44-b393b4e4fa38",
+                "input_descriptors": [{
+                    "id": "20b073bb-cede-4912-9e9d-334e5702077b",
+                    "schema": [{"uri": "https://www.w3.org/2018/credentials/v1#VerifiableCredential"}],
+                    "constraints": {"fields": [{"path": ["$.credentialSubject.familyName"]}]}
+                }]
+            }]
+        }, {
+            "type": "QueryByFrame",
+            "credentialQuery": [{
+                "reason": "Please provide your Passport details.",
+                "frame": {
+                    "@context": ["https://www.w3.org/2018/credentials/v1", "https://w3id.org/citizenship/v1", "https://w3id.org/security/bbs/v1"],
+                    "type": ["VerifiableCredential", "PermanentResidentCard"],
+                    "@explicit": true,
+                    "identifier": {},
+                    "issuer": {},
+                    "issuanceDate": {},
+                    "credentialSubject": {"@explicit": true, "name": {}, "spouse": {}}
+                },
+                "trustedIssuer": [{"issuer": "did:example:76e12ec712ebc6f1c221ebfeb1f", "required": true}],
+                "required": true
+            }]
+        }, {
+            "type": "QueryByExample",
+            "credentialQuery": [{
+                "reason": "Please present your valid degree certificate.",
+                "example": {
+                    "@context": ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"],
+                    "type": ["UniversityDegreeCredential"],
+                    "trustedIssuer": [
+                        {"issuer": "urn:some:required:issuer"},
+                        {
+                            "required": true,
+                            "issuer": "did:example:76e12ec712ebc6f1c221ebfeb1f"
+                        }
+                    ],
+                    "credentialSubject": {"id": "did:example:ebfeb1f712ebc6f1c276e12ec21"}
+                }
+            }]
+        }
+        ])
+
+        expect(results).to.have.lengthOf(2)
     })
 })
 

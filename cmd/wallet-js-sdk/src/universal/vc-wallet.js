@@ -124,13 +124,12 @@ export class UniversalWallet {
     /**
      *  runs credential queries against wallet credential contents.
      *
-     *  @param {Object} request
-     *  @param {String} request.auth -  authorization token for performing this wallet operation.
-     *  @param {Object} request.query - credential query, refer: https://w3c-ccg.github.io/vp-request-spec/#format
+     *  @param {String} auth -  authorization token for performing this wallet operation.
+     *  @param {Object} query - credential query, refer: https://w3c-ccg.github.io/vp-request-spec/#format
      *
      * @returns {Promise<Object>} - promise of presentation(s) containing credential results or an error if operation fails.
      */
-    async query({auth = '', query = {}} = {}) {
+    async query(auth = '', query = []) {
         return await this.agent.vcwallet.query({userID: this.user, auth, query})
     }
 
