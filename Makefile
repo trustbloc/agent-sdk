@@ -69,6 +69,12 @@ rest-api-bdd: clean agent-server-docker
 aries-js-bdd: clean agent-server-docker
 	@ARIES_FRAMEWORK_COMMIT=$(ARIES_FRAMEWORK_COMMIT) scripts/aries_js_bdd_tests.sh
 
+.PHONY: wallet-sdk-tests
+wallet-sdk-tests:
+	@set -e
+	@cd cmd/agent-js-worker && npm install
+	@cd cmd/wallet-js-sdk && npm install && npm run test
+
 .PHONY: unit-test-mobile
 unit-test-mobile:
 	@echo "Running unit tests for mobile"
