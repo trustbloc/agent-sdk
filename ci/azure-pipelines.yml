@@ -84,12 +84,33 @@ jobs:
           DOCKER_PASSWORD: $(DOCKER_PASSWORD)
         displayName: Run agent JS tests (npm)
 
+  - job: WalletSDKTest
+    pool:
+      vmImage: ubuntu-20.04
+    timeoutInMinutes: 30
+    steps:
+      - template: azp-dependencies.yml
+      - checkout: self
+      - bash: |
+          source ci/version_var.sh
+          echo '//npm.pkg.github.com/:_authToken=${DOCKER_PASSWORD}' > ~/.npmrc
+          echo '@hyperledger:registry=https://npm.pkg.github.com' >> ~/.npmrc
+          echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc
+          echo '@trustbloc:registry=https://npm.pkg.github.com' >> ~/.npmrc
+          export npm_config_prefix=~/.npm-prefix
+          echo '127.0.0.1 static-file-server-js' | sudo tee -a /etc/hosts
+          make wallet-sdk-tests
+        env:
+          DOCKER_PASSWORD: $(DOCKER_PASSWORD)
+        displayName: Run wallet SDK JS tests (npm)
+
   - job: Publish
     dependsOn:
       - Checks
       - UnitTest
       - UnitTestWasm
       - AgentJSTest
+      - WalletSDKTest
       - AgentRestAPTest
     condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
     pool:
@@ -114,9 +135,17 @@ jobs:
           make agent-server-docker
           docker tag ghcr.io/trustbloc/agent-sdk-server:latest ${AGENT_SDK_PKG}:${AGENT_SDK_TAG}
           docker push ${AGENT_SDK_PKG}:${AGENT_SDK_TAG}
+
           cd ./cmd/agent-js-worker
           sed -i 's/"version": "0.1.0"/"version": "'$NPM_PKG_TAG'"/g' package.json
-          sed -i 's#"name": "@trustbloc/agent-sdk-web"#"name": "@'${NPM_PKG_NAME}'"#g' package.json
+          sed -i 's#"name": "@trustbloc/agent-sdk-web"#"name": "@'${NPM_AGENT_PKG_NAME}'"#g' package.json
+          sed -i 's#"url": "git://github.com/trustbloc/agent-sdk.git"#"url": "git://github.com/'${NPM_PKG_REPO}'.git"#g' package.json
+          npm install
+          npm publish
+
+          cd ../wallet-js-sdk
+          sed -i 's/"version": "0.1.0"/"version": "'$NPM_PKG_TAG'"/g' package.json
+          sed -i 's#"name": "@trustbloc/wallet-sdk"#"name": "@'${NPM_SDK_PKG_NAME}'"#g' package.json
           sed -i 's#"url": "git://github.com/trustbloc/agent-sdk.git"#"url": "git://github.com/'${NPM_PKG_REPO}'.git"#g' package.json
           npm install
           npm publish
@@ -124,5 +153,6 @@ jobs:
           DOCKER_PASSWORD: $(DOCKER_PASSWORD)
           DOCKER_USER: $(DOCKER_USER)
           NPM_PKG_TAG: $(NPM_PKG_TAG)
-          NPM_PKG_NAME: $(NPM_PKG_NAME)
+          NPM_AGENT_PKG_NAME: $(NPM_AGENT_PKG_NAME)
+          NPM_SDK_PKG_NAME: $(NPM_SDK_PKG_NAME)
           NPM_PKG_REPO: $(NPM_PKG_REPO)
