@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
+set -e
 
 rm -rf public
 mkdir -p public/agent-js-worker/assets

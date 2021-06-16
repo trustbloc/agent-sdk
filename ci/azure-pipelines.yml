@@ -93,6 +93,7 @@ jobs:
       - checkout: self
       - bash: |
           source ci/version_var.sh
+          echo '127.0.0.1 testnet.orb.local' | sudo tee -a /etc/hosts
           echo '//npm.pkg.github.com/:_authToken=${DOCKER_PASSWORD}' > ~/.npmrc
           echo '@hyperledger:registry=https://npm.pkg.github.com' >> ~/.npmrc
           echo '@trustbloc-cicd:registry=https://npm.pkg.github.com' >> ~/.npmrc

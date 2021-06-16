@@ -9,9 +9,9 @@ set -e
 
 if [ "$1" == "setup" ]; then
   echo "generating test keys"
-  sh ./scripts/generate_test_keys.sh
+  bash ./scripts/generate_test_keys.sh
   echo "setting up agent assets"
-  sh ./scripts/setup_agent_assets.sh
+  bash ./scripts/setup_agent_assets.sh
   echo "starting containers..."
   cd test/fixtures
   (source .env && docker-compose down --remove-orphans && docker-compose up --force-recreate -d)
