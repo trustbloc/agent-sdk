@@ -43,11 +43,15 @@ export class UniversalWallet {
      *  @param {Object} options
      *  @param {String} options.localKMSPassphrase - (optional) passphrase for local kms for key operations.
      *  @param {Object} options.webKMSAuth - (optional) WebKMSAuth for authorizing access to web/remote kms.
-     *  @param {String} options.webKMSAuth.authToken - (optional) Http header 'authorization' bearer token to be used.
+     *  @param {String} options.webKMSAuth.authToken - (optional) Http header 'authorization' bearer token to be used, i.e access token.
      *  @param {String} options.webKMSAuth.capability - (optional) Capability if ZCAP sign header feature to be used for authorizing access.
+     *  @param {String} options.webKMSAuth.authzKeyStoreURL - (optional) authz key store URL if ZCAP sign header feature to be used for authorizing access.
+     *  @param {String} options.webKMSAuth.secretShare - (optional) secret share if ZCAP sign header feature to be used for authorizing access.
      *  @param {Object} options.edvUnlocks - (optional) for authorizing access to wallet's EDV content store.
-     *  @param {String} options.edvUnlocks.authToken - (optional) Http header 'authorization' bearer token to be used.
+     *  @param {String} options.edvUnlocks.authToken - (optional) Http header 'authorization' bearer token to be used, i.e access token.
      *  @param {String} options.edvUnlocks.capability - (optional) Capability if ZCAP sign header feature to be used for authorizing access.
+     *  @param {String} options.edvUnlocks.authzKeyStoreURL - (optional) authz key store URL if ZCAP sign header feature to be used for authorizing access.
+     *  @param {String} options.edvUnlocks.secretShare - (optional) secret share if ZCAP sign header feature to be used for authorizing access.
      *
      * @returns {Promise<Object>} - 'object.token' - auth token subsequent use of wallet features.
      */
@@ -273,8 +277,16 @@ export class UniversalWallet {
  *  @param {String} profileOptions -  options for creating profile.
  *  @param {String} profileOptions.localKMSPassphrase - (optional) passphrase for local kms for key operations. If provided then localkms will be used for this wallet profile's key operations.
  *  @param {String} profileOptions.keyStoreURL - (optional) key store URL for web/remote kms. If provided then webkms will be used for this wallet profile's key operations.
- *  @param {String} profileOptions.edvConfiguration - (optional) EDV configuration if profile wants to use EDV as a wallet content store.
+ *  @param {Object} profileOptions.edvConfiguration - (optional) EDV configuration if profile wants to use EDV as a wallet content store.
  *  By Default, aries context storage provider will be used.
+ *
+ *  @param {String} profileOptions.edvConfiguration.serverURL - EDV server URL for storing wallet contents.
+ *  @param {String} profileOptions.edvConfiguration.vaultID - EDV vault ID for storing the wallet contents.
+ *  @param {String} profileOptions.edvConfiguration.encryptionKID - Encryption key ID of already existing key in wallet profile kms.
+ *  If profile is using localkms then wallet will create this key set for wallet user.
+ *  @param {String} profileOptions.edvConfiguration.macKID -  MAC operation key ID of already existing key in wallet profile kms.
+ *  If profile is using localkms then wallet will create this key set for wallet user.
+ *
  *
  * @returns {Promise<Object>} - empty promise or error if operation fails.
  */
@@ -301,4 +313,17 @@ export async function createWalletProfile(agent, userID, {localKMSPassphrase, ke
  */
 export async function updateWalletProfile(agent, userID, {localKMSPassphrase, keyStoreURL, edvConfiguration} = {}) {
     return await agent.vcwallet.updateProfile({userID, localKMSPassphrase, keyStoreURL, edvConfiguration})
+}
+
+/**
+ *  check is profile exists for given wallet user.
+ *
+ *  @param {Object} agent - aries agent
+ *  @param {String} userID - unique identifier of user for which the profile is being created.
+ *  @param {String} profilestorage provider will be used.
+ *
+ * @returns {Promise<Object>} - empty promise or error if profile not found.
+ */
+export async function profileExists(agent, userID) {
+    return await agent.vcwallet.profileExists({userID})
 }

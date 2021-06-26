@@ -4,7 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import {contentTypes, createWalletProfile, UniversalWallet, updateWalletProfile} from "..";
+import {contentTypes, createWalletProfile, profileExists, UniversalWallet, updateWalletProfile} from "..";
 
 const JSONLD_CTX_USER_PREFERENCE = ['https://w3id.org/wallet/v1', 'https://trustbloc.github.io/context/wallet/user-preferences-v1.jsonld']
 const METADATA_PREFIX = 'user-preference-'
@@ -42,6 +42,13 @@ export class WalletUser {
      *  @param {string} profileOptions.edvConfiguration - (optional) EDV configuration if profile wants to use EDV as a wallet content store.
      *  By Default, aries context storage provider will be used.
      *
+     *  @param {String} profileOptions.edvConfiguration.serverURL - EDV server URL for storing wallet contents.
+     *  @param {String} profileOptions.edvConfiguration.vaultID - EDV vault ID for storing the wallet contents.
+     *  @param {String} profileOptions.edvConfiguration.encryptionKID - Encryption key ID of already existing key in wallet profile kms.
+     *  If profile is using localkms then wallet will create this key set for wallet user.
+     *  @param {String} profileOptions.edvConfiguration.macKID -  MAC operation key ID of already existing key in wallet profile kms.
+     *  If profile is using localkms then wallet will create this key set for wallet user.
+     *
      * @returns {Promise} - empty promise or an error if operation fails..
      */
     async createWalletProfile({localKMSPassphrase, keyStoreURL, edvConfiguration} = {}) {
@@ -62,10 +69,29 @@ export class WalletUser {
      *  @param {string} profileOptions.edvConfiguration - (optional) EDV configuration if profile wants to use EDV as a wallet content store.
      *  By Default, aries context storage provider will be used.
      *
+     *  @param {String} profileOptions.edvConfiguration.serverURL - EDV server URL for storing wallet contents.
+     *  @param {String} profileOptions.edvConfiguration.vaultID - EDV vault ID for storing the wallet contents.
+     *  @param {String} profileOptions.edvConfiguration.encryptionKID - Encryption key ID of already existing key in wallet profile kms.
+     *  If profile is using localkms then wallet will create this key set for wallet user.
+     *  @param {String} profileOptions.edvConfiguration.macKID -  MAC operation key ID of already existing key in wallet profile kms.
+     *  If profile is using localkms then wallet will create this key set for wallet user.
+     *
      *  @returns {Promise<Object>} - empty promise or error if operation fails.
      */
     async updateWalletProfile({localKMSPassphrase, keyStoreURL, edvConfiguration} = {}) {
         await updateWalletProfile(this.agent, this.user, {localKMSPassphrase, keyStoreURL, edvConfiguration})
+    }
+
+    /**
+     *  check is profile exists for given wallet user.
+     *
+     * @returns {Promise<Boolean>} - true if profile is found.
+     */
+    async profileExists() {
+        let found = true
+        await profileExists(this.agent, this.user).catch((e) => found = false)
+
+        return found
     }
 
     /**
@@ -76,9 +102,13 @@ export class WalletUser {
      *  @param {Object} options.webKMSAuth - (optional) WebKMSAuth for authorizing access to web/remote kms.
      *  @param {string} options.webKMSAuth.authToken - (optional) Http header 'authorization' bearer token to be used.
      *  @param {string} options.webKMSAuth.capability - (optional) Capability if ZCAP sign header feature to be used for authorizing access.
+     *  @param {String} options.webKMSAuth.authzKeyStoreURL - (optional) authz key store URL if ZCAP sign header feature to be used for authorizing access.
+     *  @param {String} options.webKMSAuth.secretShare - (optional) secret share if ZCAP sign header feature to be used for authorizing access.
      *  @param {Object} options.edvUnlocks - (optional) for authorizing access to wallet's EDV content store.
      *  @param {string} options.edvUnlocks.authToken - (optional) Http header 'authorization' bearer token to be used.
      *  @param {string} options.edvUnlocks.capability - (optional) Capability if ZCAP sign header feature to be used for authorizing access.
+     *  @param {String} options.edvUnlocks.authzKeyStoreURL - (optional) authz key store URL if ZCAP sign header feature to be used for authorizing access.
+     *  @param {String} options.edvUnlocks.secretShare - (optional) secret share if ZCAP sign header feature to be used for authorizing access.
      *
      * @returns {Promise<Object>} - 'object.token' - auth token subsequent use of wallet features.
      */

@@ -368,8 +368,8 @@ func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
 			WebKMSCacheSize:                  opts.CacheSize,
 			EDVReturnFullDocumentsOnQuery:    true,
 			EDVBatchEndpointExtensionEnabled: true,
-			WebKMSAuthSigner:                 newWebKMSHttpHeaderSigner(opts),
-			EdvAuthSigner:                    newEDVHTTPHeaderSigner(opts),
+			WebKMSAuthzProvider:              &webkmsZCAPSigner{},
+			EdvAuthzProvider:                 &edvZCAPSigner{},
 		}))
 	if err != nil {
 		return nil, err
@@ -1166,10 +1166,19 @@ func postInitMsg() {
 	js.Global().Call(handleResultFn, string(out))
 }
 
-// newWebKMSHttpHeaderSigner returns new  zcap based http header signer for vc wallet webkms header.
-func newWebKMSHttpHeaderSigner(opts *agentStartOpts) *webKMSHTTPHeaderSigner {
+type webkmsZCAPSigner struct{}
+
+func (b *webkmsZCAPSigner) GetHeaderSigner(authzKeyStoreURL, accessToken, secretShare string) vcwalletcmd.HTTPHeaderSigner { //nolint:lll
 	return &webKMSHTTPHeaderSigner{
-		zcapSVC: zcapld.New(opts.AuthzKeyStoreURL, opts.UserConfig.AccessToken, opts.UserConfig.SecretShare),
+		zcapSVC: zcapld.New(authzKeyStoreURL, accessToken, secretShare),
+	}
+}
+
+type edvZCAPSigner struct{}
+
+func (b *edvZCAPSigner) GetHeaderSigner(authzKeyStoreURL, accessToken, secretShare string) vcwalletcmd.HTTPHeaderSigner { //nolint:lll
+	return &edvHTTPHeaderSigner{
+		zcapSVC: zcapld.New(authzKeyStoreURL, accessToken, secretShare),
 	}
 }
 
@@ -1179,7 +1188,12 @@ type webKMSHTTPHeaderSigner struct {
 }
 
 // SignHeader signs HTTP header based on zcap.
-func (w *webKMSHTTPHeaderSigner) SignHeader(req *http.Request, capability []byte) (*http.Header, error) {
+func (w *webKMSHTTPHeaderSigner) SignHeader(req *http.Request, kmsCapability []byte) (*http.Header, error) {
+	capability, err := decodeAndGunzip(string(kmsCapability))
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare KMS capability for use: %w ", err)
+	}
+
 	if len(capability) != 0 {
 		invocationAction, err := kmszcap.CapabilityInvocationAction(req)
 		if err != nil {
@@ -1192,20 +1206,13 @@ func (w *webKMSHTTPHeaderSigner) SignHeader(req *http.Request, capability []byte
 	return &req.Header, nil
 }
 
-// newEDVHTTPHeaderSigner returns new  zcap based http header signer for vc wallet EDV header.
-func newEDVHTTPHeaderSigner(opts *agentStartOpts) *webKMSHTTPHeaderSigner {
-	return &webKMSHTTPHeaderSigner{
-		zcapSVC: zcapld.New(opts.AuthzKeyStoreURL, opts.UserConfig.AccessToken, opts.UserConfig.SecretShare),
-	}
-}
-
-// EDVHTTPHeaderSigner is zcap based http header signer for vc wallet edv header.
-type EDVHTTPHeaderSigner struct {
+// edvHTTPHeaderSigner is zcap based http header signer for vc wallet edv header.
+type edvHTTPHeaderSigner struct {
 	zcapSVC *zcapld.Service
 }
 
 // SignHeader signs HTTP header based on zcap.
-func (w *EDVHTTPHeaderSigner) SignHeader(req *http.Request, capability []byte) (*http.Header, error) {
+func (w *edvHTTPHeaderSigner) SignHeader(req *http.Request, capability []byte) (*http.Header, error) {
 	if len(capability) != 0 {
 		action := "write"
 

@@ -12,7 +12,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.0
 	github.com/golang/protobuf v1.5.1 // indirect
 	github.com/gorilla/mux v1.8.0
-	github.com/hyperledger/aries-framework-go v0.1.7-0.20210607112508-8ef35c358338
+	github.com/hyperledger/aries-framework-go v0.1.7-0.20210626010459-9f13e5323db9
 	github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20210430213153-6c349de21198
 	github.com/hyperledger/aries-framework-go-ext/component/storage/mysql v0.0.0-20210430213153-6c349de21198
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.1.1
