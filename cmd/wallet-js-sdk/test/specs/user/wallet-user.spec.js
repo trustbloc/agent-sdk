@@ -33,11 +33,24 @@ describe('Wallet user tests', async function () {
         proofType: 'Ed25519Signature2018'
     }
 
+    it('john checks if his wallet profile exists', async function () {
+        let walletUser = new WalletUser({agent: john, user: JOHN_USER})
+
+        let found = await walletUser.profileExists()
+        expect(found).to.be.false
+    })
 
     it('john creates his wallet profile', async function () {
         let walletUser = new WalletUser({agent: john, user: JOHN_USER})
 
         await walletUser.createWalletProfile({localKMSPassphrase: testConfig.walletUserPassphrase})
+    })
+
+    it('john again checks if his wallet profile exists', async function () {
+        let walletUser = new WalletUser({agent: john, user: JOHN_USER})
+
+        let found = await walletUser.profileExists()
+        expect(found).to.be.true
     })
 
     let auth

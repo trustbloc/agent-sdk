@@ -4,7 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-export {UniversalWallet, createWalletProfile, updateWalletProfile, contentTypes} from "./universal/vc-wallet"
+export {UniversalWallet, createWalletProfile, updateWalletProfile, profileExists, contentTypes} from "./universal/vc-wallet"
 export {DIDExchange, getMediatorConnections, connectToMediator, createInvitationFromRouter} from "./didcomm/connect"
 export {WalletUser} from "./user/wallet-user"
 export {DIDManager} from "./did/didmanager"
