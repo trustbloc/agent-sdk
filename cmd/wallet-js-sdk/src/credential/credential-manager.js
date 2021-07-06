@@ -29,31 +29,46 @@ export class CredentialManager {
     }
 
     /**
-     * Saves givens credential into wallet content store.
+     * Saves given credential into wallet content store.
      *
      *  @param {string} auth - authorization token for wallet operations.
-     *  @param {Object} credential - credential to be saved in wallet content store.
+     *  @param {Object} contents - credential(s) to be saved in wallet content store.
+     *  @param {Object} contents.credential - credential to be saved in wallet content store.
+     *  @param {Array<Object>} contents.credentials - array of credentials to be saved in wallet content store.
+     *  @param {Object} contents.presentation - presentation from which all the credentials to be saved in wallet content store.
      *  @param {Object} options - options for saving credential.
      *  @param {boolean} options.verify - (optional) to verify credential before save.
      *  @param {String} options.collection - (optional) ID of the wallet collection to which the credential should belong.
      *
      *  @returns {Promise<Object>} - empty promise or error if operation fails.
      */
-    async save(auth, credential, {verify = false, collection = ''} = {}) {
-        if (verify) {
-            let {verified, error} = await this.wallet.verify(auth, {rawCredential: credential})
+    async save(auth, {credential = null, credentials = [], presentation = {verifiableCredential: []}} = {}, {verify = false, collection = ''} = {}) {
+        let contents = (credential ? [credential] : []).concat(credentials, presentation.verifiableCredential)
 
-            if (!verified) {
-                throw `credential verification failed: ${error}`
-            }
+        // verify all credentials
+        if (verify) {
+            const _doVerify = async (rawCredential) => {
+                let {verified, error} = await this.wallet.verify(auth, {rawCredential})
+
+                if (!verified) {
+                    console.error(`verification failed for ${rawCredential.id}`)
+                    throw `credential verification failed`
+                }
+            };
+
+            await Promise.all(contents.map(_doVerify))
         }
 
-        await this.wallet.add({
-            auth,
-            contentType: contentTypes.CREDENTIAL,
-            content: credential,
-            collectionID: collection
-        })
+        const _save = async (credential) => {
+            await this.wallet.add({
+                auth,
+                contentType: contentTypes.CREDENTIAL,
+                content: credential,
+                collectionID: collection
+            })
+        };
+
+        await Promise.all(contents.map(_save))
     }
 
     /**

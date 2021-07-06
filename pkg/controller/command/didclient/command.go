@@ -52,10 +52,10 @@ const (
 	ed25519KeyType = "ed25519"
 
 	// p256KeyType EC P-256 key type.
-	p256KeyType = "p256"
+	p256KeyType = "ecdsap256ieeep1363"
 
 	// p384KeyType EC P-384 key type.
-	p384KeyType = "p384"
+	p384KeyType = "ecdsap384ieeep1363"
 
 	// BLS12381G2KeyType BLS12381G2 key type.
 	BLS12381G2KeyType = "bls12381g2"

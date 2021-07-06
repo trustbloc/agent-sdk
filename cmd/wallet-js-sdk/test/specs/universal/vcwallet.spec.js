@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import chai, {expect} from "chai";
 
-import {loadFrameworks, testConfig, getJSONTestData} from "../common";
+import {getJSONTestData, loadFrameworks, testConfig} from "../common";
 import {contentTypes, createWalletProfile, UniversalWallet} from "../../../src";
 import chaiAsPromised from 'chai-as-promised';
 
@@ -95,7 +95,7 @@ describe('Universal wallet tests', async function () {
     it('wallet user creates a key pair inside wallet', async function () {
         let wallet = new UniversalWallet({agent: walletAgent, user: WALLET_USER})
 
-        let keyPair = await wallet.createKeyPair({auth, keyType: 'ED25519'})
+        let keyPair = await wallet.createKeyPair(auth, {keyType: 'ED25519'})
         expect(keyPair.keyID).to.not.empty
         expect(keyPair.publicKey).to.not.empty
     })

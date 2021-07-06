@@ -260,7 +260,7 @@ export class UniversalWallet {
      *
      * @returns {Promise<Object>} - promise of derived credential or error if operation fails.
      */
-    async createKeyPair({auth, keyType} = {}) {
+    async createKeyPair(auth, {keyType} = {}) {
         return await this.agent.vcwallet.createKeyPair({
             userID: this.user,
             auth,
