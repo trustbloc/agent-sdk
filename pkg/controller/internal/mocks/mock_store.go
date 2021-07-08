@@ -190,6 +190,11 @@ func (m *MockIterator) Tags() ([]storage.Tag, error) {
 	panic("implement me")
 }
 
+// TotalItems is not implemented.
+func (m *MockIterator) TotalItems() (int, error) {
+	return -1, errors.New("not implemented")
+}
+
 // Close always returns a nil error.
 func (m *MockIterator) Close() error {
 	return nil

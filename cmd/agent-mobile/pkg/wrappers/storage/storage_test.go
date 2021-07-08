@@ -121,5 +121,12 @@ func (s *spiIteratorWrapper) Tags() ([]byte, error) {
 func TestCommon(t *testing.T) {
 	provider := New(&spiProviderWrapper{mem.NewProvider()})
 
-	storagetest.TestAll(t, provider)
+	storagetest.TestProviderOpenStoreSetGetConfig(t, provider)
+	storagetest.TestPutGet(t, provider)
+	storagetest.TestStoreGetTags(t, provider)
+	storagetest.TestStoreQuery(t, provider, storagetest.WithIteratorTotalItemCountTests())
+	storagetest.TestStoreDelete(t, provider)
+	storagetest.TestStoreClose(t, provider)
+	storagetest.TestProviderClose(t, provider)
+	storagetest.TestStoreBatch(t, provider)
 }
