@@ -364,6 +364,15 @@ func (i *iterator) Tags() ([]spi.Tag, error) {
 	return tags, nil
 }
 
+func (i *iterator) TotalItems() (int, error) {
+	totalItems, err := i.mobileBindingIterator.TotalItems()
+	if err != nil {
+		return -1, fmt.Errorf("failed to get total items from mobile binding iterator: %w", err)
+	}
+
+	return totalItems, nil
+}
+
 func (i *iterator) Close() error {
 	err := i.mobileBindingIterator.Close()
 	if err != nil {
