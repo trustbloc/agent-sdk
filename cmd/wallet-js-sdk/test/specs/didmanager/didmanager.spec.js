@@ -60,13 +60,12 @@ describe('DID Manager tests', async function () {
 
     it('rick creates peer DID in wallet', async function () {
         let didManager = new DIDManager({agent: rick, user: RICK_USER})
-        await didManager.createPeerDID({auth})
+        await didManager.createPeerDID(auth)
     })
 
     it('rick imports a DID with key into wallet', async function () {
         let didManager = new DIDManager({agent: rick, user: RICK_USER})
-        await didManager.importDID({
-            auth,
+        await didManager.importDID(auth, {
             did: 'did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5',
             key: {
                 keyType: 'Ed25519VerificationKey2018',
@@ -76,9 +75,15 @@ describe('DID Manager tests', async function () {
         })
     })
 
+    it('rick gets a DID from wallet', async function () {
+        let didManager = new DIDManager({agent: rick, user: RICK_USER})
+        let {content} = await didManager.getDID(auth, 'did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5')
+        expect(content).to.not.empty
+    })
+
     it('rick lists all DIDs from wallet', async function () {
         let didManager = new DIDManager({agent: rick, user: RICK_USER})
-        let {contents} = await didManager.getAllDIDs({auth})
+        let {contents} = await didManager.getAllDIDs(auth)
         expect(Object.keys(contents)).to.have.lengthOf(4)
     })
 })

@@ -36,8 +36,8 @@ export class DIDManager {
     /**
      * Creates TrustBloc DID and saves it in wallet content store.
      *
-     *  @param {Object} options
-     *  @param {string} options.auth - authorization token for wallet operations.
+     *  @param {string} auth - authorization token for wallet operations.
+     *  @param {Object} options - options for creating TrustBloc DID.
      *  @param {Object} options.keyType - (optional, default ED25519) type of the key to be used for creating keys for the DID, Refer agent documentation for supported key types.
      *  @param {string} options.signatureType - (optional, default Ed25519VerificationKey2018) signature type to be used for DID verification methods.
      *  @param {string} options.collection - (optional, default no collection) collection to which this DID should belong in wallet content store.
@@ -46,9 +46,9 @@ export class DIDManager {
      */
     async createTrustBlocDID(auth, {keyType = DEFAULT_KEY_TYPE, signatureType = DEFAULT_SIGNATURE_TYPE, purposes = ["authentication"], collection} = {}) {
         const [keySet, recoveryKeySet, updateKeySet] = await Promise.all([
-            this.wallet.createKeyPair({auth, keyType}),
-            this.wallet.createKeyPair({auth, keyType: DEFAULT_KEY_TYPE}),
-            this.wallet.createKeyPair({auth, keyType: DEFAULT_KEY_TYPE}),
+            this.wallet.createKeyPair(auth, {keyType}),
+            this.wallet.createKeyPair(auth, {keyType: DEFAULT_KEY_TYPE}),
+            this.wallet.createKeyPair(auth, {keyType: DEFAULT_KEY_TYPE}),
         ])
 
         const createDIDRequest = {
@@ -80,7 +80,7 @@ export class DIDManager {
 
         let content = await this.agent.didclient.createTrustBlocDID(createDIDRequest)
 
-        await this.saveDID({auth, content, collection})
+        await this.saveDID(auth, {content, collection})
 
         console.debug('created and saved TrustBloc DID successfully', content.DIDDocument.id)
 
@@ -96,12 +96,12 @@ export class DIDManager {
      *
      * @returns {Promise} - empty promise or an error if operation fails..
      */
-    async createPeerDID({auth, collection}) {
+    async createPeerDID(auth, {collection} = {}) {
         let content = await this.agent.didclient.createPeerDID({
             routerConnectionID: await getMediatorConnections(this.agent, {single: true})
         })
 
-        await this.saveDID({auth, content, collection})
+        await this.saveDID(auth, {content, collection})
 
         console.debug('created and saved peer DID successfully')
     }
@@ -116,7 +116,7 @@ export class DIDManager {
      *
      * @returns {Promise} - empty promise or an error if operation fails..
      */
-    async saveDID({auth, content, collection} = {}) {
+    async saveDID(auth, {content, collection} = {}) {
         await this.wallet.add({
             auth,
             contentType: contentTypes.DID_RESOLUTION_RESPONSE,
@@ -136,7 +136,7 @@ export class DIDManager {
      *
      * @returns {Promise} - empty promise or an error if operation fails..
      */
-    async importDID({auth, did, key, collection} = {}) {
+    async importDID(auth, {did, key, collection} = {}) {
         if (key) {
             let {privateKeyJwk, privateKeyBase58, keyType, keyID} = key
             await this.wallet.add({
@@ -155,7 +155,7 @@ export class DIDManager {
 
         let content = await this.agent.vdr.resolveDID({id: did})
 
-        await this.saveDID({auth, content, collection})
+        await this.saveDID(auth, {content, collection})
     }
 
 
@@ -168,11 +168,28 @@ export class DIDManager {
      *
      * @returns {Promise<Object>>} - result.contents - collection of DID documents by IDs.
      */
-    async getAllDIDs({auth, collection} = {}) {
+    async getAllDIDs(auth, {collection} = {}) {
         return await this.wallet.getAll({
             auth,
             contentType: contentTypes.DID_RESOLUTION_RESPONSE,
             collectionID: collection
+        })
+    }
+
+    /**
+     * get DID content from wallet content store.
+     *
+     *  @param {Object} options
+     *  @param {string} options.auth - authorization token for wallet operations.
+     *  @param {string} options.contentID - DID ID.
+     *
+     * @returns {Promise<Object>>} - result.content - DID document resolution from wallet content store.
+     */
+    async getDID(auth, contentID) {
+        return await this.wallet.get({
+            auth,
+            contentType: contentTypes.DID_RESOLUTION_RESPONSE,
+            contentID
         })
     }
 

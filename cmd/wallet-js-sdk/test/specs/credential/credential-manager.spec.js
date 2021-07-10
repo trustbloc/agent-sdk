@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import {expect} from "chai";
 
-import {getJSONTestData, loadFrameworks, retryWithDelay, testConfig} from "../common";
+import {getJSONTestData, loadFrameworks, retryWithDelay, testConfig, wait} from "../common";
 import {CredentialManager, DIDManager, WalletUser} from "../../../src";
 
 var uuid = require('uuid/v4')
@@ -67,19 +67,19 @@ describe('Credential Manager Tests', async function () {
     it('user saves a credential into wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        await credentialManager.save(auth, sampleUDC)
+        await credentialManager.save(auth, {credential: sampleUDC})
     })
 
     it('user saves a BBS credential into wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        await credentialManager.save(auth, sampleUDCBBS)
+        await credentialManager.save(auth, {credential:sampleUDCBBS})
     })
 
     it('user saves a credential into wallet by verifying', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        await credentialManager.save(auth, samplePRC, {verify: true})
+        await credentialManager.save(auth, {credential:samplePRC}, {verify: true})
     })
 
     it('user gets all credentials from wallet', async function () {
@@ -202,14 +202,13 @@ describe('Credential Query Tests', async function () {
     })
 
 
-    it('user saves a credential into wallet', async function () {
+    it('user saves multiple credentials into wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_QUERY_USER})
 
-        await credentialManager.save(auth, sampleUDC)
-        await credentialManager.save(auth, samplePRC)
-        await credentialManager.save(auth, sampleUDCBBS)
+        await credentialManager.save(auth, {credentials:[sampleUDC, samplePRC, sampleUDCBBS]})
 
         let {contents} = await credentialManager.getAll(auth)
+
         expect(contents).to.not.empty
         expect(Object.keys(contents)).to.have.lengthOf(3)
     })
