@@ -15,9 +15,8 @@ const client = axios.create({
  * @class
  */
 export class DeviceRegister {
-    constructor(agent) {
-        this.agent = agent
-        this.serverURL = this.agent['edge-agent-server']
+    constructor(serverURL) {
+        this.serverURL = serverURL
     }
 
     async register() {

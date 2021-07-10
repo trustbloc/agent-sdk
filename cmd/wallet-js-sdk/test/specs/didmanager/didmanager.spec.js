@@ -60,7 +60,8 @@ describe('DID Manager tests', async function () {
 
     it('rick creates peer DID in wallet', async function () {
         let didManager = new DIDManager({agent: rick, user: RICK_USER})
-        await didManager.createPeerDID(auth)
+        let document = await didManager.createPeerDID(auth)
+        expect(document).to.not.empty
     })
 
     it('rick imports a DID with key into wallet', async function () {

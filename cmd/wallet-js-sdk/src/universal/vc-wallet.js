@@ -52,11 +52,13 @@ export class UniversalWallet {
      *  @param {String} options.edvUnlocks.capability - (optional) Capability if ZCAP sign header feature to be used for authorizing access.
      *  @param {String} options.edvUnlocks.authzKeyStoreURL - (optional) authz key store URL if ZCAP sign header feature to be used for authorizing access.
      *  @param {String} options.edvUnlocks.secretShare - (optional) secret share if ZCAP sign header feature to be used for authorizing access.
+     *  @param {Time} options.expiry - (optional) time duration in milliseconds for which this profile will be unlocked.
      *
      * @returns {Promise<Object>} - 'object.token' - auth token subsequent use of wallet features.
      */
-    async open({localKMSPassphrase, webKMSAuth, edvUnlocks} = {}) {
-        return await this.agent.vcwallet.open({userID: this.user, localKMSPassphrase, webKMSAuth, edvUnlocks})
+    async open({localKMSPassphrase, webKMSAuth, edvUnlocks, expiry} = {}) {
+        console.log('@got expiry', expiry)
+        return await this.agent.vcwallet.open({userID: this.user, localKMSPassphrase, webKMSAuth, edvUnlocks, expiry})
     }
 
     /**

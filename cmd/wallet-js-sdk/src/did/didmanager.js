@@ -42,7 +42,7 @@ export class DIDManager {
      *  @param {string} options.signatureType - (optional, default Ed25519VerificationKey2018) signature type to be used for DID verification methods.
      *  @param {string} options.collection - (optional, default no collection) collection to which this DID should belong in wallet content store.
      *
-     * @returns {Promise} - empty promise or an error if operation fails..
+     * @returns {Promise<Object>>} - Promise of DID Resolution response  or an error if operation fails..
      */
     async createTrustBlocDID(auth, {keyType = DEFAULT_KEY_TYPE, signatureType = DEFAULT_SIGNATURE_TYPE, purposes = ["authentication"], collection} = {}) {
         const [keySet, recoveryKeySet, updateKeySet] = await Promise.all([
@@ -84,7 +84,7 @@ export class DIDManager {
 
         console.debug('created and saved TrustBloc DID successfully', content.DIDDocument.id)
 
-        return content.DIDDocument.id
+        return content
     }
 
     /**
@@ -104,6 +104,7 @@ export class DIDManager {
         await this.saveDID(auth, {content, collection})
 
         console.debug('created and saved peer DID successfully')
+        return content
     }
 
     /**

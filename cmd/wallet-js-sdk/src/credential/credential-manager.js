@@ -6,6 +6,9 @@ SPDX-License-Identifier: Apache-2.0
 
 import {contentTypes, UniversalWallet} from "..";
 
+const JSONLD_CTX_MANIFEST_MAPPING = ['https://w3id.org/wallet/v1', 'https://trustbloc.github.io/context/wallet/manifest-mapping-v1.jsonld']
+const MANIFEST_MAPPING_METADATA_TYPE = 'ManifestMapping'
+
 /**
  *  CredentialManager provides wallet credential features,
  *
@@ -233,5 +236,64 @@ export class CredentialManager {
      */
     async query(auth = '', query = []) {
         return await this.wallet.query(auth, query)
+    }
+
+    /**
+     *  saves manifest credential along with its mapping to given connection ID.
+     *
+     *  @param {String} auth -  authorization token for performing this wallet operation.
+     *  @param {Object} manifest - manifest credential (can be of any type).
+     *  @param {String} connectionID - connection ID to which manifest credential to be mapped.
+     *
+     * @returns {Promise<Object>} - empty promise or an error if operation fails.
+     */
+    async saveManifestCredential(auth = '', manifest = {}, connectionID = '') {
+        if (!manifest.id) {
+            throw "invalid manifest credential, credential id is required."
+        }
+
+        await this.save(auth, {credential: manifest})
+
+        let content = {
+            "@context": JSONLD_CTX_MANIFEST_MAPPING,
+            id: manifest.id,
+            type: MANIFEST_MAPPING_METADATA_TYPE,
+            connectionID
+        }
+
+        await this.wallet.add({auth, contentType: contentTypes.METADATA, content})
+    }
+
+    /**
+     *  Returns connection ID mapped to given manifest credential ID.
+     *
+     *  @param {String} auth -  authorization token for performing this wallet operation.
+     *  @param {String} manifestCredID - ID of manifest credential.
+     *
+     * @returns {Promise<String>} - promise containing connection ID or an error if operation fails.
+     */
+    async getManifestConnection(auth = '', manifestCredID=''){
+        let {content} = await this.wallet.get({auth, contentType: contentTypes.METADATA, contentID:manifestCredID})
+
+        return content.connectionID
+    }
+
+    /**
+     *  Gets all manifest credentials saved in wallet.
+     *
+     *  @param {String} auth -  authorization token for performing this wallet operation.
+     *
+     * @returns {Promise<Object>} - promise containing manifest credential search results or an error if operation fails.
+     */
+    async getAllManifests(auth = ''){
+       return await this.query(auth, [{
+           type: "QueryByExample",
+           credentialQuery: [{
+               example: {
+                   "@context": ["https://www.w3.org/2018/credentials/v1"],
+                   type: ["IssuerManifestCredential"]
+               }
+           }]
+       }])
     }
 }

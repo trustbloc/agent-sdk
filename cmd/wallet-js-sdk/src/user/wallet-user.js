@@ -109,12 +109,13 @@ export class WalletUser {
      *  @param {string} options.edvUnlocks.capability - (optional) Capability if ZCAP sign header feature to be used for authorizing access.
      *  @param {String} options.edvUnlocks.authzKeyStoreURL - (optional) authz key store URL if ZCAP sign header feature to be used for authorizing access.
      *  @param {String} options.edvUnlocks.secretShare - (optional) secret share if ZCAP sign header feature to be used for authorizing access.
+     *  @param {Time} options.expiry - (optional) time duration in milliseconds for which this profile will be unlocked.
      *
      * @returns {Promise<Object>} - 'object.token' - auth token subsequent use of wallet features.
      */
     //TODO unlock timeout
-    async unlock({localKMSPassphrase, webKMSAuth, edvUnlocks} = {}) {
-        return await this.wallet.open({localKMSPassphrase, webKMSAuth, edvUnlocks})
+    async unlock({localKMSPassphrase, webKMSAuth, edvUnlocks, expiry} = {}) {
+        return await this.wallet.open({localKMSPassphrase, webKMSAuth, edvUnlocks, expiry})
     }
 
     /**
