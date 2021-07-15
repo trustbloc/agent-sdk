@@ -27,6 +27,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/controller/command/messaging"
 	"github.com/hyperledger/aries-framework-go/pkg/controller/command/outofband"
 	"github.com/hyperledger/aries-framework-go/pkg/controller/command/presentproof"
+	"github.com/hyperledger/aries-framework-go/pkg/controller/command/vcwallet"
 	"github.com/hyperledger/aries-framework-go/pkg/controller/command/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/controller/command/verifiable"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/messaging/msghandler"
@@ -164,6 +165,10 @@ func prepareFrameworkOptions(opts *config.Options, // nolint: gocyclo
 		}
 
 		options = append(options, rsopts...)
+	}
+
+	if opts.DocumentLoader != nil {
+		options = append(options, aries.WithJSONLDDocumentLoader(opts.DocumentLoader))
 	}
 
 	return options, nil
@@ -440,4 +445,15 @@ func createVDRs(resolvers []string, trustblocDomain string) ([]ariesvdr.VDR, err
 	VDRs = append(VDRs, blocVDR)
 
 	return VDRs, nil
+}
+
+// GetVCWalletController returns a VCWalletController instance.
+func (a *Aries) GetVCWalletController() (api.VCWalletController, error) {
+	handlers, ok := a.handlers[vcwallet.CommandName]
+	if !ok {
+		return nil, fmt.Errorf("no handlers found for controller [%s]", vcwallet.CommandName)
+	}
+
+	//    return nil, fmt.Errorf("no handlers found for vcwallet controller")
+	return &VCWallet{handlers: handlers}, nil
 }

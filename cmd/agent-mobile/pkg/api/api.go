@@ -56,5 +56,5 @@ type AriesController interface {
 	UnregisterHandler(id string)
 
 	// GetVCWalletController returns an implementation of VCWalletController
+	GetVCWalletController() (VCWalletController, error)
 }
-	
