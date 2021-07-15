@@ -57,7 +57,6 @@ export class UniversalWallet {
      * @returns {Promise<Object>} - 'object.token' - auth token subsequent use of wallet features.
      */
     async open({localKMSPassphrase, webKMSAuth, edvUnlocks, expiry} = {}) {
-        console.log('@got expiry', expiry)
         return await this.agent.vcwallet.open({userID: this.user, localKMSPassphrase, webKMSAuth, edvUnlocks, expiry})
     }
 
