@@ -25,18 +25,21 @@ export class BlindedRouter {
         // request peer DID from other party
         console.debug('Sending DID Doc request')
         let response = await this.agent.blindedrouting.sendDIDDocRequest({connectionID: ConnectionID})
-        console.log("payload from did doc response ", JSON.stringify(response, null ,2))
+        console.log("payload from did doc response", response)
 
-        let {payload} = response
-        if (!payload) {
+        if (!response || !response.payload || !response.payload.message) {
             throw 'no response DID found in did doc response'
         }
 
-        let peerDID = _parseResponseDID(payload)
+        let {message} = response.payload
+
+        let peerDID =  message.data.didDoc
         if (!peerDID) {
             console.error('failed to get peerDID from inviter, could not find peer DID in response message.')
             throw 'failed to get peer DID from inviter'
         }
+        console.debug('received peer DID')
+
 
         // request wallet peer DID from router by sending peer DID from other party
         console.debug('requesting peer DID from wallet')
@@ -51,8 +54,6 @@ export class BlindedRouter {
         })
     }
 }
-
-let _parseResponseDID = (response) => response.data.didDoc ? response.data.didDoc : undefined
 
 async function requestDIDFromMediator(agent, reqDoc) {
     let res = await agent.mediatorclient.sendCreateConnectionRequest({
