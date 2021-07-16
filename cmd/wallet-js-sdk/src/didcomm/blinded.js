@@ -4,9 +4,6 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import {POST_STATE, waitForEvent} from "../util/event.js";
-import axios from 'axios';
-
 
 /**
  * BlindedRouter provides DIDComm message based blinded routing features.

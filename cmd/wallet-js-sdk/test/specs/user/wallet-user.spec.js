@@ -74,7 +74,6 @@ describe('Wallet user tests', async function () {
         let walletUser = new WalletUser({agent: john, user: JOHN_USER})
 
         let {content} = await walletUser.getPreferences(auth)
-
         expect(preferences.name).to.be.equal(content.name)
         expect(preferences.description).to.be.equal(content.description)
         expect(preferences.image).to.be.equal(content.image)
@@ -88,14 +87,14 @@ describe('Wallet user tests', async function () {
 
         let walletUser = new WalletUser({agent: john, user: JOHN_USER})
 
-        await walletUser.updatePreferences(auth, {description: newDescription})
+        await walletUser.updatePreferences(auth, {description: newDescription, verificationMethod: ""})
 
         let {content} = await walletUser.getPreferences(auth)
         expect(preferences.name).to.be.equal(content.name)
         expect(newDescription).to.be.equal(content.description)
         expect(preferences.image).to.be.equal(content.image)
         expect(preferences.controller).to.be.equal(content.controller)
-        expect(preferences.verificationMethod).to.be.equal(content.verificationMethod)
+        expect(content.verificationMethod).to.be.empty
         expect(preferences.proofType).to.be.equal(content.proofType)
     })
 

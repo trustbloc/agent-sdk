@@ -4,7 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import {contentTypes, createWalletProfile, profileExists, UniversalWallet, updateWalletProfile} from "..";
+import {contentTypes, createWalletProfile, profileExists, UniversalWallet, updateWalletProfile, definedProps} from "..";
 
 const JSONLD_CTX_USER_PREFERENCE = ['https://w3id.org/wallet/v1', 'https://trustbloc.github.io/context/wallet/user-preferences-v1.jsonld']
 const METADATA_PREFIX = 'user-preference-'
@@ -143,7 +143,7 @@ export class WalletUser {
      *
      *  @returns {Promise<Object>} - empty promise or error if operation fails.
      */
-    async savePreferences(auth, {name, description, image, controller, verificationMethod, proofType} = {}) {
+    async savePreferences(auth, {name="", description="", image="", controller="", verificationMethod="", proofType=""} = {}) {
         await this.saveMetadata(auth, {
             "@context": JSONLD_CTX_USER_PREFERENCE,
             id: `${METADATA_PREFIX}${this.user}`,
@@ -166,7 +166,7 @@ export class WalletUser {
      *
      *  @returns {Promise<Object>} - empty promise or error if operation fails.
      */
-    async updatePreferences(auth, {name, description, image, controller, verificationMethod, proofType} = {}) {
+    async updatePreferences(auth, {name, description, image, controller, verificationMethod, proofType}) {
         let {content} = await this.getPreferences(auth)
         if (!content) {
             throw 'user preference not found'
@@ -177,13 +177,14 @@ export class WalletUser {
             contentID: `${METADATA_PREFIX}${this.user}`,
             contentType: contentTypes.METADATA
         })
-        let updates = {name, description, image, controller, verificationMethod, proofType}
 
-        const newContent = {};
-        Object.keys(content).forEach((key) => newContent[[key]] = updates[key] ? updates[key] : content[key]);
+        let updates = definedProps({name, description, image, controller, verificationMethod, proofType})
+
+        Object.keys(updates).forEach(key => content[key] = updates[key])
 
         await remove
-        await this.saveMetadata(auth, newContent)
+
+        await this.saveMetadata(auth, content)
     }
 
     /**

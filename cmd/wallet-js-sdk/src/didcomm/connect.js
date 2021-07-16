@@ -4,7 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import {POST_STATE, waitForEvent} from "../util/event.js";
+import {POST_STATE, waitForEvent} from "../";
 import axios from 'axios';
 
 const STATE_COMPLETED = 'completed'
