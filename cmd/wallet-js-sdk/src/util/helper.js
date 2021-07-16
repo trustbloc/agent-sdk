@@ -49,3 +49,8 @@ export function waitForEvent(agent, {
         }, [topic])
     })
 }
+
+// filter and return defined properties only
+export const definedProps = obj => Object.fromEntries(
+    Object.entries(obj).filter(([k, v]) => v !== undefined)
+);
