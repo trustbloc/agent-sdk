@@ -25,6 +25,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/controller/rest/messaging"
 	"github.com/hyperledger/aries-framework-go/pkg/controller/rest/outofband"
 	"github.com/hyperledger/aries-framework-go/pkg/controller/rest/presentproof"
+	"github.com/hyperledger/aries-framework-go/pkg/controller/rest/vcwallet"
 	"github.com/hyperledger/aries-framework-go/pkg/controller/rest/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/controller/rest/verifiable"
 	"nhooyr.io/websocket"
@@ -299,4 +300,14 @@ func (ar *Aries) GetBlindedRoutingController() (api.BlindedRoutingController, er
 	}
 
 	return &BlindedRouting{endpoints: endpoints, URL: ar.URL, Token: ar.Token, httpClient: &http.Client{}}, nil
+}
+
+// GetVCWalletController returns a VCWalletController instance.
+func (ar *Aries) GetVCWalletController() (api.VCWalletController, error) {
+	endpoints, ok := ar.endpoints[vcwallet.OperationID]
+	if !ok {
+		return nil, fmt.Errorf("no endpoints found for controller [%s]", vcwallet.OperationID)
+	}
+
+	return &VCWallet{endpoints: endpoints, URL: ar.URL, Token: ar.Token, httpClient: &http.Client{}}, nil
 }

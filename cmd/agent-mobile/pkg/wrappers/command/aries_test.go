@@ -271,3 +271,16 @@ func TestAries_GetBlindedRoutingController(t *testing.T) {
 		require.NotNil(t, m)
 	})
 }
+
+func TestAries_GetVCWalletController(t *testing.T) {
+	t.Run("it creates a controller", func(t *testing.T) {
+		opts := &config.Options{}
+		a, err := NewAries(opts)
+		require.NoError(t, err)
+		require.NotNil(t, a)
+
+		m, err := a.GetVCWalletController()
+		require.NoError(t, err)
+		require.NotNil(t, m)
+	})
+}
