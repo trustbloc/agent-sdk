@@ -23,8 +23,8 @@ export class WalletUser {
      *
      * @class WalletUser
      *
-     * @param {string} agent - aries agent.
-     * @param {string} user -  unique wallet user identifier, the one used to create wallet profile.
+     * @param {String} agent - aries agent.
+     * @param {String} user -  unique wallet user identifier, the one used to create wallet profile.
      *
      */
     constructor({agent, user} = {}) {
@@ -36,10 +36,10 @@ export class WalletUser {
     /**
      * Create wallet profile for the user and returns error if profile is already created.
      *
-     *  @param {string} profileOptions -  options for creating profile.
-     *  @param {string} profileOptions.localKMSPassphrase - (optional) passphrase for local kms for key operations. If provided then localkms will be used for this wallet profile's key operations.
-     *  @param {string} profileOptions.keyStoreURL - (optional) key store URL for web/remote kms. If provided then webkms will be used for this wallet profile's key operations.
-     *  @param {string} profileOptions.edvConfiguration - (optional) EDV configuration if profile wants to use EDV as a wallet content store.
+     *  @param {String} profileOptions -  options for creating profile.
+     *  @param {String} profileOptions.localKMSPassphrase - (optional) passphrase for local kms for key operations. If provided then localkms will be used for this wallet profile's key operations.
+     *  @param {String} profileOptions.keyStoreURL - (optional) key store URL for web/remote kms. If provided then webkms will be used for this wallet profile's key operations.
+     *  @param {String} profileOptions.edvConfiguration - (optional) EDV configuration if profile wants to use EDV as a wallet content store.
      *  By Default, aries context storage provider will be used.
      *
      *  @param {String} profileOptions.edvConfiguration.serverURL - EDV server URL for storing wallet contents.
@@ -63,10 +63,10 @@ export class WalletUser {
      *  - you might lose your existing wallet contents if you change storage/EDV options
      *  (ex: switching context storage provider or changing EDV settings).
      *
-     *  @param {string} profileOptions -  options for creating profile.
-     *  @param {string} profileOptions.localKMSPassphrase - (optional) passphrase for local kms for key operations. If provided then localkms will be used for this wallet profile's key operations.
-     *  @param {string} profileOptions.keyStoreURL - (optional) key store URL for web/remote kms. If provided then webkms will be used for this wallet profile's key operations.
-     *  @param {string} profileOptions.edvConfiguration - (optional) EDV configuration if profile wants to use EDV as a wallet content store.
+     *  @param {String} profileOptions -  options for creating profile.
+     *  @param {String} profileOptions.localKMSPassphrase - (optional) passphrase for local kms for key operations. If provided then localkms will be used for this wallet profile's key operations.
+     *  @param {String} profileOptions.keyStoreURL - (optional) key store URL for web/remote kms. If provided then webkms will be used for this wallet profile's key operations.
+     *  @param {String} profileOptions.edvConfiguration - (optional) EDV configuration if profile wants to use EDV as a wallet content store.
      *  By Default, aries context storage provider will be used.
      *
      *  @param {String} profileOptions.edvConfiguration.serverURL - EDV server URL for storing wallet contents.
@@ -98,15 +98,15 @@ export class WalletUser {
      * Unlocks wallet and returns a authorization token to be used for performing wallet operations.
      *
      *  @param {Object} options
-     *  @param {string} options.localKMSPassphrase - (optional) passphrase for local kms for key operations.
+     *  @param {String} options.localKMSPassphrase - (optional) passphrase for local kms for key operations.
      *  @param {Object} options.webKMSAuth - (optional) WebKMSAuth for authorizing access to web/remote kms.
-     *  @param {string} options.webKMSAuth.authToken - (optional) Http header 'authorization' bearer token to be used.
-     *  @param {string} options.webKMSAuth.capability - (optional) Capability if ZCAP sign header feature to be used for authorizing access.
+     *  @param {String} options.webKMSAuth.authToken - (optional) Http header 'authorization' bearer token to be used.
+     *  @param {String} options.webKMSAuth.capability - (optional) Capability if ZCAP sign header feature to be used for authorizing access.
      *  @param {String} options.webKMSAuth.authzKeyStoreURL - (optional) authz key store URL if ZCAP sign header feature to be used for authorizing access.
      *  @param {String} options.webKMSAuth.secretShare - (optional) secret share if ZCAP sign header feature to be used for authorizing access.
      *  @param {Object} options.edvUnlocks - (optional) for authorizing access to wallet's EDV content store.
-     *  @param {string} options.edvUnlocks.authToken - (optional) Http header 'authorization' bearer token to be used.
-     *  @param {string} options.edvUnlocks.capability - (optional) Capability if ZCAP sign header feature to be used for authorizing access.
+     *  @param {String} options.edvUnlocks.authToken - (optional) Http header 'authorization' bearer token to be used.
+     *  @param {String} options.edvUnlocks.capability - (optional) Capability if ZCAP sign header feature to be used for authorizing access.
      *  @param {String} options.edvUnlocks.authzKeyStoreURL - (optional) authz key store URL if ZCAP sign header feature to be used for authorizing access.
      *  @param {String} options.edvUnlocks.secretShare - (optional) secret share if ZCAP sign header feature to be used for authorizing access.
      *  @param {Time} options.expiry - (optional) time duration in milliseconds for which this profile will be unlocked.
@@ -132,14 +132,14 @@ export class WalletUser {
     /**
      * Saves TrustBloc wallet user preferences.
      *
-     *  @param {string} auth - authorization token for wallet operations.
+     *  @param {String} auth - authorization token for wallet operations.
      *  @param {Object} preferences
-     *  @param {string} preferences.name - (optional) wallet user display name.
+     *  @param {String} preferences.name - (optional) wallet user display name.
      *  @param {Object} preferences.description - (optional) wallet user display description.
-     *  @param {string} preferences.image - (optional)  wallet user display image in URL format.
-     *  @param {string} preferences.controller - (optional) default controller to be used for digital proof for this wallet user.
+     *  @param {String} preferences.image - (optional)  wallet user display image in URL format.
+     *  @param {String} preferences.controller - (optional) default controller to be used for digital proof for this wallet user.
      *  @param {Object} preferences.verificationMethod - (optional) default verificationMethod to be used for digital proof for this wallet user.
-     *  @param {string} preferences.proofType - (optional) default proofType to be used for digital proof for this wallet user.
+     *  @param {String} preferences.proofType - (optional) default proofType to be used for digital proof for this wallet user.
      *
      *  @returns {Promise<Object>} - empty promise or error if operation fails.
      */
@@ -155,14 +155,14 @@ export class WalletUser {
     /**
      * Updates TrustBloc wallet user preferences.
      *
-     *  @param {string} auth - authorization token for wallet operations.
+     *  @param {String} auth - authorization token for wallet operations.
      *  @param {Object} preferences
-     *  @param {string} preferences.name - (optional) wallet user display name.
+     *  @param {String} preferences.name - (optional) wallet user display name.
      *  @param {Object} preferences.description - (optional) wallet user display description.
-     *  @param {string} preferences.image - (optional)  wallet user display image in URL format.
-     *  @param {string} preferences.controller - (optional) default controller to be used for digital proof for this wallet user.
+     *  @param {String} preferences.image - (optional)  wallet user display image in URL format.
+     *  @param {String} preferences.controller - (optional) default controller to be used for digital proof for this wallet user.
      *  @param {Object} preferences.verificationMethod - (optional) default verificationMethod to be used for digital proof for this wallet user.
-     *  @param {string} preferences.proofType - (optional) default proofType to be used for digital proof for this wallet user.
+     *  @param {String} preferences.proofType - (optional) default proofType to be used for digital proof for this wallet user.
      *
      *  @returns {Promise<Object>} - empty promise or error if operation fails.
      */
@@ -190,7 +190,7 @@ export class WalletUser {
     /**
      * Gets TrustBloc walletuser preference.
      *
-     *  @param {string} auth - authorization token for wallet operations.
+     *  @param {String} auth - authorization token for wallet operations.
      *
      *  @returns {Promise<Object{content}>} - promise containing preference metadata or error if operation fails.
      */
@@ -205,7 +205,7 @@ export class WalletUser {
     /**
      * Saves custom metadata data model into wallet.
      *
-     *  @param {string} auth - authorization token for wallet operations.
+     *  @param {String} auth - authorization token for wallet operations.
      *  @param {Object} content - metadata to be saved in wallet content store.
      *
      *  @returns {Promise<Object>} - empty promise or error if operation fails.
@@ -217,8 +217,8 @@ export class WalletUser {
     /**
      * Gets metadata by ID from wallet.
      *
-     *  @param {string} auth - authorization token for wallet operations.
-     *  @param {string} contentID - ID of the metadata to be read from wallet content store.
+     *  @param {String} auth - authorization token for wallet operations.
+     *  @param {String} contentID - ID of the metadata to be read from wallet content store.
      *
      *  @returns {Promise<Object{content}>} result.content - promise containing metadata or error if operation fails.
      */
@@ -229,7 +229,7 @@ export class WalletUser {
     /**
      * Gets All metadata data models from wallet.
      *
-     *  @param {string} auth - authorization token for wallet operations.
+     *  @param {String} auth - authorization token for wallet operations.
      *
      *  @returns {Promise<Object{contents}>} result.contents - promise containing result or error if operation fails.
      */

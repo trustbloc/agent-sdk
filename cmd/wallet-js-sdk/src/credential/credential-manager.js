@@ -93,8 +93,8 @@ export class CredentialManager {
      *
      *  @returns {Promise<Object>} result.contents - promise containing results or error if operation fails.
      */
-    async getAll(auth) {
-        return await this.wallet.getAll({auth, contentType: contentTypes.CREDENTIAL})
+    async getAll(auth, {collectionID} = {}) {
+        return await this.wallet.getAll({auth, contentType: contentTypes.CREDENTIAL, collectionID})
     }
 
     /**
@@ -272,8 +272,8 @@ export class CredentialManager {
      *
      * @returns {Promise<String>} - promise containing connection ID or an error if operation fails.
      */
-    async getManifestConnection(auth = '', manifestCredID=''){
-        let {content} = await this.wallet.get({auth, contentType: contentTypes.METADATA, contentID:manifestCredID})
+    async getManifestConnection(auth = '', manifestCredID = '') {
+        let {content} = await this.wallet.get({auth, contentType: contentTypes.METADATA, contentID: manifestCredID})
 
         return content.connectionID
     }
@@ -285,15 +285,15 @@ export class CredentialManager {
      *
      * @returns {Promise<Object>} - promise containing manifest credential search results or an error if operation fails.
      */
-    async getAllManifests(auth = ''){
-       return await this.query(auth, [{
-           type: "QueryByExample",
-           credentialQuery: [{
-               example: {
-                   "@context": ["https://www.w3.org/2018/credentials/v1"],
-                   type: ["IssuerManifestCredential"]
-               }
-           }]
-       }])
+    async getAllManifests(auth = '') {
+        return await this.query(auth, [{
+            type: "QueryByExample",
+            credentialQuery: [{
+                example: {
+                    "@context": ["https://www.w3.org/2018/credentials/v1"],
+                    type: ["IssuerManifestCredential"]
+                }
+            }]
+        }])
     }
 }
