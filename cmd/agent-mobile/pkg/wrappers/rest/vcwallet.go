@@ -21,68 +21,80 @@ type VCWallet struct {
 	Token string
 }
 
-
+// CreateProfile creates new wallet profile for given user.
 func (wallet *VCWallet) CreateProfile(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.CreateProfileMethod)
 }
 
+// UpdateProfile updates an existing wallet profile for given user.
 func (wallet *VCWallet) UpdateProfile(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.UpdateProfileMethod)
 }
 
+// ProfileExists checks if profile exists for given wallet user, returns error if not found.
 func (wallet *VCWallet) ProfileExists(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.ProfileExistsMethod)
 }
 
+// Open unlocks given user's wallet and returns a token for subsequent use of wallet features.
 func (wallet *VCWallet) Open(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.OpenMethod)
 }
 
+// Close locks given user's wallet.
 func (wallet *VCWallet) Close(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.CloseMethod)
 }
 
+// Add adds given data model to wallet content store.
 func (wallet *VCWallet) Add(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.AddMethod)
 }
 
-
+// Remove deletes given content from wallet content store.
 func (wallet *VCWallet) Remove(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.RemoveMethod)
 }
 
+// Get returns wallet content by ID from wallet content store.
 func (wallet *VCWallet) Get(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.GetMethod)
 }
 
+// GetAll gets all wallet content from wallet content store for given type.
 func (wallet *VCWallet) GetAll(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.GetAllMethod)
 }
 
+// Query runs credential queries against wallet credential contents.
 func (wallet *VCWallet) Query(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.QueryMethod)
 }
 
+// Issue adds proof to a Verifiable Credential from wallet.
 func (wallet *VCWallet) Issue(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.IssueMethod)
 }
 
+// Prove produces a Verifiable Presentation from wallet.
 func (wallet *VCWallet) Prove(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.ProveMethod)
 }
 
+// Verify verifies credential/presentation from wallet.
 func (wallet *VCWallet) Verify(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.VerifyMethod)
 }
 
+// Derive derives a credential from wallet.
 func (wallet *VCWallet) Derive(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.DeriveMethod)
 }
 
+// CreateKeyPair creates key pair from wallet.
 func (wallet *VCWallet) CreateKeyPair(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return wallet.createRespEnvelope(request, cmdvcwallet.CreateKeyPairMethod)
 }
-
 
 func (wallet *VCWallet) createRespEnvelope(request *models.RequestEnvelope, endpoint string) *models.ResponseEnvelope {
 	return exec(&restOperation{

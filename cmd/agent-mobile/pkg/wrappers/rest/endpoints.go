@@ -491,16 +491,13 @@ func getBlindedRoutingEndpoints() map[string]*endpoint {
 func getVCWalletEndpoints() map[string]*endpoint {
 	return map[string]*endpoint{
 		cmdvcwallet.CreateProfileMethod: {
-			Path:   opvcwallet.CreateProfilePath,
-			Method: http.MethodPost,
+			Path: opvcwallet.CreateProfilePath, Method: http.MethodPost,
 		},
 		cmdvcwallet.UpdateProfileMethod: {
-			Path:   opvcwallet.UpdateProfilePath,
-			Method: http.MethodPost,
+			Path: opvcwallet.UpdateProfilePath, Method: http.MethodPost,
 		},
 		cmdvcwallet.ProfileExistsMethod: {
-			Path:   opvcwallet.ProfileExistsPath,
-			Method: http.MethodGet,
+			Path: opvcwallet.ProfileExistsPath, Method: http.MethodGet,
 		},
 		cmdvcwallet.OpenMethod: {
 			Path:   opvcwallet.OpenPath,

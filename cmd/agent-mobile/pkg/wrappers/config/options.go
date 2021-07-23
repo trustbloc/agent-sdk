@@ -8,8 +8,9 @@ SPDX-License-Identifier: Apache-2.0
 package config
 
 import (
-	"github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/api"
+
+	"github.com/piprate/json-gold/ld"
 )
 
 // Options represents configurations for Aries.

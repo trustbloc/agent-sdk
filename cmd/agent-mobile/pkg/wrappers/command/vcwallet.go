@@ -15,13 +15,12 @@ import (
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/models"
 )
 
-// VDR contains necessary fields for each of its operations.
+// VCWallet contains necessary fields to support its operations.
 type VCWallet struct {
 	handlers map[string]command.Exec
 }
 
 // CreateProfile creates new wallet profile for given user.
-// returns nil on success
 func (v *VCWallet) CreateProfile(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := cmdvcwallet.CreateOrUpdateProfileRequest{}
 
@@ -38,7 +37,6 @@ func (v *VCWallet) CreateProfile(request *models.RequestEnvelope) *models.Respon
 }
 
 // UpdateProfile updates an existing wallet profile for given user.
-// returns nil on success
 func (v *VCWallet) UpdateProfile(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := cmdvcwallet.CreateOrUpdateProfileRequest{}
 
@@ -71,7 +69,6 @@ func (v *VCWallet) ProfileExists(request *models.RequestEnvelope) *models.Respon
 }
 
 // Open unlocks given user's wallet and returns a token for subsequent use of wallet features.
-// returns UnlockWalletResponse
 func (v *VCWallet) Open(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := cmdvcwallet.UnlockWalletRequest{}
 
@@ -104,7 +101,6 @@ func (v *VCWallet) Close(request *models.RequestEnvelope) *models.ResponseEnvelo
 }
 
 // Add adds given data model to wallet content store.
-// return nil
 func (v *VCWallet) Add(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := cmdvcwallet.AddContentRequest{}
 
@@ -121,7 +117,6 @@ func (v *VCWallet) Add(request *models.RequestEnvelope) *models.ResponseEnvelope
 }
 
 // Remove deletes given content from wallet content store.
-// return nil
 func (v *VCWallet) Remove(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := cmdvcwallet.RemoveContentRequest{}
 
@@ -137,8 +132,7 @@ func (v *VCWallet) Remove(request *models.RequestEnvelope) *models.ResponseEnvel
 	return &models.ResponseEnvelope{Payload: response}
 }
 
-// // Get returns wallet content by ID from wallet content store.
-// return GetContentResponse
+// Get returns wallet content by ID from wallet content store.
 func (v *VCWallet) Get(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := cmdvcwallet.GetContentRequest{}
 
@@ -155,7 +149,6 @@ func (v *VCWallet) Get(request *models.RequestEnvelope) *models.ResponseEnvelope
 }
 
 // GetAll gets all wallet content from wallet content store for given type.
-// return GetAllContentResponse
 func (v *VCWallet) GetAll(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := cmdvcwallet.GetAllContentRequest{}
 
@@ -171,9 +164,7 @@ func (v *VCWallet) GetAll(request *models.RequestEnvelope) *models.ResponseEnvel
 	return &models.ResponseEnvelope{Payload: response}
 }
 
-// Query runs credential queries against wallet credential contents and
-// returns presentation containing credential results.
-// return ContentQueryResponse
+// Query runs credential queries against wallet credential contents.
 func (v *VCWallet) Query(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := cmdvcwallet.ContentQueryRequest{}
 
@@ -190,7 +181,6 @@ func (v *VCWallet) Query(request *models.RequestEnvelope) *models.ResponseEnvelo
 }
 
 // Issue adds proof to a Verifiable Credential from wallet.
-// return IssueResponse
 func (v *VCWallet) Issue(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := cmdvcwallet.IssueRequest{}
 
@@ -207,7 +197,6 @@ func (v *VCWallet) Issue(request *models.RequestEnvelope) *models.ResponseEnvelo
 }
 
 // Prove produces a Verifiable Presentation from wallet.
-// return ProveResponse
 func (v *VCWallet) Prove(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := cmdvcwallet.ProveRequest{}
 
@@ -224,7 +213,6 @@ func (v *VCWallet) Prove(request *models.RequestEnvelope) *models.ResponseEnvelo
 }
 
 // Verify verifies credential/presentation from wallet.
-// return VerifyResponse
 func (v *VCWallet) Verify(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := cmdvcwallet.VerifyRequest{}
 
@@ -241,7 +229,6 @@ func (v *VCWallet) Verify(request *models.RequestEnvelope) *models.ResponseEnvel
 }
 
 // Derive derives a credential from wallet.
-// return DeriveResponse
 func (v *VCWallet) Derive(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := cmdvcwallet.DeriveRequest{}
 
@@ -258,7 +245,6 @@ func (v *VCWallet) Derive(request *models.RequestEnvelope) *models.ResponseEnvel
 }
 
 // CreateKeyPair creates key pair from wallet.
-// return CreateKeyPairResponse
 func (v *VCWallet) CreateKeyPair(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := cmdvcwallet.CreateKeyPairRequest{}
 

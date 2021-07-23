@@ -454,6 +454,5 @@ func (a *Aries) GetVCWalletController() (api.VCWalletController, error) {
 		return nil, fmt.Errorf("no handlers found for controller [%s]", vcwallet.CommandName)
 	}
 
-	//    return nil, fmt.Errorf("no handlers found for vcwallet controller")
 	return &VCWallet{handlers: handlers}, nil
 }
