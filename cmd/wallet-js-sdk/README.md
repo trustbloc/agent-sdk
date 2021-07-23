@@ -2,7 +2,12 @@
 
 # Wallet SDK
 
-Wallet JavaScript SDK for user agent wallet operations.
+Wallet JavaScript SDK for user agent wallet operations. 
+
+# Documentation
+
+Refer this [documentation](docs/wallet_sdk.md) to learn more about wallet SDK.
+
 
 # Build it
 
@@ -22,6 +27,10 @@ You can also run following command to test your changes.
 - `npm run test:start` can be run multiple times.
 - `npm run test:dev` to launch test with Chrome.
 - `npm run test:teardown` to bring down containers and cleanup tests.
+
+# Update API reference docs
+
+Run `npm run docs` to update API reference docs.
 
 ## Contributing
 Thank you for your interest in contributing. Please see our [community contribution guidelines](https://github.com/trustbloc/community/blob/main/CONTRIBUTING.md) for more information.
