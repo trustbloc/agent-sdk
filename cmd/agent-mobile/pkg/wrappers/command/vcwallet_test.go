@@ -261,6 +261,7 @@ func TestVCWallet_Open_Close(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		vcwalletController := getVCWalletController(t)
 		require.NotNil(t, vcwalletController)
+
 		openPayload := sampleUserAuth
 
 		openReq := &models.RequestEnvelope{Payload: []byte(openPayload)}
