@@ -21,14 +21,10 @@ var (
 	credentialExamples []byte
 	//go:embed contexts/examples_v1.jsonld
 	vcExamples []byte
-	//go:embed contexts/odrl.jsonld
-	odrl []byte
 	//go:embed contexts/citizenship_v1.jsonld
 	citizenship []byte
 	//go:embed contexts/governance.jsonld
 	governance []byte
-	//go:embed contexts/lds-jws2020-v1.jsonld
-	jws2020 []byte
 )
 
 // DocumentLoader returns a document loader with preloaded test contexts.
@@ -46,10 +42,6 @@ func DocumentLoader(t *testing.T) *jsonld.DocumentLoader {
 				Content: vcExamples,
 			},
 			jsonld.ContextDocument{
-				URL:     "https://www.w3.org/ns/odrl.jsonld",
-				Content: odrl,
-			},
-			jsonld.ContextDocument{
 				URL:         "https://w3id.org/citizenship/v1",
 				DocumentURL: "https://w3c-ccg.github.io/citizenship-vocab/contexts/citizenship-v1.jsonld",
 				Content:     citizenship,
@@ -57,10 +49,6 @@ func DocumentLoader(t *testing.T) *jsonld.DocumentLoader {
 			jsonld.ContextDocument{
 				URL:     "https://trustbloc.github.io/context/governance/context.jsonld",
 				Content: governance,
-			},
-			jsonld.ContextDocument{
-				URL:     "https://w3c-ccg.github.io/lds-jws2020/contexts/lds-jws2020-v1.json",
-				Content: jws2020,
 			},
 		),
 	)
