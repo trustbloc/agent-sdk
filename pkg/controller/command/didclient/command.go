@@ -39,8 +39,8 @@ var logger = log.New("agent-sdk-didclient")
 const (
 	// CommandName package command name.
 	CommandName = "didclient"
-	// CreateTrustBlocDIDCommandMethod command method.
-	CreateTrustBlocDIDCommandMethod = "CreateTrustBlocDID"
+	// CreateOrbDIDCommandMethod command method.
+	CreateOrbDIDCommandMethod = "CreateOrbDID"
 	// CreatePeerDIDCommandMethod command method.
 	CreatePeerDIDCommandMethod = "CreatePeerDID"
 	// log constants.
@@ -140,18 +140,18 @@ type Command struct {
 // GetHandlers returns list of all commands supported by this controller command.
 func (c *Command) GetHandlers() []command.Handler {
 	return []command.Handler{
-		cmdutil.NewCommandHandler(CommandName, CreateTrustBlocDIDCommandMethod, c.CreateTrustBlocDID),
+		cmdutil.NewCommandHandler(CommandName, CreateOrbDIDCommandMethod, c.CreateOrbDID),
 		cmdutil.NewCommandHandler(CommandName, CreatePeerDIDCommandMethod, c.CreatePeerDID),
 	}
 }
 
-// CreateTrustBlocDID creates a new trust bloc DID.
-func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error { //nolint: funlen,gocyclo
-	var request CreateBlocDIDRequest
+// CreateOrbDID creates a new orb DID.
+func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { //nolint: funlen,gocyclo
+	var request CreateOrbDIDRequest
 
 	err := json.NewDecoder(req).Decode(&request)
 	if err != nil {
-		logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, err.Error())
+		logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, err.Error())
 
 		return command.NewValidationError(InvalidRequestErrorCode, err)
 	}
@@ -163,14 +163,14 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 	for _, v := range request.PublicKeys {
 		value, decodeErr := base64.RawURLEncoding.DecodeString(v.Value)
 		if decodeErr != nil {
-			logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, decodeErr.Error())
+			logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, decodeErr.Error())
 
 			return command.NewExecuteError(CreateDIDErrorCode, decodeErr)
 		}
 
 		k, errGet := getKey(v.KeyType, value)
 		if errGet != nil {
-			logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, errGet.Error())
+			logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, errGet.Error())
 
 			return command.NewExecuteError(CreateDIDErrorCode, errGet)
 		}
@@ -189,14 +189,14 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 
 		jwk, errJWK := ariesjose.JWKFromKey(k)
 		if errJWK != nil {
-			logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, errJWK.Error())
+			logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, errJWK.Error())
 
 			return command.NewExecuteError(CreateDIDErrorCode, errJWK)
 		}
 
 		vm, errVM := did.NewVerificationMethodFromJWK(v.ID, v.Type, "", jwk)
 		if errVM != nil {
-			logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, errVM.Error())
+			logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, errVM.Error())
 
 			return command.NewExecuteError(CreateDIDErrorCode, errVM)
 		}
@@ -219,7 +219,7 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 				didDoc.CapabilityInvocation = append(didDoc.CapabilityInvocation,
 					*did.NewReferencedVerification(vm, did.CapabilityInvocation))
 			default:
-				logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod,
+				logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod,
 					fmt.Sprintf("public key purpose %s not supported", p))
 
 				return command.NewExecuteError(CreateDIDErrorCode,
@@ -232,14 +232,14 @@ func (c *Command) CreateTrustBlocDID(rw io.Writer, req io.Reader) command.Error 
 
 	docResolution, err := c.didBlocClient.Create(&didDoc, didMethodOpt...)
 	if err != nil {
-		logutil.LogError(logger, CommandName, CreateTrustBlocDIDCommandMethod, err.Error())
+		logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, err.Error())
 
 		return command.NewExecuteError(CreateDIDErrorCode, err)
 	}
 
 	command.WriteNillableResponse(rw, docResolution, logger)
 
-	logutil.LogDebug(logger, CommandName, CreateTrustBlocDIDCommandMethod, successString)
+	logutil.LogDebug(logger, CommandName, CreateOrbDIDCommandMethod, successString)
 
 	return nil
 }
@@ -335,7 +335,7 @@ func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //n
 
 	command.WriteNillableResponse(rw, docResolution, logger)
 
-	logutil.LogDebug(logger, CommandName, CreateTrustBlocDIDCommandMethod, successString)
+	logutil.LogDebug(logger, CommandName, CreateOrbDIDCommandMethod, successString)
 
 	return nil
 }

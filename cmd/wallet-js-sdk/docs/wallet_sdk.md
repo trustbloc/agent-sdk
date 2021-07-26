@@ -453,7 +453,7 @@ did-manager module provides DID related features for wallet like creating, impor
 * [did-manager](#module_did-manager)
     * [.exports.DIDManager](#exp_module_did-manager--exports.DIDManager) ⏏
         * [new exports.DIDManager(agent, user)](#new_module_did-manager--exports.DIDManager_new)
-        * [.createTrustBlocDID(auth, options)](#module_did-manager--exports.DIDManager.DIDManager+createTrustBlocDID) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.createOrbDID(auth, options)](#module_did-manager--exports.DIDManager.DIDManager+createOrbDID) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.createPeerDID(options)](#module_did-manager--exports.DIDManager.DIDManager+createPeerDID) ⇒ <code>Promise</code>
         * [.saveDID(options)](#module_did-manager--exports.DIDManager.DIDManager+saveDID) ⇒ <code>Promise</code>
         * [.importDID(options)](#module_did-manager--exports.DIDManager.DIDManager+importDID) ⇒ <code>Promise</code>
@@ -465,7 +465,7 @@ did-manager module provides DID related features for wallet like creating, impor
 ### .exports.DIDManager ⏏
 DID Manger provides DID related features for wallet like,
 
- - Creating TrustBloc DIDs.
+ - Creating Orb DIDs.
  - Creating Peer DIDs.
  - Saving Custom DIDs along with keys.
  - Getting all Saved DIDs.
@@ -480,22 +480,23 @@ DID Manger provides DID related features for wallet like,
 | agent | <code>string</code> | aries agent. |
 | user | <code>string</code> | unique wallet user identifier, the one used to create wallet profile. |
 
-<a name="module_did-manager--exports.DIDManager.DIDManager+createTrustBlocDID"></a>
+<a name="module_did-manager--exports.DIDManager.DIDManager+createOrbDID"></a>
 
-#### exports.DIDManager.createTrustBlocDID(auth, options) ⇒ <code>Promise.&lt;Object&gt;</code>
-Creates TrustBloc DID and saves it in wallet content store.
+#### exports.DIDManager.createOrbDID(auth, options) ⇒ <code>Promise.&lt;Object&gt;</code>
+Creates Orb DID and saves it in wallet content store.
 
 **Kind**: instance method of [<code>exports.DIDManager</code>](#exp_module_did-manager--exports.DIDManager)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - - Promise of DID Resolution response  or an error if operation fails..  
+**See**: [The did:orb Method](https://trustbloc.github.io/did-method-orb)  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | auth | <code>string</code> |  | authorization token for wallet operations. |
-| options | <code>Object</code> |  | options for creating TrustBloc DID. |
+| options | <code>Object</code> |  | options for creating Orb DID. |
 | options.keyType | <code>Object</code> | <code>ED25519</code> | (optional, default ED25519) type of the key to be used for creating keys for the DID, Refer agent documentation for supported key types. |
-| options.signatureType | <code>string</code> | <code>&quot;Ed25519VerificationKey2018&quot;</code> | (optional, default Ed25519VerificationKey2018) signature type to be used for DID verification methods. |
-| options.purposes | <code>string</code> | <code>&quot;[\&quot;authentication\&quot;&quot;</code> | (optional, default "authentication") purpose of the key. |
-| options.collection | <code>string</code> |  | (optional, default no collection) collection to which this DID should belong in wallet content store. |
+| options.signatureType | <code>String</code> | <code>Ed25519VerificationKey2018</code> | (optional, default Ed25519VerificationKey2018) signature type to be used for DID verification methods. |
+| options.purposes | <code>Array.&lt;String&gt;</code> | <code>authentication</code> | (optional, default "authentication") purpose of the key. |
+| options.collection | <code>String</code> |  | (optional, default no collection) collection to which this DID should belong in wallet content store. |
 
 <a name="module_did-manager--exports.DIDManager.DIDManager+createPeerDID"></a>
 

@@ -7,11 +7,11 @@ package didclient
 
 import "encoding/json"
 
-// CreateBlocDIDRequest model
+// CreateOrbDIDRequest model
 //
-// This is used for creating trustbloc DID.
+// This is used for creating orb DID.
 //
-type CreateBlocDIDRequest struct {
+type CreateOrbDIDRequest struct {
 	PublicKeys []PublicKey `json:"publicKeys,omitempty"`
 }
 

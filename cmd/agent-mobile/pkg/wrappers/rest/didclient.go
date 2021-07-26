@@ -20,9 +20,9 @@ type DIDClient struct {
 	Token string
 }
 
-// CreateTrustBlocDID creates a new trust bloc DID.
-func (dc *DIDClient) CreateTrustBlocDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
-	return dc.createRespEnvelope(request, didclient.CreateTrustBlocDIDCommandMethod)
+// CreateOrbDID creates a new Orb DID.
+func (dc *DIDClient) CreateOrbDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
+	return dc.createRespEnvelope(request, didclient.CreateOrbDIDCommandMethod)
 }
 
 // CreatePeerDID creates a new peer DID.

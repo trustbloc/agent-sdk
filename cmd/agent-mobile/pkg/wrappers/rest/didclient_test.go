@@ -56,7 +56,7 @@ func TestDIDClient_CreatePeerDID(t *testing.T) {
 	require.Equal(t, string(response), string(resp.Payload))
 }
 
-func TestDIDClient_CreateTrustBlocDID(t *testing.T) {
+func TestDIDClient_CreateOrbDID(t *testing.T) {
 	dc := getDIDClient(t)
 
 	response, err := json.Marshal(didclient.CreateDIDResponse{})
@@ -64,13 +64,13 @@ func TestDIDClient_CreateTrustBlocDID(t *testing.T) {
 
 	dc.httpClient = &mockHTTPClient{
 		data:   string(response),
-		method: http.MethodPost, url: mockAgentURL + restdidclient.CreateBlocDIDPath,
+		method: http.MethodPost, url: mockAgentURL + restdidclient.CreateOrbDIDPath,
 	}
 
-	payload, err := json.Marshal(didclient.CreateBlocDIDRequest{})
+	payload, err := json.Marshal(didclient.CreateOrbDIDRequest{})
 	require.NoError(t, err)
 
-	resp := dc.CreateTrustBlocDID(&models.RequestEnvelope{Payload: payload})
+	resp := dc.CreateOrbDID(&models.RequestEnvelope{Payload: payload})
 
 	require.NotNil(t, resp)
 	require.Nil(t, resp.Error)

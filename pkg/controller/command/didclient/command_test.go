@@ -84,7 +84,7 @@ func TestNew(t *testing.T) {
 	})
 }
 
-func TestCommand_CreateBlocDID(t *testing.T) {
+func TestCommand_CreateOrbDID(t *testing.T) {
 	t.Run("test error from request", func(t *testing.T) {
 		c, err := New("domain", "origin", "", getMockProvider())
 		require.NoError(t, err)
@@ -94,7 +94,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 		var b bytes.Buffer
 
-		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBufferString("--"))
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBufferString("--"))
 		require.Error(t, cmdErr)
 		require.Equal(t, InvalidRequestErrorCode, cmdErr.Code())
 		require.Equal(t, command.ValidationError, cmdErr.Type())
@@ -120,7 +120,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		}}
 
 		var b bytes.Buffer
-		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBufferString("{}"))
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBufferString("{}"))
 		require.Empty(t, b.Bytes())
 		require.NoError(t, cmdErr)
 	})
@@ -134,7 +134,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 		var b bytes.Buffer
 
-		req, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+		req, err := json.Marshal(CreateOrbDIDRequest{PublicKeys: []PublicKey{
 			{
 				ID: "key1", Type: "key1", KeyType: "Ed25519",
 				Value:    base64.RawURLEncoding.EncodeToString([]byte("value")),
@@ -143,7 +143,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		}})
 		require.NoError(t, err)
 
-		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(req))
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBuffer(req))
 		require.Error(t, cmdErr)
 		require.Equal(t, CreateDIDErrorCode, cmdErr.Code())
 		require.Equal(t, command.ExecuteError, cmdErr.Type())
@@ -159,7 +159,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 		var b bytes.Buffer
 
-		req, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+		req, err := json.Marshal(CreateOrbDIDRequest{PublicKeys: []PublicKey{
 			{
 				ID: "key1", Type: "key1", KeyType: "Ed25519",
 				Value: base64.RawURLEncoding.EncodeToString([]byte("value")),
@@ -175,7 +175,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		}})
 		require.NoError(t, err)
 
-		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(req))
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBuffer(req))
 		require.Error(t, cmdErr)
 		require.Equal(t, CreateDIDErrorCode, cmdErr.Code())
 		require.Equal(t, command.ExecuteError, cmdErr.Type())
@@ -191,7 +191,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 		var b bytes.Buffer
 
-		req, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+		req, err := json.Marshal(CreateOrbDIDRequest{PublicKeys: []PublicKey{
 			{
 				KeyType:  "wrong",
 				Recovery: true,
@@ -203,7 +203,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		}})
 		require.NoError(t, err)
 
-		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(req))
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBuffer(req))
 		require.Error(t, cmdErr)
 		require.Equal(t, CreateDIDErrorCode, cmdErr.Code())
 		require.Equal(t, command.ExecuteError, cmdErr.Type())
@@ -219,7 +219,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 		var b bytes.Buffer
 
-		req, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+		req, err := json.Marshal(CreateOrbDIDRequest{PublicKeys: []PublicKey{
 			{
 				Type:  "key1",
 				Value: "value",
@@ -227,7 +227,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		}})
 		require.NoError(t, err)
 
-		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(req))
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBuffer(req))
 		require.Error(t, cmdErr)
 		require.Equal(t, CreateDIDErrorCode, cmdErr.Code())
 		require.Equal(t, command.ExecuteError, cmdErr.Type())
@@ -263,7 +263,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
 		// ED key
-		r, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+		r, err := json.Marshal(CreateOrbDIDRequest{PublicKeys: []PublicKey{
 			{
 				KeyType:  ed25519KeyType,
 				Value:    base64.RawURLEncoding.EncodeToString(pubKey),
@@ -282,7 +282,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		require.NoError(t, err)
 
 		var b bytes.Buffer
-		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(r))
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBuffer(r))
 		require.NoError(t, cmdErr)
 
 		docRes, err := did.ParseDocumentResolution(b.Bytes())
@@ -297,7 +297,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
 		// ED key
-		r, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+		r, err := json.Marshal(CreateOrbDIDRequest{PublicKeys: []PublicKey{
 			{
 				KeyType:  ed25519KeyType,
 				Value:    base64.RawURLEncoding.EncodeToString(pubKey),
@@ -316,7 +316,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		require.NoError(t, err)
 
 		var b bytes.Buffer
-		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(r))
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBuffer(r))
 		require.NoError(t, cmdErr)
 
 		docRes, err := did.ParseDocumentResolution(b.Bytes())
@@ -331,7 +331,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 
 		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
 		// ED key
-		r, err := json.Marshal(CreateBlocDIDRequest{PublicKeys: []PublicKey{
+		r, err := json.Marshal(CreateOrbDIDRequest{PublicKeys: []PublicKey{
 			{
 				KeyType:  ed25519KeyType,
 				Value:    base64.RawURLEncoding.EncodeToString(pubKey),
@@ -351,7 +351,7 @@ func TestCommand_CreateBlocDID(t *testing.T) {
 		require.NoError(t, err)
 
 		var b bytes.Buffer
-		cmdErr := c.CreateTrustBlocDID(&b, bytes.NewBuffer(r))
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBuffer(r))
 		require.NoError(t, cmdErr)
 
 		docRes, err := did.ParseDocumentResolution(b.Bytes())

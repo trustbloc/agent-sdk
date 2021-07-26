@@ -12,17 +12,17 @@ import (
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
 )
 
-// createTrustBlocDIDRequest model
+// createOrbDIDRequest model
 //
 // Request to create a new trust bloc DID.
 //
-// swagger:parameters createTrustBlocDID
-type createTrustBlocDIDRequest struct { // nolint: unused,deadcode
-	// Params for creating a TrustBlocDID.
+// swagger:parameters createOrbDID
+type createOrbDIDRequest struct { // nolint: unused,deadcode
+	// Params for creating a Orb DID.
 	//
 	// in: body
 	// required: true
-	Request didclient.CreateBlocDIDRequest
+	Request didclient.CreateOrbDIDRequest
 }
 
 // createPeerDIDRequest model
