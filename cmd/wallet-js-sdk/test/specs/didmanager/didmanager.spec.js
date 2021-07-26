@@ -36,15 +36,15 @@ describe('DID Manager tests', async function () {
         auth = authResponse.token
     })
 
-    it('rick creates trustbloc DID in wallet', async function () {
+    it('rick creates orb DID in wallet', async function () {
         let didManager = new DIDManager({agent: rick, user: RICK_USER})
-        let did = await didManager.createTrustBlocDID(auth)
+        let did = await didManager.createOrbDID(auth)
         expect(did).to.not.empty
     })
 
-    it('user creates BLS12381G2 TrustBloc DID in wallet', async function () {
+    it('user creates BLS12381G2 Orb DID in wallet', async function () {
         let didManager = new DIDManager({agent: rick, user: RICK_USER})
-        let didBBS = await didManager.createTrustBlocDID(auth, {
+        let didBBS = await didManager.createOrbDID(auth, {
             purposes: ["assertionMethod", "authentication"],
             keyType: 'BLS12381G2',
             signatureType: 'Bls12381G2Key2020'

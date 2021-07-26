@@ -36,7 +36,7 @@ func getDIDClient(t *testing.T) *DIDClient {
 	return client
 }
 
-func TestDIDClient_CreateTrustBlocDID(t *testing.T) {
+func TestDIDClient_CreateOrbDID(t *testing.T) {
 	t.Run("creates trust bloc DID", func(t *testing.T) {
 		client := getDIDClient(t)
 
@@ -44,13 +44,13 @@ func TestDIDClient_CreateTrustBlocDID(t *testing.T) {
 		require.NoError(t, err)
 
 		fakeHandler := mockCommandRunner{data: response}
-		client.handlers[didclient.CreateTrustBlocDIDCommandMethod] = fakeHandler.exec
+		client.handlers[didclient.CreateOrbDIDCommandMethod] = fakeHandler.exec
 
-		payload, err := json.Marshal(didclient.CreateBlocDIDRequest{})
+		payload, err := json.Marshal(didclient.CreateOrbDIDRequest{})
 		require.NoError(t, err)
 
 		req := &models.RequestEnvelope{Payload: payload}
-		resp := client.CreateTrustBlocDID(req)
+		resp := client.CreateOrbDID(req)
 		require.NotNil(t, resp)
 		require.Nil(t, resp.Error)
 
@@ -60,15 +60,15 @@ func TestDIDClient_CreateTrustBlocDID(t *testing.T) {
 	t.Run("custom error", func(t *testing.T) {
 		client := getDIDClient(t)
 
-		client.handlers[didclient.CreateTrustBlocDIDCommandMethod] = func(rw io.Writer, req io.Reader) command.Error {
+		client.handlers[didclient.CreateOrbDIDCommandMethod] = func(rw io.Writer, req io.Reader) command.Error {
 			return command.NewExecuteError(1, errors.New("error"))
 		}
 
-		payload, err := json.Marshal(didclient.CreateBlocDIDRequest{})
+		payload, err := json.Marshal(didclient.CreateOrbDIDRequest{})
 		require.NoError(t, err)
 
 		req := &models.RequestEnvelope{Payload: payload}
-		resp := client.CreateTrustBlocDID(req)
+		resp := client.CreateOrbDID(req)
 		require.NotNil(t, resp)
 		require.NotNil(t, resp.Error)
 
@@ -79,7 +79,7 @@ func TestDIDClient_CreateTrustBlocDID(t *testing.T) {
 		client := getDIDClient(t)
 
 		req := &models.RequestEnvelope{Payload: []byte(`{`)}
-		resp := client.CreateTrustBlocDID(req)
+		resp := client.CreateOrbDID(req)
 		require.NotNil(t, resp)
 		require.NotNil(t, resp.Error)
 		require.Equal(t, "unexpected end of JSON input", resp.Error.Message)
@@ -114,7 +114,7 @@ func TestDIDClient_CreatePeerDID(t *testing.T) {
 			return command.NewExecuteError(1, errors.New("error"))
 		}
 
-		payload, err := json.Marshal(didclient.CreateBlocDIDRequest{})
+		payload, err := json.Marshal(didclient.CreateOrbDIDRequest{})
 		require.NoError(t, err)
 
 		req := &models.RequestEnvelope{Payload: payload}

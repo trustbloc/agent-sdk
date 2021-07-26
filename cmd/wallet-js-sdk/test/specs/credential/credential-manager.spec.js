@@ -109,10 +109,10 @@ describe('Credential Manager Tests', async function () {
     })
 
     let did
-    it('user creates TrustBloc DID in wallet', async function () {
+    it('user creates Orb DID in wallet', async function () {
         let didManager = new DIDManager({agent: walletUserAgent, user: WALLET_USER})
 
-        let docres = await didManager.createTrustBlocDID(auth, {purposes: ["assertionMethod", "authentication"]})
+        let docres = await didManager.createOrbDID(auth, {purposes: ["assertionMethod", "authentication"]})
         expect(docres).to.not.empty
         did = docres.DIDDocument.id
     })
@@ -433,7 +433,7 @@ let issueCredential = async (issuer, ...credential) => {
         ]
     };
 
-    let {DIDDocument} = await issuer.didclient.createTrustBlocDID(createDIDRequest)
+    let {DIDDocument} = await issuer.didclient.createOrbDID(createDIDRequest)
 
     let resolveDID = async () => await issuer.vdr.resolveDID({id: DIDDocument.id})
     await retryWithDelay(resolveDID, 10, 5000)

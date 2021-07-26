@@ -1265,17 +1265,17 @@ const Agent = function (opts) {
             pkgname: "didclient",
 
             /**
-             * Creates a trustbloc DID.
+             * Creates a Orb DID.
              *
              * @param req - json document
              * @returns {Promise<Object>}
              */
-            createTrustBlocDID: async function (req) {
-                return invoke(aw, pending, this.pkgname, "CreateTrustBlocDID", req, "timeout while creating did")
+            createOrbDID: async function (req) {
+                return invoke(aw, pending, this.pkgname, "CreateOrbDID", req, "timeout while creating orb did")
             },
 
             /**
-             * Creates a trustbloc DID.
+             * Creates a peer DID.
              *
              * @param req - json document
              * @returns {Promise<Object>}

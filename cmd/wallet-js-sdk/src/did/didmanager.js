@@ -19,7 +19,7 @@ const JSONLD_CTX_KEY = ["https://w3id.org/wallet/v1"];
 /**
  * DID Manger provides DID related features for wallet like,
  *
- *  - Creating TrustBloc DIDs.
+ *  - Creating Orb DIDs.
  *  - Creating Peer DIDs.
  *  - Saving Custom DIDs along with keys.
  *  - Getting all Saved DIDs.
@@ -38,18 +38,20 @@ export class DIDManager {
   }
 
   /**
-   * Creates TrustBloc DID and saves it in wallet content store.
+   * Creates Orb DID and saves it in wallet content store.
+   *
+   * @see {@link https://trustbloc.github.io/did-method-orb|The did:orb Method}
    *
    *  @param {string} auth - authorization token for wallet operations.
-   *  @param {Object} options - options for creating TrustBloc DID.
+   *  @param {Object} options - options for creating Orb DID.
    *  @param {Object} options.keyType=ED25519 - (optional, default ED25519) type of the key to be used for creating keys for the DID, Refer agent documentation for supported key types.
-   *  @param {string} options.signatureType=Ed25519VerificationKey2018 - (optional, default Ed25519VerificationKey2018) signature type to be used for DID verification methods.
-   *  @param {string} options.purposes=["authentication"] - (optional, default "authentication") purpose of the key.
-   *  @param {string} options.collection - (optional, default no collection) collection to which this DID should belong in wallet content store.
+   *  @param {String} options.signatureType=Ed25519VerificationKey2018 - (optional, default Ed25519VerificationKey2018) signature type to be used for DID verification methods.
+   *  @param {Array<String>} options.purposes=authentication - (optional, default "authentication") purpose of the key.
+   *  @param {String} options.collection - (optional, default no collection) collection to which this DID should belong in wallet content store.
    *
    * @returns {Promise<Object>} - Promise of DID Resolution response  or an error if operation fails..
    */
-  async createTrustBlocDID(
+  async createOrbDID(
     auth,
     {
       keyType = DEFAULT_KEY_TYPE,
@@ -93,14 +95,14 @@ export class DIDManager {
       ],
     };
 
-    let content = await this.agent.didclient.createTrustBlocDID(
+    let content = await this.agent.didclient.createOrbDID(
       createDIDRequest
     );
 
     await this.saveDID(auth, { content, collection });
 
     console.debug(
-      "created and saved TrustBloc DID successfully",
+      "created and saved Orb DID successfully",
       content.DIDDocument.id
     );
 

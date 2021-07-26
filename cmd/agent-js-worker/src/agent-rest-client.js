@@ -458,8 +458,8 @@ const pkgs = {
         },
     },
     didclient: {
-        CreateTrustBlocDID: {
-            path: "/didclient/create-trustbloc-did",
+        CreateOrbDID: {
+            path: "/didclient/create-orb-did",
             method: "POST",
         },
         CreatePeerDID: {

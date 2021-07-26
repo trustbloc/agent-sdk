@@ -20,15 +20,15 @@ type DIDClient struct {
 	handlers map[string]command.Exec
 }
 
-// CreateTrustBlocDID creates a new trust bloc DID.
-func (de *DIDClient) CreateTrustBlocDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
-	args := didclient.CreateBlocDIDRequest{}
+// CreateOrbDID creates a new orb DID.
+func (de *DIDClient) CreateOrbDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
+	args := didclient.CreateOrbDIDRequest{}
 
 	if err := json.Unmarshal(request.Payload, &args); err != nil {
 		return &models.ResponseEnvelope{Error: &models.CommandError{Message: err.Error()}}
 	}
 
-	response, cmdErr := exec(de.handlers[didclient.CreateTrustBlocDIDCommandMethod], args)
+	response, cmdErr := exec(de.handlers[didclient.CreateOrbDIDCommandMethod], args)
 	if cmdErr != nil {
 		return &models.ResponseEnvelope{Error: cmdErr}
 	}

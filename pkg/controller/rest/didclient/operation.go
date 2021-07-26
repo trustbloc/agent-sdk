@@ -19,7 +19,7 @@ import (
 // constants for endpoints of DIDClient.
 const (
 	OperationID       = "/didclient"
-	CreateBlocDIDPath = OperationID + "/create-trustbloc-did"
+	CreateOrbDIDPath  = OperationID + "/create-orb-did"
 	CreatePeerDIDPath = OperationID + "/create-peer-did"
 )
 
@@ -51,20 +51,20 @@ func (c *Operation) GetRESTHandlers() []rest.Handler {
 func (c *Operation) registerHandler() {
 	// Add more protocol endpoints here to expose them as controller API endpoints
 	c.handlers = []rest.Handler{
-		cmdutil.NewHTTPHandler(CreateBlocDIDPath, http.MethodPost, c.CreateTrustBlocDID),
+		cmdutil.NewHTTPHandler(CreateOrbDIDPath, http.MethodPost, c.CreateOrbDID),
 		cmdutil.NewHTTPHandler(CreatePeerDIDPath, http.MethodPost, c.CreatePeerDID),
 	}
 }
 
-// CreateTrustBlocDID swagger:route POST /didclient/create-trustbloc-did didclient createTrustBlocDID
+// CreateOrbDID swagger:route POST /didclient/create-orb-did didclient createOrbDID
 //
-// Creates a new trust bloc DID.
+// Creates a new orb DID.
 //
 // Responses:
 //    default: genericError
 //    200: createDIDResp
-func (c *Operation) CreateTrustBlocDID(rw http.ResponseWriter, req *http.Request) {
-	rest.Execute(c.command.CreateTrustBlocDID, rw, req.Body)
+func (c *Operation) CreateOrbDID(rw http.ResponseWriter, req *http.Request) {
+	rest.Execute(c.command.CreateOrbDID, rw, req.Body)
 }
 
 // CreatePeerDID swagger:route POST /didclient/create-peer-did didclient createPeerDID
