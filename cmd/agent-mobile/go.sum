@@ -589,8 +589,8 @@ github.com/hyperledger/aries-framework-go v0.1.7-0.20210421203733-b5dfd703a8fc/g
 github.com/hyperledger/aries-framework-go v0.1.7-0.20210429205242-c5e97865879c/go.mod h1:NH2lUe2C7kR7agKx3B+qBebALNJWrJVUBpqU2L9hvIM=
 github.com/hyperledger/aries-framework-go v0.1.7-0.20210526123422-eec182deab9a/go.mod h1:h6L+YoXtw90OZrH2IequxukIGwzfSpz8pUueQ9T5KqI=
 github.com/hyperledger/aries-framework-go v0.1.7-0.20210603210127-e57b8c94e3cf/go.mod h1:h6L+YoXtw90OZrH2IequxukIGwzfSpz8pUueQ9T5KqI=
-github.com/hyperledger/aries-framework-go v0.1.7-0.20210709155504-c8d5f0b43bb5 h1:TM4z4k+TZ437qyTm7B2u1VTgbWwmE7txtIXMzLEpIa0=
-github.com/hyperledger/aries-framework-go v0.1.7-0.20210709155504-c8d5f0b43bb5/go.mod h1:Ovk4guvBEyaWNgTijrU78Ot9uFfLGQTKeWofqqheumQ=
+github.com/hyperledger/aries-framework-go v0.1.7-0.20210804193628-c06a49a517fc h1:PZh5pS5MvoVXT4r7rIIvW8wN7g8CNqrHjt1UFcoGZ+8=
+github.com/hyperledger/aries-framework-go v0.1.7-0.20210804193628-c06a49a517fc/go.mod h1:o2KbvV3ev8YHxu50KqWYP1YYZpONw25FlxTX7PWrczI=
 github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20210326155331-14f4ca7d75cb/go.mod h1:zHlYeWY7yvMXtHQ8wTpoZ5UCuUE5WdxHd4D8KEW4DRM=
 github.com/hyperledger/aries-framework-go-ext/component/storage/mysql v0.0.0-20210326155331-14f4ca7d75cb/go.mod h1:EkAALlA2YG9bPxzLnGhsX6FipuN+zVDLyLY2FJmHuUk=
 github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.1.1 h1:bQMWfJkLfOV1zfCKE/SWyQy2YNnTAdfRhzDZnvAlUWw=
@@ -703,8 +703,9 @@ github.com/kawamuray/jsonpath v0.0.0-20201211160320-7483bafabd7e/go.mod h1:dz00y
 github.com/kelseyhightower/envconfig v1.3.0/go.mod h1:cccZRl6mQpaq41TPp5QxidR+Sa3axMbJDNb//FQX6Gg=
 github.com/kelseyhightower/envconfig v1.4.0/go.mod h1:cccZRl6mQpaq41TPp5QxidR+Sa3axMbJDNb//FQX6Gg=
 github.com/keybase/go-crypto v0.0.0-20190403132359-d65b6b94177f/go.mod h1:ghbZscTyKdM07+Fw3KSi0hcJm+AlEUWj8QLlPtijN/M=
-github.com/kilic/bls12-381 v0.0.0-20201104083100-a288617c07f1 h1:fLyvBx6b/VrqcC1KlgTsPdpX3BcwGRWV8P6QfdgOLuw=
 github.com/kilic/bls12-381 v0.0.0-20201104083100-a288617c07f1/go.mod h1:gcwDl9YLyNc3H3wmPXamu+8evD8TYUa6BjTsWnvdn7A=
+github.com/kilic/bls12-381 v0.1.1-0.20210503002446-7b7597926c69 h1:kMJlf8z8wUcpyI+FQJIdGjAhfTww1y0AbQEv86bpVQI=
+github.com/kilic/bls12-381 v0.1.1-0.20210503002446-7b7597926c69/go.mod h1:tlkavyke+Ac7h8R3gZIjI5LKBcvMlSWnXNMgT3vZXo8=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
@@ -1163,7 +1164,6 @@ golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f/go.mod h1:5qLYkcX4OjUUV8bRu
 golang.org/x/lint v0.0.0-20200130185559-910be7a94367/go.mod h1:3xt1FjdF8hUf6vQPIChWIBhFzV8gjjsPE/fR3IyQdNY=
 golang.org/x/lint v0.0.0-20200302205851-738671d3881b/go.mod h1:3xt1FjdF8hUf6vQPIChWIBhFzV8gjjsPE/fR3IyQdNY=
 golang.org/x/mobile v0.0.0-20190312151609-d3739f865fa6/go.mod h1:z+o9i4GpDbdi3rU15maQ/Ox0txvL9dWGYEHz965HBQE=
-golang.org/x/mobile v0.0.0-20190719004257-d2bd2a29d028 h1:4+4C/Iv2U4fMZBiMCc98MG1In4gJY5YRhtpDNeDeHWs=
 golang.org/x/mobile v0.0.0-20190719004257-d2bd2a29d028/go.mod h1:E/iHnbuqvinMTCcRqshq8CkpyQDoeVncDDYHnLhea+o=
 golang.org/x/mod v0.0.0-20190513183733-4bf6d317e70e/go.mod h1:mXi4GBBbnImb6dmsKGUJ2LatrhH/nqhxcFungHvyanc=
 golang.org/x/mod v0.1.0/go.mod h1:0QHyrYULN0/3qlju5TqG8bIK38QM8yzMo5ekMj3DlcY=
@@ -1305,6 +1305,7 @@ golang.org/x/sys v0.0.0-20201009025420-dfb3f7c4e634/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20201119102817-f84b799fce68/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20201211090839-8ad439b19e0f/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20201214210602-f9fddec55a1e/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c h1:F1jZWGFhYfh0Ci55sIpILtKKK8p3i2/krTr0H1rg74I=
 golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=

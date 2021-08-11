@@ -287,7 +287,7 @@ describe('Credential Query Tests', async function () {
                 "id": "22c77155-edf2-4ec5-8d44-b393b4e4fa38",
                 "input_descriptors": [{
                     "id": "20b073bb-cede-4912-9e9d-334e5702077b",
-                    "schema": [{"uri": "https://www.w3.org/2018/credentials/v1#VerifiableCredential"}],
+                    "schema": [{"uri": "https://www.w3.org/2018/credentials#VerifiableCredential"}],
                     "constraints": {"fields": [{"path": ["$.credentialSubject.familyName"]}]}
                 }]
             }]
@@ -306,7 +306,7 @@ describe('Credential Query Tests', async function () {
                 "id": "22c77155-edf2-4ec5-8d44-b393b4e4fa38",
                 "input_descriptors": [{
                     "id": "20b073bb-cede-4912-9e9d-334e5702077b",
-                    "schema": [{"uri": "https://www.w3.org/2018/credentials/v1#VerifiableCredential"}],
+                    "schema": [{"uri": "https://www.w3.org/2018/credentials#VerifiableCredential"}],
                     "constraints": {"fields": [{"path": ["$.credentialSubject.familyName"]}]}
                 }]
             }]

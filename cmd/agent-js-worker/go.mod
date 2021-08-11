@@ -10,7 +10,7 @@ require (
 	github.com/btcsuite/btcd v0.22.0-beta
 	github.com/google/tink/go v1.6.1-0.20210519071714-58be99b3c4d0
 	github.com/google/uuid v1.2.0
-	github.com/hyperledger/aries-framework-go v0.1.7-0.20210709155504-c8d5f0b43bb5
+	github.com/hyperledger/aries-framework-go v0.1.7-0.20210804193628-c06a49a517fc
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.1.1
 	github.com/hyperledger/aries-framework-go/component/storage/edv v0.0.0-20210709155504-c8d5f0b43bb5
 	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20210709155504-c8d5f0b43bb5
