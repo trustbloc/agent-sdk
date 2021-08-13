@@ -30,14 +30,15 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport"
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/jsonld"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/defaults"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
+	ldstore "github.com/hyperledger/aries-framework-go/pkg/store/ld"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
-	"github.com/piprate/json-gold/ld"
+	jsonld "github.com/piprate/json-gold/ld"
 	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 
@@ -796,7 +797,7 @@ func startAgent(parameters *agentParameters) error {
 	return nil
 }
 
-func createAriesAgent(parameters *agentParameters) (*context.Provider, error) { //nolint:funlen
+func createAriesAgent(parameters *agentParameters) (*context.Provider, error) {
 	var opts []aries.Option
 
 	storePro, err := createStoreProviders(parameters)
@@ -806,8 +807,7 @@ func createAriesAgent(parameters *agentParameters) (*context.Provider, error) { 
 
 	opts = append(opts, aries.WithStoreProvider(storePro))
 
-	loader, err := jsonld.NewDocumentLoader(storePro,
-		jsonld.WithRemoteDocumentLoader(ld.NewDefaultDocumentLoader(http.DefaultClient)))
+	loader, err := createJSONLDDocumentLoader(storePro)
 	if err != nil {
 		return nil, fmt.Errorf("create document loader: %w", err)
 	}
@@ -888,4 +888,42 @@ func createStoreProviders(parameters *agentParameters) (storage.Provider, error)
 	}
 
 	return store, nil
+}
+
+type ldStoreProvider struct {
+	ContextStore        ldstore.ContextStore
+	RemoteProviderStore ldstore.RemoteProviderStore
+}
+
+func (p *ldStoreProvider) JSONLDContextStore() ldstore.ContextStore {
+	return p.ContextStore
+}
+
+func (p *ldStoreProvider) JSONLDRemoteProviderStore() ldstore.RemoteProviderStore {
+	return p.RemoteProviderStore
+}
+
+func createJSONLDDocumentLoader(storageProvider storage.Provider) (jsonld.DocumentLoader, error) {
+	contextStore, err := ldstore.NewContextStore(storageProvider)
+	if err != nil {
+		return nil, fmt.Errorf("create JSON-LD context store: %w", err)
+	}
+
+	remoteProviderStore, err := ldstore.NewRemoteProviderStore(storageProvider)
+	if err != nil {
+		return nil, fmt.Errorf("create remote provider store: %w", err)
+	}
+
+	ldStore := &ldStoreProvider{
+		ContextStore:        contextStore,
+		RemoteProviderStore: remoteProviderStore,
+	}
+
+	documentLoader, err := ld.NewDocumentLoader(ldStore,
+		ld.WithRemoteDocumentLoader(jsonld.NewDefaultDocumentLoader(http.DefaultClient)))
+	if err != nil {
+		return nil, fmt.Errorf("new document loader: %w", err)
+	}
+
+	return documentLoader, nil
 }

@@ -23,7 +23,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 	mediatorservice "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	ariesjose "github.com/hyperledger/aries-framework-go/pkg/doc/jose"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk/jwksupport"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/peer"
@@ -187,7 +187,7 @@ func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { //no
 			continue
 		}
 
-		jwk, errJWK := ariesjose.JWKFromKey(k)
+		jwk, errJWK := jwksupport.JWKFromKey(k)
 		if errJWK != nil {
 			logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, errJWK.Error())
 
