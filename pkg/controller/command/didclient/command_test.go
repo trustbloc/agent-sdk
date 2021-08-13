@@ -19,12 +19,12 @@ import (
 	"testing"
 
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
 	mediatorsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	mockprotocol "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
@@ -105,13 +105,13 @@ func TestCommand_CreateOrbDID(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
-		jwk := &jose.JWK{}
-		jwk.Key = ed25519.PublicKey{}
+		j := &jwk.JWK{}
+		j.Key = ed25519.PublicKey{}
 
-		v, err := did.NewVerificationMethodFromJWK("id", "type", "c", jwk)
+		v, err := did.NewVerificationMethodFromJWK("id", "type", "c", j)
 		require.NoError(t, err)
 
-		jwk.Key = make(chan struct{})
+		j.Key = make(chan struct{})
 
 		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{
 			DIDDocument: &did.Doc{

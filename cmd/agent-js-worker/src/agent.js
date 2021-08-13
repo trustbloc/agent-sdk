@@ -1409,21 +1409,66 @@ const Agent = function (opts) {
             },
         },
         /**
-         * JSON-LD context management API.
+         * JSON-LD management API.
          *
          * Refer to [OpenAPI spec](docs/rest/openapi_spec.md#generate-openapi-spec) for
          * input params and output return json values.
          */
-        context: {
-            pkgname: "context",
+        ld: {
+            pkgname: "ld",
 
             /**
              * Adds JSON-LD contexts to the underlying storage.
              *
              * @returns {Promise<Object>}
              */
-            add: async function (req) {
-                return invoke(aw, pending, this.pkgname, "Add", req, "timeout while adding contexts")
+            addContexts: async function (req) {
+                return invoke(aw, pending, this.pkgname, "AddContexts", req, "timeout while adding contexts")
+            },
+
+            /**
+             * Adds remote provider and JSON-LD contexts from that provider to the underlying storage.
+             *
+             * @returns {Promise<Object>}
+             */
+            addRemoteProvider: async function (req) {
+                return invoke(aw, pending, this.pkgname, "AddRemoteProvider", req, "timeout while adding remote provider")
+            },
+
+            /**
+             * Updates contexts from the remote provider.
+             *
+             * @returns {Promise<Object>}
+             */
+            refreshRemoteProvider: async function (req) {
+                return invoke(aw, pending, this.pkgname, "RefreshRemoteProvider", req, "timeout while refreshing remote provider")
+            },
+
+            /**
+             * Deletes remote provider and JSON-LD contexts from that provider from the underlying storage.
+             *
+             * @returns {Promise<Object>}
+             */
+            deleteRemoteProvider: async function (req) {
+                return invoke(aw, pending, this.pkgname, "DeleteRemoteProvider", req, "timeout while removing remote provider")
+            },
+
+            /**
+             * Gets all remote providers from the underlying storage.
+             *
+             * @returns {Promise<Object>}
+             */
+            getAllRemoteProviders: async function () {
+                return invoke(aw, pending, this.pkgname, "GetAllRemoteProviders", {}, "timeout while getting remote providers")
+            },
+
+            /**
+             * Updates contexts from all remote providers in the underlying storage.
+             *
+             * @returns {Promise<Object>}
+             */
+            refreshAllRemoteProviders: async function (req) {
+                return invoke(aw, pending, this.pkgname, "RefreshAllRemoteProviders", req, "timeout while refreshing remote providers")
             },
         },
     }
