@@ -21,6 +21,7 @@ import (
 
 	"github.com/hyperledger/aries-framework-go/component/storage/leveldb"
 	"github.com/hyperledger/aries-framework-go/pkg/common/log"
+	ldstore "github.com/hyperledger/aries-framework-go/pkg/store/ld"
 	spilog "github.com/hyperledger/aries-framework-go/spi/log"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/spf13/cobra"
@@ -350,8 +351,10 @@ func TestStartCmd(t *testing.T) {
 	})
 
 	t.Cleanup(func() {
-		require.NoError(t, os.RemoveAll("db1-jsonldcontexts"))
-		require.NoError(t, os.RemoveAll("db2-jsonldcontexts"))
+		require.NoError(t, os.RemoveAll("db1-"+ldstore.ContextStoreName))
+		require.NoError(t, os.RemoveAll("db2-"+ldstore.ContextStoreName))
+		require.NoError(t, os.RemoveAll("db1-"+ldstore.RemoteProviderStoreName))
+		require.NoError(t, os.RemoveAll("db2-"+ldstore.RemoteProviderStoreName))
 	})
 }
 

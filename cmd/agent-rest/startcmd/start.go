@@ -30,15 +30,12 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport"
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/defaults"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
-	ldstore "github.com/hyperledger/aries-framework-go/pkg/store/ld"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
-	jsonld "github.com/piprate/json-gold/ld"
 	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 
@@ -195,6 +192,14 @@ const (
 		"pkg/framework/aries/framework.go#L165-L168." +
 		" Alternatively, this can be set with the following environment variable: " + agentTransportReturnRouteEnvKey
 
+	// remote JSON-LD context provider url flag.
+	agentContextProviderFlagName  = "context-provider-url"
+	agentContextProviderEnvKey    = "ARIESD_CONTEXT_PROVIDER_URL"
+	agentContextProviderFlagUsage = "Remote context provider URL to get JSON-LD contexts from." +
+		" This flag can be repeated, allowing setting up multiple context providers." +
+		" Alternatively, this can be set with the following environment variable (in CSV format): " +
+		agentContextProviderEnvKey
+
 	httpProtocol      = "http"
 	websocketProtocol = "ws"
 
@@ -219,6 +224,7 @@ type agentParameters struct {
 	trustblocResolver                              string
 	webhookURLs, httpResolvers, outboundTransports []string
 	inboundHostInternals, inboundHostExternals     []string
+	contextProviderURLs                            []string
 	autoAccept                                     bool
 	msgHandler                                     command.MessageHandler
 	dbParam                                        *dbParam
@@ -373,6 +379,11 @@ func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo, g
 				return err
 			}
 
+			contextProviderURLs, err := getUserSetVars(cmd, agentContextProviderFlagName, agentContextProviderEnvKey, true)
+			if err != nil {
+				return err
+			}
+
 			parameters := &agentParameters{
 				server:               server,
 				host:                 host,
@@ -389,6 +400,7 @@ func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo, g
 				outboundTransports:   outboundTransports,
 				autoAccept:           autoAccept,
 				transportReturnRoute: transportReturnRoute,
+				contextProviderURLs:  contextProviderURLs,
 				tlsCertFile:          tlsCertFile,
 				tlsKeyFile:           tlsKeyFile,
 			}
@@ -519,6 +531,9 @@ func createFlags(startCmd *cobra.Command) { // nolint: funlen
 
 	// db timeout
 	startCmd.Flags().StringP(databaseTimeoutFlagName, "", "", databaseTimeoutFlagUsage)
+
+	// remote JSON-LD context provider url flag
+	startCmd.Flags().StringSliceP(agentContextProviderFlagName, "", []string{}, agentContextProviderFlagUsage)
 }
 
 func getUserSetVar(cmd *cobra.Command, flagName, envKey string, isOptional bool) (string, error) {
@@ -807,13 +822,6 @@ func createAriesAgent(parameters *agentParameters) (*context.Provider, error) {
 
 	opts = append(opts, aries.WithStoreProvider(storePro))
 
-	loader, err := createJSONLDDocumentLoader(storePro)
-	if err != nil {
-		return nil, fmt.Errorf("create document loader: %w", err)
-	}
-
-	opts = append(opts, aries.WithJSONLDDocumentLoader(loader))
-
 	if parameters.transportReturnRoute != "" {
 		opts = append(opts, aries.WithTransportReturnRoute(parameters.transportReturnRoute))
 	}
@@ -844,6 +852,10 @@ func createAriesAgent(parameters *agentParameters) (*context.Provider, error) {
 
 	opts = append(opts, outboundTransportOpts...)
 	opts = append(opts, aries.WithMessageServiceProvider(parameters.msgHandler))
+
+	if len(parameters.contextProviderURLs) > 0 {
+		opts = append(opts, aries.WithJSONLDContextProviderURL(parameters.contextProviderURLs...))
+	}
 
 	framework, err := aries.New(opts...)
 	if err != nil {
@@ -888,42 +900,4 @@ func createStoreProviders(parameters *agentParameters) (storage.Provider, error)
 	}
 
 	return store, nil
-}
-
-type ldStoreProvider struct {
-	ContextStore        ldstore.ContextStore
-	RemoteProviderStore ldstore.RemoteProviderStore
-}
-
-func (p *ldStoreProvider) JSONLDContextStore() ldstore.ContextStore {
-	return p.ContextStore
-}
-
-func (p *ldStoreProvider) JSONLDRemoteProviderStore() ldstore.RemoteProviderStore {
-	return p.RemoteProviderStore
-}
-
-func createJSONLDDocumentLoader(storageProvider storage.Provider) (jsonld.DocumentLoader, error) {
-	contextStore, err := ldstore.NewContextStore(storageProvider)
-	if err != nil {
-		return nil, fmt.Errorf("create JSON-LD context store: %w", err)
-	}
-
-	remoteProviderStore, err := ldstore.NewRemoteProviderStore(storageProvider)
-	if err != nil {
-		return nil, fmt.Errorf("create remote provider store: %w", err)
-	}
-
-	ldStore := &ldStoreProvider{
-		ContextStore:        contextStore,
-		RemoteProviderStore: remoteProviderStore,
-	}
-
-	documentLoader, err := ld.NewDocumentLoader(ldStore,
-		ld.WithRemoteDocumentLoader(jsonld.NewDefaultDocumentLoader(http.DefaultClient)))
-	if err != nil {
-		return nil, fmt.Errorf("new document loader: %w", err)
-	}
-
-	return documentLoader, nil
 }

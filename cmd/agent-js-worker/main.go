@@ -44,7 +44,6 @@ import (
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
@@ -53,12 +52,10 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/kms/webkms"
 	"github.com/hyperledger/aries-framework-go/pkg/secretlock"
 	"github.com/hyperledger/aries-framework-go/pkg/secretlock/local"
-	ldstore "github.com/hyperledger/aries-framework-go/pkg/store/ld"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/key"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/mitchellh/mapstructure"
-	jsonld "github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/edge-core/pkg/log"
 	kmszcap "github.com/trustbloc/kms/pkg/restapi/kms/operation"
 
@@ -145,6 +142,7 @@ type agentStartOpts struct {
 	OPSKMSCapability     string      `json:"opsKMSCapability,omitempty"` // TODO to be removed/refined after universal wallet migration
 	DidAnchorOrigin      string      `json:"didAnchorOrigin"`
 	SidetreeToken        string      `json:"sidetreeToken"`
+	ContextProviderURLs  []string    `json:"context-provider-url"`
 }
 
 type userConfig struct {
@@ -602,18 +600,15 @@ func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 		options = append(options, aries.WithTransportReturnRoute(startOpts.TransportReturnRoute))
 	}
 
-	// indexedDBProvider used by localKMS and JSON-LD document loader.
+	if len(startOpts.ContextProviderURLs) > 0 {
+		options = append(options, aries.WithJSONLDContextProviderURL(startOpts.ContextProviderURLs...))
+	}
+
+	// indexedDBProvider used by localKMS
 	indexedDBProvider, err := createIndexedDBStorage(startOpts)
 	if err != nil {
 		return nil, fmt.Errorf("unexpected failure while creating IndexDB storage provider: %w", err)
 	}
-
-	loader, err := createJSONLDDocumentLoader(indexedDBProvider)
-	if err != nil {
-		return nil, fmt.Errorf("create document loader: %w", err)
-	}
-
-	options = append(options, aries.WithJSONLDDocumentLoader(loader))
 
 	var (
 		kmsImpl    kms.KeyManager
@@ -1224,42 +1219,4 @@ func (w *edvHTTPHeaderSigner) SignHeader(req *http.Request, capability []byte) (
 	}
 
 	return &req.Header, nil
-}
-
-type ldStoreProvider struct {
-	ContextStore        ldstore.ContextStore
-	RemoteProviderStore ldstore.RemoteProviderStore
-}
-
-func (p *ldStoreProvider) JSONLDContextStore() ldstore.ContextStore {
-	return p.ContextStore
-}
-
-func (p *ldStoreProvider) JSONLDRemoteProviderStore() ldstore.RemoteProviderStore {
-	return p.RemoteProviderStore
-}
-
-func createJSONLDDocumentLoader(storageProvider storage.Provider) (jsonld.DocumentLoader, error) {
-	contextStore, err := ldstore.NewContextStore(storageProvider)
-	if err != nil {
-		return nil, fmt.Errorf("create JSON-LD context store: %w", err)
-	}
-
-	remoteProviderStore, err := ldstore.NewRemoteProviderStore(storageProvider)
-	if err != nil {
-		return nil, fmt.Errorf("create remote provider store: %w", err)
-	}
-
-	ldStore := &ldStoreProvider{
-		ContextStore:        contextStore,
-		RemoteProviderStore: remoteProviderStore,
-	}
-
-	documentLoader, err := ld.NewDocumentLoader(ldStore,
-		ld.WithRemoteDocumentLoader(jsonld.NewDefaultDocumentLoader(http.DefaultClient)))
-	if err != nil {
-		return nil, fmt.Errorf("new document loader: %w", err)
-	}
-
-	return documentLoader, nil
 }

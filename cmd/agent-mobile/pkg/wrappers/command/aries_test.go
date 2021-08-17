@@ -284,3 +284,16 @@ func TestAries_GetVCWalletController(t *testing.T) {
 		require.NotNil(t, m)
 	})
 }
+
+func TestAries_GetLDContextController(t *testing.T) {
+	t.Run("it creates a controller", func(t *testing.T) {
+		opts := &config.Options{}
+		a, err := NewAries(opts)
+		require.NoError(t, err)
+		require.NotNil(t, a)
+
+		controller, err := a.GetLDController()
+		require.NoError(t, err)
+		require.NotNil(t, controller)
+	})
+}
