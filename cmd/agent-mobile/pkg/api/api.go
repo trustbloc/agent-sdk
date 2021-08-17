@@ -57,4 +57,7 @@ type AriesController interface {
 
 	// GetVCWalletController returns an implementation of VCWalletController
 	GetVCWalletController() (VCWalletController, error)
+
+	// GetLDController returns an implementation of LDController
+	GetLDController() (LDController, error)
 }

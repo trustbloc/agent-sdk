@@ -89,6 +89,7 @@ function newMsg(pkg, fn, payload) {
  *      "trustbloc-resolver": "http://trustbloc.resolver.com",
  *      "agent-rest-url": "http://controller.api.example.com",
  *      "agent-rest-wshook": "ws://controller.api.example.com"
+ *      "context-provider-url": ["https://context-provider.example.com/ld_contexts.json"]
  * }
  *
  * @param opts agent initialization options.
