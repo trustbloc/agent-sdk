@@ -195,7 +195,7 @@ export class CredentialManager {
    *  @param {Array<string>} credentialOptions.storedCredentials - (optional) ids of the credentials already saved in wallet content store.
    *  @param {Array<Object>} credentialOptions.rawCredentials - (optional) list of raw credentials to be presented.
    *  @param {Object} credentialOptions.presentation - (optional) presentation to be proved.
-   *  @param {Object} proofOptions - proof options for issuing credential.
+   *  @param {Object} proofOptions - proof options for signing presentation.
    *  @param {String} proofOptions.controller -  DID to be used for signing.
    *  @param {String} proofOptions.verificationMethod - (optional) VerificationMethod is the URI of the verificationMethod used for the proof.
    *  By default, Controller public key matching 'assertion' for issue or 'authentication' for prove functions.
