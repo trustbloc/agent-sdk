@@ -43,8 +43,8 @@ Refer  Wallet SDK Data Model [documentation](data_models.md) to know about data 
 <dt><a href="#module_blinded-routing">blinded-routing</a></dt>
 <dd><p>blinded-routing module provides features supporting blinded DIDComm routing features.</p>
 </dd>
-<dt><a href="#module_didexchange">didexchange</a></dt>
-<dd><p>didexchange module provides aries DID exchange connect features.</p>
+<dt><a href="#module_didcomm">didcomm</a></dt>
+<dd><p>didcomm module provides wallet based DIDComm features.</p>
 </dd>
 <dt><a href="#module_vcwallet">vcwallet</a></dt>
 <dd><p>vcwallet module provides verifiable credential wallet SDK for aries universal wallet implementation.</p>
@@ -607,69 +607,124 @@ This function provides functionality of sharing peer DID with connecting party f
 | --- | --- | --- |
 | connection | <code>Object</code> | connection record of the connection established. |
 
-<a name="module_didexchange"></a>
+<a name="module_didcomm"></a>
 
-## didexchange
-didexchange module provides aries DID exchange connect features.
+## didcomm
+didcomm module provides wallet based DIDComm features.
 
 
-* [didexchange](#module_didexchange)
-    * [.exports.DIDExchange](#exp_module_didexchange--exports.DIDExchange) ⏏
+* [didcomm](#module_didcomm)
+    * [.exports.DIDComm](#exp_module_didcomm--exports.DIDComm) ⏏
+        * [new exports.DIDComm(agent, user)](#new_module_didcomm--exports.DIDComm_new)
         * _instance_
-            * [.connect(invitation, options)](#module_didexchange--exports.DIDExchange.DIDExchange+connect)
+            * [.connect(auth, invitation, options)](#module_didcomm--exports.DIDComm.DIDComm+connect) ⇒ <code>Promise.&lt;Object&gt;</code>
+            * [.proposePresentation(auth, invitation, connectOptions, proposeOptions)](#module_didcomm--exports.DIDComm.DIDComm+proposePresentation) ⇒ <code>Promise.&lt;Object&gt;</code>
+            * [.presentProof(auth, threadID, presentation)](#module_didcomm--exports.DIDComm.DIDComm+presentProof) ⇒ <code>Promise.&lt;Object&gt;</code>
         * _static_
-            * [.createInvitationFromRouter](#module_didexchange--exports.DIDExchange.createInvitationFromRouter)
-            * [.getMediatorConnections(agent)](#module_didexchange--exports.DIDExchange.getMediatorConnections)
-            * [.connectToMediator(agent, endpoint, wait)](#module_didexchange--exports.DIDExchange.connectToMediator)
+            * [.createInvitationFromRouter](#module_didcomm--exports.DIDComm.createInvitationFromRouter)
+            * [.getMediatorConnections(agent)](#module_didcomm--exports.DIDComm.getMediatorConnections)
+            * [.connectToMediator(agent, endpoint, wait)](#module_didcomm--exports.DIDComm.connectToMediator)
 
-<a name="exp_module_didexchange--exports.DIDExchange"></a>
+<a name="exp_module_didcomm--exports.DIDComm"></a>
 
-### .exports.DIDExchange ⏏
-DIDExchange provides features to establish DID Connection.
+### .exports.DIDComm ⏏
+DIDComm module provides wallet based DIDComm features. Currently supporting DID-Exchange, Present Proof & WACI features.
 
-**Kind**: static class of [<code>didexchange</code>](#module_didexchange)  
-<a name="module_didexchange--exports.DIDExchange.DIDExchange+connect"></a>
+**Kind**: static class of [<code>didcomm</code>](#module_didcomm)  
+<a name="new_module_didcomm--exports.DIDComm_new"></a>
 
-#### exports.DIDExchange.connect(invitation, options)
-Accept out-of-band DIDComm invitation and perform DIDExchange.
+#### new exports.DIDComm(agent, user)
 
-**Kind**: instance method of [<code>exports.DIDExchange</code>](#exp_module_didexchange--exports.DIDExchange)  
+| Param | Type | Description |
+| --- | --- | --- |
+| agent | <code>string</code> | aries agent. |
+| user | <code>string</code> | unique wallet user identifier, the one used to create wallet profile. |
+
+<a name="module_didcomm--exports.DIDComm.DIDComm+connect"></a>
+
+#### exports.DIDComm.connect(auth, invitation, options) ⇒ <code>Promise.&lt;Object&gt;</code>
+accepts an out of band invitation and performs did-exchange.
+
+**Kind**: instance method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing connection ID or error if operation fails.  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| invitation | <code>string</code> |  | out-of-band DIDComm invitation. |
-| options | <code>Object</code> |  | options for connect. |
-| options.waitForCompletion | <code>string</code> |  | wait for custom 'didexchange-state-complete' message to conclude connection as completed. |
-| options.label | <code>string</code> | <code>&quot;agent-default-label&quot;</code> | custom label to be provided. |
+| auth | <code>String</code> |  | authorization token for performing this wallet operation. |
+| invitation | <code>Object</code> |  | out of band invitation. |
+| options | <code>Object</code> |  | (optional) for accepting incoming out-of-band invitation and connecting to inviter. |
+| options.myLabel | <code>String</code> |  | (optional) for providing label to be shared with the other agent during the subsequent did-exchange. |
+| options.routerConnections | <code>Array.&lt;string&gt;</code> |  | (optional) to provide router connection to be used. |
+| options.reuseConnection | <code>String</code> |  | (optional) to provide DID to be used when reusing a connection. |
+| options.reuseAnyConnection | <code>Bool</code> | <code>false</code> | (optional) to use any recognized DID in the services array for a reusable connection. |
+| options.timeout | <code>Time</code> |  | (optional) to wait for connection status to be 'completed'. |
+| options.waitForCompletion | <code>Bool</code> |  | (optional) if true then wait for custom 'didexchange-state-complete' message to conclude connection as completed. |
 
-<a name="module_didexchange--exports.DIDExchange.createInvitationFromRouter"></a>
+<a name="module_didcomm--exports.DIDComm.DIDComm+proposePresentation"></a>
 
-#### exports.DIDExchange.createInvitationFromRouter
+#### exports.DIDComm.proposePresentation(auth, invitation, connectOptions, proposeOptions) ⇒ <code>Promise.&lt;Object&gt;</code>
+accepts an out of band invitation, sends propose presentation message to inviter to initiate credential share interaction
+ and waits for request presentation message from inviter as a response.
+
+**Kind**: instance method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing presentation request message from relying party or error if operation fails.  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| auth | <code>String</code> |  | authorization token for performing this wallet operation. |
+| invitation | <code>Object</code> |  | out of band invitation. |
+| connectOptions | <code>Object</code> |  | (optional) for accepting incoming out-of-band invitation and connecting to inviter. |
+| connectOptions.myLabel | <code>String</code> |  | (optional) for providing label to be shared with the other agent during the subsequent did-exchange. |
+| connectOptions.routerConnections | <code>Array.&lt;string&gt;</code> |  | (optional) to provide router connection to be used. |
+| connectOptions.reuseConnection | <code>String</code> |  | (optional) to provide DID to be used when reusing a connection. |
+| connectOptions.reuseAnyConnection | <code>Bool</code> | <code>false</code> | (optional) to use any recognized DID in the services array for a reusable connection. |
+| connectOptions.connectionTimeout | <code>timeout</code> |  | (optional) to wait for connection status to be 'completed'. |
+| proposeOptions | <code>Object</code> |  | (optional) for sending message proposing presentation. |
+| proposeOptions.from | <code>String</code> |  | (optional) option from DID option to customize sender DID.. |
+| proposeOptions.timeout | <code>Time</code> |  | (optional) to wait for request presentation message from relying party. |
+
+<a name="module_didcomm--exports.DIDComm.DIDComm+presentProof"></a>
+
+#### exports.DIDComm.presentProof(auth, threadID, presentation) ⇒ <code>Promise.&lt;Object&gt;</code>
+sends present proof message from wallet to relying party as part of ongoing credential share interaction.
+
+**Kind**: instance method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - empty promise or error if operation fails.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| auth | <code>String</code> | authorization token for performing this wallet operation. |
+| threadID | <code>String</code> | threadID of credential interaction. |
+| presentation | <code>Object</code> | to be sent as part of present proof message.. |
+
+<a name="module_didcomm--exports.DIDComm.createInvitationFromRouter"></a>
+
+#### exports.DIDComm.createInvitationFromRouter
 Get DID Invitation from edge router.
 
-**Kind**: static constant of [<code>exports.DIDExchange</code>](#exp_module_didexchange--exports.DIDExchange)  
+**Kind**: static constant of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
 
 | Param | Description |
 | --- | --- |
 | endpoint | edge router endpoint |
 
-<a name="module_didexchange--exports.DIDExchange.getMediatorConnections"></a>
+<a name="module_didcomm--exports.DIDComm.getMediatorConnections"></a>
 
-#### exports.DIDExchange.getMediatorConnections(agent)
+#### exports.DIDComm.getMediatorConnections(agent)
 Get router/mediator connections from agent.
 
-**Kind**: static method of [<code>exports.DIDExchange</code>](#exp_module_didexchange--exports.DIDExchange)  
+**Kind**: static method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
 
 | Param | Description |
 | --- | --- |
 | agent | instance |
 
-<a name="module_didexchange--exports.DIDExchange.connectToMediator"></a>
+<a name="module_didcomm--exports.DIDComm.connectToMediator"></a>
 
-#### exports.DIDExchange.connectToMediator(agent, endpoint, wait)
+#### exports.DIDComm.connectToMediator(agent, endpoint, wait)
 Connect given agent to edge mediator/router.
 
-**Kind**: static method of [<code>exports.DIDExchange</code>](#exp_module_didexchange--exports.DIDExchange)  
+**Kind**: static method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
 
 | Param | Description |
 | --- | --- |
@@ -699,6 +754,9 @@ vcwallet module provides verifiable credential wallet SDK for aries universal wa
             * [.verify(auth, verificationOption)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+verify) ⇒ <code>Promise.&lt;Object&gt;</code>
             * [.derive(auth, credentialOption, deriveOption)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+derive) ⇒ <code>Promise.&lt;Object&gt;</code>
             * [.createKeyPair(request)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+createKeyPair) ⇒ <code>Promise.&lt;Object&gt;</code>
+            * [.connect(auth, invitation, options)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+connect) ⇒ <code>Promise.&lt;Object&gt;</code>
+            * [.proposePresentation(auth, invitation, connectOptions, proposeOptions)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+proposePresentation) ⇒ <code>Promise.&lt;Object&gt;</code>
+            * [.presentProof(auth, threadID, presentation)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+presentProof) ⇒ <code>Promise.&lt;Object&gt;</code>
         * _static_
             * [.contentTypes](#module_vcwallet--exports.UniversalWallet.contentTypes) : <code>enum</code>
             * [.createWalletProfile(agent, userID, profileOptions)](#module_vcwallet--exports.UniversalWallet.createWalletProfile) ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -924,6 +982,62 @@ creates a key pair from wallet.
 | request | <code>Object</code> |  |
 | request.auth | <code>String</code> | authorization token for performing this wallet operation. |
 | request.keyType | <code>String</code> | type of the key to be created, refer aries kms for supported key types. |
+
+<a name="module_vcwallet--exports.UniversalWallet.UniversalWallet+connect"></a>
+
+#### exports.UniversalWallet.connect(auth, invitation, options) ⇒ <code>Promise.&lt;Object&gt;</code>
+accepts an out of band invitation and performs did-exchange.
+
+**Kind**: instance method of [<code>exports.UniversalWallet</code>](#exp_module_vcwallet--exports.UniversalWallet)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing connection ID or error if operation fails.  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| auth | <code>String</code> |  | authorization token for performing this wallet operation. |
+| invitation | <code>Object</code> |  | out of band invitation. |
+| options | <code>Object</code> |  | (optional) for accepting incoming out-of-band invitation and connecting to inviter. |
+| options.myLabel | <code>String</code> |  | (optional) for providing label to be shared with the other agent during the subsequent did-exchange. |
+| options.routerConnections | <code>Array.&lt;string&gt;</code> |  | (optional) to provide router connection to be used. |
+| options.reuseConnection | <code>String</code> |  | (optional) to provide DID to be used when reusing a connection. |
+| options.reuseAnyConnection | <code>Bool</code> | <code>false</code> | (optional) to use any recognized DID in the services array for a reusable connection. |
+| options.timeout | <code>Time</code> |  | (optional) to wait for connection status to be 'completed'. |
+
+<a name="module_vcwallet--exports.UniversalWallet.UniversalWallet+proposePresentation"></a>
+
+#### exports.UniversalWallet.proposePresentation(auth, invitation, connectOptions, proposeOptions) ⇒ <code>Promise.&lt;Object&gt;</code>
+accepts an out of band invitation, sends propose presentation message to inviter to initiate credential share interaction
+ and waits for request presentation message from inviter as a response.
+
+**Kind**: instance method of [<code>exports.UniversalWallet</code>](#exp_module_vcwallet--exports.UniversalWallet)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing presentation request message from relying party or error if operation fails.  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| auth | <code>String</code> |  | authorization token for performing this wallet operation. |
+| invitation | <code>Object</code> |  | out of band invitation. |
+| connectOptions | <code>Object</code> |  | (optional) for accepting incoming out-of-band invitation and connecting to inviter. |
+| connectOptions.myLabel | <code>String</code> |  | (optional) for providing label to be shared with the other agent during the subsequent did-exchange. |
+| connectOptions.routerConnections | <code>Array.&lt;string&gt;</code> |  | (optional) to provide router connection to be used. |
+| connectOptions.reuseConnection | <code>String</code> |  | (optional) to provide DID to be used when reusing a connection. |
+| connectOptions.reuseAnyConnection | <code>Bool</code> | <code>false</code> | (optional) to use any recognized DID in the services array for a reusable connection. |
+| connectOptions.connectionTimeout | <code>timeout</code> |  | (optional) to wait for connection status to be 'completed'. |
+| proposeOptions | <code>Object</code> |  | (optional) for sending message proposing presentation. |
+| proposeOptions.from | <code>String</code> |  | (optional) option from DID option to customize sender DID.. |
+| proposeOptions.timeout | <code>Time</code> |  | (optional) to wait for request presentation message from relying party. |
+
+<a name="module_vcwallet--exports.UniversalWallet.UniversalWallet+presentProof"></a>
+
+#### exports.UniversalWallet.presentProof(auth, threadID, presentation) ⇒ <code>Promise.&lt;Object&gt;</code>
+sends present proof message from wallet to relying party as part of ongoing credential share interaction.
+
+**Kind**: instance method of [<code>exports.UniversalWallet</code>](#exp_module_vcwallet--exports.UniversalWallet)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - empty promise or error if operation fails.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| auth | <code>String</code> | authorization token for performing this wallet operation. |
+| threadID | <code>String</code> | threadID of credential interaction. |
+| presentation | <code>Object</code> | to be sent as part of present proof message.. |
 
 <a name="module_vcwallet--exports.UniversalWallet.contentTypes"></a>
 

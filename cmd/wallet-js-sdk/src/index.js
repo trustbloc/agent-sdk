@@ -12,11 +12,11 @@ export {
   contentTypes,
 } from "./universal/vc-wallet";
 export {
-  DIDExchange,
+  DIDComm,
   getMediatorConnections,
   connectToMediator,
   createInvitationFromRouter,
-} from "./didcomm/connect";
+} from "./didcomm/didcomm";
 export { BlindedRouter } from "./didcomm/blinded";
 export { WalletUser } from "./user/wallet-user";
 export { DIDManager } from "./did/didmanager";

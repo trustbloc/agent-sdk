@@ -11,6 +11,8 @@ var uuid = require('uuid/v4')
 export const DIDEXCHANGE_STATE_TOPIC = "didexchange_states"
 export const POST_STATE = "post_state"
 export const DIDEXCHANGE_STATE_REQUESTED = "requested"
+export const DIDEXCHANGE_STATE_COMPLETED = "completed"
+export const PRESENT_PROOF_ACTION_TOPIC = "present-proof_actions"
 
 export const testConfig = window.__ini__ ? window.__ini__['test/fixtures/config.ini'] : {}
 testConfig.walletUserPassphrase = uuid()

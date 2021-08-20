@@ -8,6 +8,7 @@ import {expect} from "chai";
 
 import {getJSONTestData, loadFrameworks, retryWithDelay, testConfig, wait} from "../common";
 import {CredentialManager, DIDManager, WalletUser} from "../../../src";
+import {IssuerAdapter} from "../mocks/adapters";
 
 var uuid = require('uuid/v4')
 
@@ -22,7 +23,9 @@ let walletUserAgent, issuer, sampleUDC, samplePRC, sampleUDCBBS, sampleFrameDoc,
 before(async function () {
     this.timeout(0)
     walletUserAgent = await loadFrameworks({name: WALLET_USER})
-    issuer = await loadFrameworks({name: VC_ISSUER})
+
+    issuer = new IssuerAdapter(VC_ISSUER)
+    await issuer.init()
 
     // load sample VCs from testdata
     let udcVC = getJSONTestData('udc-vc.json')
@@ -32,7 +35,7 @@ before(async function () {
     manifest = getJSONTestData('manifest-vc.json')
 
     // issue sample credentials
-    let [vc1, vc2] = await issueCredential(issuer, udcVC, prcVC)
+    let [vc1, vc2] = await issuer.issue(udcVC, prcVC)
     expect(vc1.id).to.not.empty
     expect(vc1.credentialSubject).to.not.empty
     expect(vc2.id).to.not.empty
@@ -350,7 +353,7 @@ describe('Credential Query Tests', async function () {
     })
 })
 
-describe('Credential Manager DIDComm Tests', async function () {
+describe('Credential Manager Credential Manifest Tests', async function () {
     it('user creates his wallet profile', async function () {
         let walletUser = new WalletUser({agent: walletUserAgent, user: WALLET_DIDCOMM_USER})
 
@@ -392,63 +395,6 @@ describe('Credential Manager DIDComm Tests', async function () {
         await credentialManager.saveManifestCredential(auth, manifest2, uuid())
 
         let {contents} = await credentialManager.getAllManifests(auth)
-        console.log(JSON.stringify(contents))
-
         expect(Object.keys(contents)).to.have.lengthOf(2)
     })
 })
-
-let issueCredential = async (issuer, ...credential) => {
-    const keyType = 'ED25519'
-
-    const [keySet, recoveryKeySet, updateKeySet] = await Promise.all([
-        issuer.kms.createKeySet({keyType}),
-        issuer.kms.createKeySet({keyType}),
-        issuer.kms.createKeySet({keyType})
-    ])
-
-    const createDIDRequest = {
-        "publicKeys": [{
-            "id": keySet.keyID,
-            "type": 'Ed25519VerificationKey2018',
-            "value": keySet.publicKey,
-            "encoding": "Jwk",
-            keyType,
-            "purposes": ["authentication"]
-        }, {
-            "id": recoveryKeySet.keyID,
-            "type": 'Ed25519VerificationKey2018',
-            "value": recoveryKeySet.publicKey,
-            "encoding": "Jwk",
-            keyType,
-            "recovery": true
-        }, {
-            "id": updateKeySet.keyID,
-            "type": 'Ed25519VerificationKey2018',
-            "value": updateKeySet.publicKey,
-            "encoding": "Jwk",
-            keyType,
-            "update": true
-        }
-        ]
-    };
-
-    let {DIDDocument} = await issuer.didclient.createOrbDID(createDIDRequest)
-
-    let resolveDID = async () => await issuer.vdr.resolveDID({id: DIDDocument.id})
-    await retryWithDelay(resolveDID, 10, 5000)
-
-
-    let signVCs = await Promise.all(credential.map(async (credential) => {
-            let {verifiableCredential} = await issuer.verifiable.signCredential({
-                credential,
-                "did": DIDDocument.id,
-                "signatureType": "Ed25519Signature2018"
-            })
-
-            return verifiableCredential
-        }
-    ))
-
-    return signVCs
-}
