@@ -11,7 +11,8 @@ import {
     DIDEXCHANGE_STATE_TOPIC,
     loadFrameworks,
     POST_STATE,
-    PRESENT_PROOF_ACTION_TOPIC, retryWithDelay,
+    PRESENT_PROOF_ACTION_TOPIC,
+    retryWithDelay,
     testConfig
 } from "../common";
 
@@ -49,11 +50,12 @@ export class Adapter {
         return response.invitation
     }
 
-    async acceptExchangeRequest() {
+    async acceptExchangeRequest(timeout) {
         return await waitForEvent(this.agent, {
             stateID: DIDEXCHANGE_STATE_REQUESTED,
             type: POST_STATE,
             topic: DIDEXCHANGE_STATE_TOPIC,
+            timeout,
             callback: async (payload) => {
                 await this.agent.didexchange.acceptExchangeRequest({
                     id: payload.Properties.connectionID,
@@ -63,7 +65,7 @@ export class Adapter {
         })
     }
 
-    async destroy(){
+    async destroy() {
         return await this.agent.destroy()
     }
 }
@@ -83,9 +85,10 @@ export class VerifierAdapter extends Adapter {
         return await super.init()
     }
 
-    async acceptPresentationProposal(query = {}) {
+    async acceptPresentationProposal(query = {}, timeout) {
         return await waitForEvent(this.agent, {
             topic: PRESENT_PROOF_ACTION_TOPIC,
+            timeout,
             callback: async (payload) => {
                 let id = uuid()
                 let {myDID, theirDID, piid} = payload.Properties
@@ -117,13 +120,13 @@ export class VerifierAdapter extends Adapter {
         })
     }
 
-    async acceptPresentProof() {
+    async acceptPresentProof(timeout) {
         let presentation
         await waitForEvent(this.agent, {
             topic: PRESENT_PROOF_ACTION_TOPIC,
+            timeout,
             callback: async (payload) => {
                 let {Message} = payload
-                console.log('MESSAGE::::', JSON.stringify(Message, null, 2))
                 presentation = Message["presentations~attach"][0].data.json
             }
         })
@@ -147,7 +150,7 @@ export class IssuerAdapter extends Adapter {
         return await super.init()
     }
 
-    async issue(...credential){
+    async issue(...credential) {
         const keyType = 'ED25519'
 
         const [keySet, recoveryKeySet, updateKeySet] = await Promise.all([

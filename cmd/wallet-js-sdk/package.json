@@ -7,7 +7,7 @@
   "scripts": {
     "test:setup": "bash scripts/setup_test.sh setup",
     "test:start": "karma start --single-run",
-    "test:dev": "karma start --browsers=Chrome",
+    "test:dev": "karma start --browsers=Chrome_without_security",
     "test:teardown": "bash scripts/setup_test.sh teardown",
     "test": "npm run test:setup && npm run test:start && npm run test:teardown",
     "docs": "jsdoc2md --template docs/wallet_sdk.hbs src/*/*.js > docs/wallet_sdk.md",

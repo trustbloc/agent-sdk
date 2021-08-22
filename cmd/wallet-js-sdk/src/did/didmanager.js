@@ -95,9 +95,7 @@ export class DIDManager {
       ],
     };
 
-    let content = await this.agent.didclient.createOrbDID(
-      createDIDRequest
-    );
+    let content = await this.agent.didclient.createOrbDID(createDIDRequest);
 
     await this.saveDID(auth, { content, collection });
 
