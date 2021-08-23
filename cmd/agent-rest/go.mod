@@ -16,7 +16,7 @@ require (
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.0.0-20210816155124-45ab1ecd4762
 	github.com/hyperledger/aries-framework-go/component/storage/leveldb v0.0.0-20210813122903-2b268f3c37dd
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20210807121559-b41545a4f1e8
-	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210807121559-b41545a4f1e8
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20210820175050-dcc7a225178d
 	github.com/rs/cors v1.7.0
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
