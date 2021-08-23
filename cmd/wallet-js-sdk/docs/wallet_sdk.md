@@ -287,7 +287,7 @@ Prepares verifiable presentation of given credential(s).
 | credentialOptions.storedCredentials | <code>Array.&lt;string&gt;</code> | (optional) ids of the credentials already saved in wallet content store. |
 | credentialOptions.rawCredentials | <code>Array.&lt;Object&gt;</code> | (optional) list of raw credentials to be presented. |
 | credentialOptions.presentation | <code>Object</code> | (optional) presentation to be proved. |
-| proofOptions | <code>Object</code> | proof options for issuing credential. |
+| proofOptions | <code>Object</code> | proof options for signing presentation. |
 | proofOptions.controller | <code>String</code> | DID to be used for signing. |
 | proofOptions.verificationMethod | <code>String</code> | (optional) VerificationMethod is the URI of the verificationMethod used for the proof.  By default, Controller public key matching 'assertion' for issue or 'authentication' for prove functions. |
 | proofOptions.created | <code>String</code> | (optional) Created date of the proof.  By default, current system time will be used. |
@@ -618,8 +618,8 @@ didcomm module provides wallet based DIDComm features.
         * [new exports.DIDComm(agent, user)](#new_module_didcomm--exports.DIDComm_new)
         * _instance_
             * [.connect(auth, invitation, options)](#module_didcomm--exports.DIDComm.DIDComm+connect) ⇒ <code>Promise.&lt;Object&gt;</code>
-            * [.proposePresentation(auth, invitation, connectOptions, proposeOptions)](#module_didcomm--exports.DIDComm.DIDComm+proposePresentation) ⇒ <code>Promise.&lt;Object&gt;</code>
-            * [.presentProof(auth, threadID, presentation)](#module_didcomm--exports.DIDComm.DIDComm+presentProof) ⇒ <code>Promise.&lt;Object&gt;</code>
+            * [.initiateCredentialShare(auth, invitation, connectOptions, proposeOptions)](#module_didcomm--exports.DIDComm.DIDComm+initiateCredentialShare) ⇒ <code>Object</code> \| <code>String</code> \| <code>Array.&lt;Object&gt;</code>
+            * [.completeCredentialShare(auth, threadID, presentations, proofOptions)](#module_didcomm--exports.DIDComm.DIDComm+completeCredentialShare) ⇒ <code>Promise.&lt;Object&gt;</code>
         * _static_
             * [.createInvitationFromRouter](#module_didcomm--exports.DIDComm.createInvitationFromRouter)
             * [.getMediatorConnections(agent)](#module_didcomm--exports.DIDComm.getMediatorConnections)
@@ -643,7 +643,7 @@ DIDComm module provides wallet based DIDComm features. Currently supporting DID-
 <a name="module_didcomm--exports.DIDComm.DIDComm+connect"></a>
 
 #### exports.DIDComm.connect(auth, invitation, options) ⇒ <code>Promise.&lt;Object&gt;</code>
-accepts an out of band invitation and performs did-exchange.
+accepts an out of band invitation, performs did-exchange and returns connection record of connection established.
 
 **Kind**: instance method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing connection ID or error if operation fails.  
@@ -655,19 +655,22 @@ accepts an out of band invitation and performs did-exchange.
 | options | <code>Object</code> |  | (optional) for accepting incoming out-of-band invitation and connecting to inviter. |
 | options.myLabel | <code>String</code> |  | (optional) for providing label to be shared with the other agent during the subsequent did-exchange. |
 | options.routerConnections | <code>Array.&lt;string&gt;</code> |  | (optional) to provide router connection to be used. |
+| options.userAnyRouterConnection | <code>Bool</code> | <code>false</code> | (optional) if true and options.routerConnections not provided then wallet will find  an existing router connection and will use it for accepting invitation. |
 | options.reuseConnection | <code>String</code> |  | (optional) to provide DID to be used when reusing a connection. |
 | options.reuseAnyConnection | <code>Bool</code> | <code>false</code> | (optional) to use any recognized DID in the services array for a reusable connection. |
 | options.timeout | <code>Time</code> |  | (optional) to wait for connection status to be 'completed'. |
 | options.waitForCompletion | <code>Bool</code> |  | (optional) if true then wait for custom 'didexchange-state-complete' message to conclude connection as completed. |
 
-<a name="module_didcomm--exports.DIDComm.DIDComm+proposePresentation"></a>
+<a name="module_didcomm--exports.DIDComm.DIDComm+initiateCredentialShare"></a>
 
-#### exports.DIDComm.proposePresentation(auth, invitation, connectOptions, proposeOptions) ⇒ <code>Promise.&lt;Object&gt;</code>
-accepts an out of band invitation, sends propose presentation message to inviter to initiate credential share interaction
- and waits for request presentation message from inviter as a response.
+#### exports.DIDComm.initiateCredentialShare(auth, invitation, connectOptions, proposeOptions) ⇒ <code>Object</code> \| <code>String</code> \| <code>Array.&lt;Object&gt;</code>
+Initiates WACI credential share interaction from wallet.
+
+ accepts an out of band invitation, sends propose presentation message to inviter, waits for request presentation message reply from inviter.
+ reads presentation definition(s) from request presentation, performs query in wallet and returns response presentation(s) to be shared.
 
 **Kind**: instance method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing presentation request message from relying party or error if operation fails.  
+**Returns**: <code>Object</code> - response - promise of object containing presentation request message from relying party or error if operation fails.<code>String</code> - response.threadID - thread ID of credential interaction to be used for correlation.<code>Array.&lt;Object&gt;</code> - response.presentations - array of presentation responses from wallet query.  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -676,6 +679,7 @@ accepts an out of band invitation, sends propose presentation message to inviter
 | connectOptions | <code>Object</code> |  | (optional) for accepting incoming out-of-band invitation and connecting to inviter. |
 | connectOptions.myLabel | <code>String</code> |  | (optional) for providing label to be shared with the other agent during the subsequent did-exchange. |
 | connectOptions.routerConnections | <code>Array.&lt;string&gt;</code> |  | (optional) to provide router connection to be used. |
+| options.userAnyRouterConnection | <code>Bool</code> | <code>false</code> | (optional) if true and options.routerConnections not provided then wallet will find  an existing router connection and will use it for accepting invitation. |
 | connectOptions.reuseConnection | <code>String</code> |  | (optional) to provide DID to be used when reusing a connection. |
 | connectOptions.reuseAnyConnection | <code>Bool</code> | <code>false</code> | (optional) to use any recognized DID in the services array for a reusable connection. |
 | connectOptions.connectionTimeout | <code>timeout</code> |  | (optional) to wait for connection status to be 'completed'. |
@@ -683,10 +687,12 @@ accepts an out of band invitation, sends propose presentation message to inviter
 | proposeOptions.from | <code>String</code> |  | (optional) option from DID option to customize sender DID.. |
 | proposeOptions.timeout | <code>Time</code> |  | (optional) to wait for request presentation message from relying party. |
 
-<a name="module_didcomm--exports.DIDComm.DIDComm+presentProof"></a>
+<a name="module_didcomm--exports.DIDComm.DIDComm+completeCredentialShare"></a>
 
-#### exports.DIDComm.presentProof(auth, threadID, presentation) ⇒ <code>Promise.&lt;Object&gt;</code>
-sends present proof message from wallet to relying party as part of ongoing credential share interaction.
+#### exports.DIDComm.completeCredentialShare(auth, threadID, presentations, proofOptions) ⇒ <code>Promise.&lt;Object&gt;</code>
+Completes WACI credential share flow.
+
+ Signs presentation(s) and sends them as part of present proof message to relying party.
 
 **Kind**: instance method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - - empty promise or error if operation fails.  
@@ -695,7 +701,15 @@ sends present proof message from wallet to relying party as part of ongoing cred
 | --- | --- | --- |
 | auth | <code>String</code> | authorization token for performing this wallet operation. |
 | threadID | <code>String</code> | threadID of credential interaction. |
-| presentation | <code>Object</code> | to be sent as part of present proof message.. |
+| presentations | <code>Array.&lt;Object&gt;</code> | to be sent as part of present proof message.. |
+| proofOptions | <code>Object</code> | proof options for signing presentation. |
+| proofOptions.controller | <code>String</code> | DID to be used for signing. |
+| proofOptions.verificationMethod | <code>String</code> | (optional) VerificationMethod is the URI of the verificationMethod used for the proof.  By default, Controller public key matching 'assertion' for issue or 'authentication' for prove functions. |
+| proofOptions.created | <code>String</code> | (optional) Created date of the proof.  By default, current system time will be used. |
+| proofOptions.domain | <code>String</code> | (optional) operational domain of a digital proof.  By default, domain will not be part of proof. |
+| proofOptions.challenge | <code>String</code> | (optional) random or pseudo-random value option authentication.  By default, challenge will not be part of proof. |
+| proofOptions.proofType | <code>String</code> | (optional) signature type used for signing.  By default, proof will be generated in Ed25519Signature2018 format. |
+| proofOptions.proofRepresentation | <code>String</code> | (optional) type of proof data expected ( "proofValue" or "jws").  By default, 'proofValue' will be used. |
 
 <a name="module_didcomm--exports.DIDComm.createInvitationFromRouter"></a>
 
@@ -926,7 +940,7 @@ produces a Verifiable Presentation from wallet.
 | credentialOptions.storedCredentials | <code>Array.&lt;string&gt;</code> | (optional) ids of the credentials already saved in wallet content store. |
 | credentialOptions.rawCredentials | <code>Array.&lt;Object&gt;</code> | (optional) list of raw credentials to be presented. |
 | credentialOptions.presentation | <code>Object</code> | (optional) presentation to be proved. |
-| proofOptions | <code>Object</code> | proof options for issuing credential. |
+| proofOptions | <code>Object</code> | proof options for signing. |
 | proofOptions.controller | <code>String</code> | DID to be used for signing. |
 | proofOptions.verificationMethod | <code>String</code> | (optional) VerificationMethod is the URI of the verificationMethod used for the proof.  By default, Controller public key matching 'assertion' for issue or 'authentication' for prove functions. |
 | proofOptions.created | <code>String</code> | (optional) Created date of the proof.  By default, current system time will be used. |
