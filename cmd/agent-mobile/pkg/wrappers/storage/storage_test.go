@@ -124,7 +124,7 @@ func TestCommon(t *testing.T) {
 	storagetest.TestProviderOpenStoreSetGetConfig(t, provider)
 	storagetest.TestPutGet(t, provider)
 	storagetest.TestStoreGetTags(t, provider)
-	storagetest.TestStoreQuery(t, provider, storagetest.WithIteratorTotalItemCountTests())
+	storagetest.TestStoreQuery(t, provider)
 	storagetest.TestStoreDelete(t, provider)
 	storagetest.TestStoreClose(t, provider)
 	storagetest.TestProviderClose(t, provider)
