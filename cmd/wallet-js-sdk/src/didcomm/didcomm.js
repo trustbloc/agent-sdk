@@ -258,10 +258,13 @@ export class DIDComm {
 
     let vps = await Promise.all(presentations.map(_prove));
 
-    // typically only one presentation, if there are multiple then send them all as part of single attachment for now.
-    let presentation = vps.length == 1 ? vps[0] : { presentations: vps };
+    if (vps.length == 1 ) {
+        let { presentation } = vps[0]
+        return await this.wallet.presentProof(auth, threadID, presentation);
+    }
 
-    return await this.wallet.presentProof(auth, threadID, presentation);
+    // typically only one presentation, if there are multiple then send them all as part of single attachment for now.
+    return await this.wallet.presentProof(auth, threadID, { presentations: vps });
   }
 }
 

@@ -1024,6 +1024,7 @@ accepts an out of band invitation, sends propose presentation message to inviter
 
 **Kind**: instance method of [<code>exports.UniversalWallet</code>](#exp_module_vcwallet--exports.UniversalWallet)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing presentation request message from relying party or error if operation fails.  
+**See**: [WACI Propose Presentation ](https://w3c-ccg.github.io/universal-wallet-interop-spec/#proposepresentation)  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1046,6 +1047,7 @@ sends present proof message from wallet to relying party as part of ongoing cred
 
 **Kind**: instance method of [<code>exports.UniversalWallet</code>](#exp_module_vcwallet--exports.UniversalWallet)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - - empty promise or error if operation fails.  
+**See**: [WACI Present Proof ](https://w3c-ccg.github.io/universal-wallet-interop-spec/#presentproof)  
 
 | Param | Type | Description |
 | --- | --- | --- |
