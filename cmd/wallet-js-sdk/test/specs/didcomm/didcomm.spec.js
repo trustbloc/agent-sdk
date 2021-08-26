@@ -130,7 +130,7 @@ describe('Wallet DIDComm WACI credential share flow', async function () {
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
         await didcomm.completeCredentialShare(auth, threadID, presentations, {controller: did})
 
-        let {presentation} = await rp.acceptPresentProof()
+        let presentation = await rp.acceptPresentProof()
         expect(presentation.verifiableCredential).to.not.empty
         expect(presentation.verifiableCredential[0].id).to.be.equal(samplePRC.id)
     })

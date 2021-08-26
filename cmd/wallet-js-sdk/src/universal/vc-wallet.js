@@ -360,6 +360,8 @@ export class UniversalWallet {
    *  accepts an out of band invitation, sends propose presentation message to inviter to initiate credential share interaction
    *  and waits for request presentation message from inviter as a response.
    *
+   *  @see {@link https://w3c-ccg.github.io/universal-wallet-interop-spec/#proposepresentation|WACI Propose Presentation }
+   *
    *  @param {String} auth -  authorization token for performing this wallet operation.
    *  @param {Object} invitation - out of band invitation.
    *
@@ -406,6 +408,8 @@ export class UniversalWallet {
 
   /**
    *  sends present proof message from wallet to relying party as part of ongoing credential share interaction.
+   *
+   *  @see {@link https://w3c-ccg.github.io/universal-wallet-interop-spec/#presentproof|WACI Present Proof }
    *
    *  @param {String} auth -  authorization token for performing this wallet operation.
    *  @param {String} threadID - threadID of credential interaction.
