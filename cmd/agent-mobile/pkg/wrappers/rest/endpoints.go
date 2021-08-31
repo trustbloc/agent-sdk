@@ -500,52 +500,49 @@ func getVCWalletEndpoints() map[string]*endpoint {
 			Path: opvcwallet.ProfileExistsPath, Method: http.MethodGet,
 		},
 		cmdvcwallet.OpenMethod: {
-			Path:   opvcwallet.OpenPath,
-			Method: http.MethodPost,
+			Path: opvcwallet.OpenPath, Method: http.MethodPost,
 		},
 		cmdvcwallet.CloseMethod: {
-			Path:   opvcwallet.ClosePath,
-			Method: http.MethodPost,
+			Path: opvcwallet.ClosePath, Method: http.MethodPost,
 		},
 		cmdvcwallet.AddMethod: {
-			Path:   opvcwallet.AddPath,
-			Method: http.MethodPost,
+			Path: opvcwallet.AddPath, Method: http.MethodPost,
 		},
 		cmdvcwallet.RemoveMethod: {
-			Path:   opvcwallet.RemovePath,
-			Method: http.MethodPost,
+			Path: opvcwallet.RemovePath, Method: http.MethodPost,
 		},
 		cmdvcwallet.GetMethod: {
-			Path:   opvcwallet.GetPath,
-			Method: http.MethodPost,
+			Path: opvcwallet.GetPath, Method: http.MethodPost,
 		},
 		cmdvcwallet.GetAllMethod: {
-			Path:   opvcwallet.GetAllPath,
-			Method: http.MethodPost,
+			Path: opvcwallet.GetAllPath, Method: http.MethodPost,
 		},
 		cmdvcwallet.QueryMethod: {
-			Path:   opvcwallet.QueryPath,
-			Method: http.MethodPost,
+			Path: opvcwallet.QueryPath, Method: http.MethodPost,
 		},
 		cmdvcwallet.IssueMethod: {
-			Path:   opvcwallet.IssuePath,
-			Method: http.MethodPost,
+			Path: opvcwallet.IssuePath, Method: http.MethodPost,
 		},
 		cmdvcwallet.ProveMethod: {
-			Path:   opvcwallet.ProvePath,
-			Method: http.MethodPost,
+			Path: opvcwallet.ProvePath, Method: http.MethodPost,
 		},
 		cmdvcwallet.VerifyMethod: {
-			Path:   opvcwallet.VerifyPath,
-			Method: http.MethodPost,
+			Path: opvcwallet.VerifyPath, Method: http.MethodPost,
 		},
 		cmdvcwallet.DeriveMethod: {
-			Path:   opvcwallet.DerivePath,
-			Method: http.MethodPost,
+			Path: opvcwallet.DerivePath, Method: http.MethodPost,
 		},
 		cmdvcwallet.CreateKeyPairMethod: {
-			Path:   opvcwallet.CreateKeyPairPath,
-			Method: http.MethodPost,
+			Path: opvcwallet.CreateKeyPairPath, Method: http.MethodPost,
+		},
+		cmdvcwallet.ConnectMethod: {
+			Path: opvcwallet.ConnectPath, Method: http.MethodPost,
+		},
+		cmdvcwallet.ProposePresentationMethod: {
+			Path: opvcwallet.ProposePresentationPath, Method: http.MethodPost,
+		},
+		cmdvcwallet.PresentProofMethod: {
+			Path: opvcwallet.PresentProofPath, Method: http.MethodPost,
 		},
 	}
 }

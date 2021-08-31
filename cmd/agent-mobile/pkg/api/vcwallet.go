@@ -58,4 +58,14 @@ type VCWalletController interface {
 
 	// creates a key pair from wallet.
 	CreateKeyPair(request *models.RequestEnvelope) *models.ResponseEnvelope
+
+	// accepts out-of-band invitations and performs DID exchange.
+	Connect(request *models.RequestEnvelope) *models.ResponseEnvelope
+
+	// accepts out-of-band invitation and sends message proposing presentation
+	// from wallet to relying party.
+	ProposePresentation(request *models.RequestEnvelope) *models.ResponseEnvelope
+
+	// sends message present proof message from wallet to relying party.
+	PresentProof(request *models.RequestEnvelope) *models.ResponseEnvelope
 }
