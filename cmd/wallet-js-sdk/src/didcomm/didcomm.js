@@ -184,6 +184,8 @@ export class DIDComm {
       }
     );
 
+    console.debug('presentation request from verifier', JSON.stringify(presentationRequest, null, 2))
+
     //supports multiple, but only presentation_definition inside json data.
     let _query = (attachment) => {
       return {
