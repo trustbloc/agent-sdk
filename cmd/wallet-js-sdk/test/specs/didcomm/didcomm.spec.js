@@ -111,7 +111,7 @@ describe('Wallet DIDComm WACI credential share flow', async function () {
             "id": "22c77155-edf2-4ec5-8d44-b393b4e4fa38",
             "input_descriptors": [{
                 "id": "20b073bb-cede-4912-9e9d-334e5702077b",
-                "schema": [{"uri": "https://www.w3.org/2018/credentials#VerifiableCredential"}],
+                "schema": [{"uri": "https://w3id.org/citizenship#PermanentResidentCard"}],
                 "constraints": {"fields": [{"path": ["$.credentialSubject.familyName"]}]}
             }]
         })
@@ -128,7 +128,7 @@ describe('Wallet DIDComm WACI credential share flow', async function () {
         let {threadID, presentations} = credentialInteraction
 
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
-        await didcomm.completeCredentialShare(auth, threadID, presentations, {controller: did})
+        await didcomm.completeCredentialShare(auth, threadID, presentations, {controller: did}, true)
 
         let presentation = await rp.acceptPresentProof()
         expect(presentation.verifiableCredential).to.not.empty
