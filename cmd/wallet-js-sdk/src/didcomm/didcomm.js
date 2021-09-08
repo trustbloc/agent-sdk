@@ -4,12 +4,14 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import { UniversalWallet } from "..";
+import { UniversalWallet, waitForEvent, POST_STATE } from "..";
 import axios from "axios";
 
 const STATE_COMPLETE_MSG_TOPIC = "didexchange-state-complete";
 const STATE_COMPLETE_MSG_TYPE =
   "https://trustbloc.dev/didexchange/1.0/state-complete";
+const PRESENT_PROOF_STATE_TOPIC = "present-proof_states";
+const PRESENTATION_SENT_STATE_ID = "presentation-sent";
 
 const DEFAULT_LABEL = "agent-default-label";
 const ROUTER_CREATE_INVITATION_PATH = `/didcomm/invitation`;
@@ -184,7 +186,10 @@ export class DIDComm {
       }
     );
 
-    console.debug('presentation request from verifier', JSON.stringify(presentationRequest, null, 2))
+    console.debug(
+      "presentation request from verifier",
+      JSON.stringify(presentationRequest, null, 2)
+    );
 
     //supports multiple, but only presentation_definition inside json data.
     let _query = (attachment) => {
@@ -226,6 +231,8 @@ export class DIDComm {
    *  @param {String} proofOptions.proofRepresentation - (optional) type of proof data expected ( "proofValue" or "jws").
    *  By default, 'proofValue' will be used.
    *
+   *  @param {Bool} waitForStateCompletion=false - if true, then wallet will wait till 'presentation-sent' state before returning.
+   *
    * @returns {Promise<Object>} - empty promise or error if operation fails.
    */
   async completeCredentialShare(
@@ -240,7 +247,8 @@ export class DIDComm {
       challenge,
       proofType,
       proofRepresentation,
-    } = {}
+    } = {},
+    waitForStateCompletion
   ) {
     let _prove = async (presentation) => {
       return await this.wallet.prove(
@@ -260,13 +268,21 @@ export class DIDComm {
 
     let vps = await Promise.all(presentations.map(_prove));
 
-    if (vps.length == 1 ) {
-        let { presentation } = vps[0]
-        return await this.wallet.presentProof(auth, threadID, presentation);
+    if (vps.length == 1) {
+      let { presentation } = vps[0];
+      await this.wallet.presentProof(auth, threadID, presentation);
+    } else {
+      // typically only one presentation, if there are multiple then send them all as part of single attachment for now.
+      await this.wallet.presentProof(auth, threadID, { presentations: vps });
     }
 
-    // typically only one presentation, if there are multiple then send them all as part of single attachment for now.
-    return await this.wallet.presentProof(auth, threadID, { presentations: vps });
+    if (waitForStateCompletion) {
+      await waitForEvent(this.agent, {
+        topic: PRESENT_PROOF_STATE_TOPIC,
+        type: POST_STATE,
+        stateID: PRESENTATION_SENT_STATE_ID,
+      });
+    }
   }
 }
 
