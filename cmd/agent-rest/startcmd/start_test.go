@@ -829,6 +829,13 @@ func TestStoreProvider(t *testing.T) {
 		require.Contains(t, err.Error(), "DB URL for new mySQL DB provider can't be blank")
 	})
 
+	t.Run("test error from create new mongodb", func(t *testing.T) {
+		_, err := createAriesAgent(&agentParameters{dbParam: &dbParam{dbType: databaseTypeMongoDBOption}})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to connect to storage at : failed to create a new MongoDB "+
+			`client: error parsing uri: scheme must be "mongodb" or "mongodb+srv"`)
+	})
+
 	t.Run("leveldb database with retry", func(t *testing.T) {
 		retry := true
 		origin := supportedStorageProviders[databaseTypeLevelDBOption]
