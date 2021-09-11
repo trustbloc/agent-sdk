@@ -19,6 +19,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gorilla/mux"
 	"github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb"
+	"github.com/hyperledger/aries-framework-go-ext/component/storage/mongodb"
 	"github.com/hyperledger/aries-framework-go-ext/component/storage/mysql"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go/component/storage/leveldb"
@@ -61,13 +62,13 @@ const (
 	databaseTypeEnvKey        = "ARIESD_DATABASE_TYPE"
 	databaseTypeFlagShorthand = "q"
 	databaseTypeFlagUsage     = "The type of database to use for everything except key storage. " +
-		"Supported options: mem, couchdb, mysql, leveldb. " +
+		"Supported options: mem, couchdb, mysql, leveldb, mongodb. " +
 		" Alternatively, this can be set with the following environment variable: " + databaseTypeEnvKey
 
 	databaseURLFlagName      = "database-url"
 	databaseURLEnvKey        = "ARIESD_DATABASE_URL"
 	databaseURLFlagShorthand = "v"
-	databaseURLFlagUsage     = "The URL of the database. Not needed if using memstore." +
+	databaseURLFlagUsage     = "The URL (or connection string) of the database. Not needed if using memstore." +
 		" For CouchDB, include the username:password@ text if required. " +
 		" Alternatively, this can be set with the following environment variable: " + databaseURLEnvKey
 
@@ -207,6 +208,7 @@ const (
 	databaseTypeCouchDBOption = "couchdb"
 	databaseTypeMYSQLDBOption = "mysql"
 	databaseTypeLevelDBOption = "leveldb"
+	databaseTypeMongoDBOption = "mongodb"
 )
 
 var (
@@ -251,6 +253,9 @@ var supportedStorageProviders = map[string]func(url, prefix string) (storage.Pro
 	},
 	databaseTypeMYSQLDBOption: func(url, prefix string) (storage.Provider, error) {
 		return mysql.NewProvider(url, mysql.WithDBPrefix(prefix))
+	},
+	databaseTypeMongoDBOption: func(url, prefix string) (storage.Provider, error) {
+		return mongodb.NewProvider(url, mongodb.WithDBPrefix(prefix))
 	},
 }
 
