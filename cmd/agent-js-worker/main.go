@@ -1264,6 +1264,10 @@ func createJSONLDDocumentLoader(storageProvider storage.Provider,
 		for _, url := range contextProviderURLs {
 			loaderOpts = append(loaderOpts, ld.WithRemoteProvider(remote.NewProvider(url)))
 		}
+	} else {
+		// fetching contexts from the network is enabled if no context providers are specified
+		loaderOpts = append(loaderOpts,
+			ld.WithRemoteDocumentLoader(jsonld.NewDefaultDocumentLoader(http.DefaultClient)))
 	}
 
 	documentLoader, err := ld.NewDocumentLoader(ldStore, loaderOpts...)
