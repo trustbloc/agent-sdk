@@ -45,6 +45,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/ldcontext/remote"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
@@ -603,22 +604,18 @@ func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 		options = append(options, aries.WithTransportReturnRoute(startOpts.TransportReturnRoute))
 	}
 
-	// indexedDBProvider used by localKMS
+	// indexedDBProvider used by localKMS and JSON-LD contexts
 	indexedDBProvider, err := createIndexedDBStorage(startOpts)
 	if err != nil {
 		return nil, fmt.Errorf("unexpected failure while creating IndexDB storage provider: %w", err)
 	}
 
-	if len(startOpts.ContextProviderURLs) > 0 {
-		options = append(options, aries.WithJSONLDContextProviderURL(startOpts.ContextProviderURLs...))
-	} else {
-		loader, loaderErr := createJSONLDDocumentLoader(indexedDBProvider)
-		if loaderErr != nil {
-			return nil, fmt.Errorf("create document loader: %w", loaderErr)
-		}
-
-		options = append(options, aries.WithJSONLDDocumentLoader(loader))
+	loader, err := createJSONLDDocumentLoader(indexedDBProvider, startOpts.ContextProviderURLs)
+	if err != nil {
+		return nil, fmt.Errorf("create document loader: %w", err)
 	}
+
+	options = append(options, aries.WithJSONLDDocumentLoader(loader))
 
 	var (
 		kmsImpl    kms.KeyManager
@@ -1244,7 +1241,8 @@ func (p *ldStoreProvider) JSONLDRemoteProviderStore() ldstore.RemoteProviderStor
 	return p.RemoteProviderStore
 }
 
-func createJSONLDDocumentLoader(storageProvider storage.Provider) (jsonld.DocumentLoader, error) {
+func createJSONLDDocumentLoader(storageProvider storage.Provider,
+	contextProviderURLs []string) (jsonld.DocumentLoader, error) {
 	contextStore, err := ldstore.NewContextStore(storageProvider)
 	if err != nil {
 		return nil, fmt.Errorf("create JSON-LD context store: %w", err)
@@ -1260,8 +1258,15 @@ func createJSONLDDocumentLoader(storageProvider storage.Provider) (jsonld.Docume
 		RemoteProviderStore: remoteProviderStore,
 	}
 
-	documentLoader, err := ld.NewDocumentLoader(ldStore,
-		ld.WithRemoteDocumentLoader(jsonld.NewDefaultDocumentLoader(http.DefaultClient)))
+	var loaderOpts []ld.DocumentLoaderOpts
+
+	if len(contextProviderURLs) > 0 {
+		for _, url := range contextProviderURLs {
+			loaderOpts = append(loaderOpts, ld.WithRemoteProvider(remote.NewProvider(url)))
+		}
+	}
+
+	documentLoader, err := ld.NewDocumentLoader(ldStore, loaderOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("new document loader: %w", err)
 	}
