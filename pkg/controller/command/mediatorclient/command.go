@@ -91,6 +91,7 @@ type Provider interface {
 	Messenger() service.Messenger
 	KeyType() kms.KeyType
 	KeyAgreementType() kms.KeyType
+	MediaTypeProfiles() []string
 }
 
 // Command is controller command for mediator client.
