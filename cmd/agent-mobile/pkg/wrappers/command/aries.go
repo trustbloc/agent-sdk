@@ -91,6 +91,8 @@ func NewAries(opts *config.Options) (*Aries, error) {
 	}
 
 	sdkCommandHandlers, err := sdkcontroller.GetCommandHandlers(context,
+		sdkcontroller.WithDidAnchorOrigin(opts.DidAnchorOrigin),
+		sdkcontroller.WithSidetreeToken(opts.SidetreeToken),
 		sdkcontroller.WithBlocDomain(opts.TrustblocDomain),
 		sdkcontroller.WithMessageHandler(msgHandler),
 		sdkcontroller.WithNotifier(notifier.NewNotifier(notifications)),

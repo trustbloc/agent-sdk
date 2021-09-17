@@ -25,6 +25,8 @@ type Options struct {
 	TrustblocDomain      string
 	TrustblocResolver    string
 	WebsocketURL         string
+	SidetreeToken        string
+	DidAnchorOrigin      string
 	Logger               api.LoggerProvider
 	Storage              api.Provider
 	DocumentLoader       ld.DocumentLoader

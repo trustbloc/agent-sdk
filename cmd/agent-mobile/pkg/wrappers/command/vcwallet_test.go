@@ -7,18 +7,22 @@ SPDX-License-Identifier: Apache-2.0
 package command // nolint:testpackage // uses internal implementation details
 
 import (
+	_ "embed" //nolint:gci // required for go:embed
 	"encoding/json"
 	"fmt"
 	"testing"
 
+	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/config"
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/models"
 
 	cmdvcwallet "github.com/hyperledger/aries-framework-go/pkg/controller/command/vcwallet"
-
+	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/ldcontext"
+	mockldstore "github.com/hyperledger/aries-framework-go/pkg/mock/ld"
+	ldstore "github.com/hyperledger/aries-framework-go/pkg/store/ld"
 	"github.com/stretchr/testify/require"
 )
 
-// nolint: lll
 const (
 	sampleUserAuth = `{"userID":"user1", "localKMSPassphrase": "fakepassphrase"}`
 	sampleUDCVC    = `{
@@ -126,68 +130,84 @@ const (
                     ],
                     "required": true
                 }`
-	sampleKeyContentBase58 = `{
-  			"@context": ["https://w3id.org/wallet/v1"],
-  		  	"id": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5",
-  		  	"controller": "did:example:123456789abcdefghi",
-			"type": "Ed25519VerificationKey2018",
-			"privateKeyBase58":"2MP5gWCnf67jvW3E4Lz8PpVrDWAXMYY1sDxjnkEnKhkkbKD7yP2mkVeyVpu5nAtr3TeDgMNjBPirk2XcQacs3dvZ"
-  		}`
-	sampleDIDResolutionResponse = `{
-        "@context": [
-            "https://w3id.org/wallet/v1",
-            "https://w3id.org/did-resolution/v1"
-        ],
-        "id": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5",
-        "type": ["DIDResolutionResponse"],
-        "name": "Farming Sensor DID Document",
-        "image": "https://via.placeholder.com/150",
-        "description": "An IoT device in the middle of a corn field.",
-        "tags": ["professional"],
-        "correlation": ["4058a72a-9523-11ea-bb37-0242ac130002"],
-        "created": "2017-06-18T21:19:10Z",
-        "expires": "2026-06-18T21:19:10Z",
-        "didDocument": {
-            "@context": [
-                "https://w3id.org/did/v0.11"
-            ],
-            "id": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5",
-            "publicKey": [
-                {
-                    "id": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5",
-                    "type": "Ed25519VerificationKey2018",
-                    "controller": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5",
-                    "publicKeyBase58": "8jkuMBqmu1TRA6is7TT5tKBksTZamrLhaXrg9NAczqeh"
-                }
-            ],
-            "authentication": [
-                "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5"
-            ],
-            "assertionMethod": [
-                "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5"
-            ],
-            "capabilityDelegation": [
-                "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5"
-            ],
-            "capabilityInvocation": [
-                "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5"
-            ],
-            "keyAgreement": [
-                {
-                    "id": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6LSmjNfS5FC9W59JtPZq7fHgrjThxsidjEhZeMxCarbR998",
-                    "type": "X25519KeyAgreementKey2019",
-                    "controller": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5",
-                    "publicKeyBase58": "B4CVumSL43MQDW1oJU9LNGWyrpLbw84YgfeGi8D4hmNN"
-                }
-            ]
-        }
-    }`
 )
+
+// nolint:gochecknoglobals // embedded test contexts
+var (
+	//go:embed testdata/contexts/credentials-examples_v1.jsonld
+	credentialExamples []byte
+	//go:embed testdata/contexts/examples_v1.jsonld
+	vcExamples []byte
+	//go:embed testdata/contexts/odrl.jsonld
+	odrl []byte
+	//go:embed testdata/contexts/citizenship_v1.jsonld
+	citizenship []byte
+	//go:embed testdata/contexts/governance.jsonld
+	governance []byte
+	//go:embed testdata/contexts/lds-jws2020-v1.jsonld
+	jws2020 []byte
+)
+
+// DocumentLoader returns a document loader with preloaded test contexts.
+func DocumentLoader(t *testing.T) *ld.DocumentLoader {
+	t.Helper()
+
+	ldStore := &mockLDStoreProvider{
+		ContextStore:        mockldstore.NewMockContextStore(),
+		RemoteProviderStore: mockldstore.NewMockRemoteProviderStore(),
+	}
+
+	loader, err := ld.NewDocumentLoader(ldStore,
+		ld.WithExtraContexts(
+			ldcontext.Document{
+				URL:     "https://www.w3.org/2018/credentials/examples/v1",
+				Content: credentialExamples,
+			},
+			ldcontext.Document{
+				URL:     "https://trustbloc.github.io/context/vc/examples-v1.jsonld",
+				Content: vcExamples,
+			},
+			ldcontext.Document{
+				URL:     "https://www.w3.org/ns/odrl.jsonld",
+				Content: odrl,
+			},
+			ldcontext.Document{
+				URL:         "https://w3id.org/citizenship/v1",
+				DocumentURL: "https://w3c-ccg.github.io/citizenship-vocab/contexts/citizenship-v1.jsonld",
+				Content:     citizenship,
+			},
+			ldcontext.Document{
+				URL:     "https://trustbloc.github.io/context/governance/context.jsonld",
+				Content: governance,
+			},
+			ldcontext.Document{
+				URL:     "https://w3c-ccg.github.io/lds-jws2020/contexts/lds-jws2020-v1.json",
+				Content: jws2020,
+			},
+		),
+	)
+	require.NoError(t, err)
+
+	return loader
+}
+
+type mockLDStoreProvider struct {
+	ContextStore        ldstore.ContextStore
+	RemoteProviderStore ldstore.RemoteProviderStore
+}
+
+func (p *mockLDStoreProvider) JSONLDContextStore() ldstore.ContextStore {
+	return p.ContextStore
+}
+
+func (p *mockLDStoreProvider) JSONLDRemoteProviderStore() ldstore.RemoteProviderStore {
+	return p.RemoteProviderStore
+}
 
 func getVCWalletController(t *testing.T) *VCWallet {
 	t.Helper()
 
-	a, err := getAgentWithOpts(t)
+	a, err := getAgentWithOpts(&config.Options{DocumentLoader: DocumentLoader(t)})
 	require.NotNil(t, a)
 	require.NoError(t, err)
 
@@ -487,59 +507,4 @@ func TestVCWallet_Add_Get_GetAll(t *testing.T) {
 		require.NotNil(t, resp)
 		require.NotNil(t, resp.Error)
 	})
-}
-
-// nolint: lll
-func TestVCWallet_Issue(t *testing.T) {
-	vcwalletController := getVCWalletController(t)
-	require.NotNil(t, vcwalletController)
-
-	var tokenResponse cmdvcwallet.UnlockWalletResponse
-
-	// create profile
-	createProfilePayload := sampleUserAuth
-	createProfileReq := &models.RequestEnvelope{Payload: []byte(createProfilePayload)}
-	createProfileResp := vcwalletController.CreateProfile(createProfileReq)
-	require.NotNil(t, createProfileResp)
-	require.Nil(t, createProfileResp.Error)
-	require.Equal(t,
-		``,
-		string(createProfileResp.Payload))
-
-	// open the wallet
-	openPayload := sampleUserAuth
-	openReq := &models.RequestEnvelope{Payload: []byte(openPayload)}
-
-	openResp := vcwalletController.Open(openReq)
-	require.NotNil(t, openResp)
-	require.Nil(t, openResp.Error)
-
-	if err := json.Unmarshal(openResp.Payload, &tokenResponse); err != nil {
-		t.Fail()
-	} else {
-		require.NotNil(t,
-			tokenResponse.Token)
-		require.NotEqual(t,
-			``,
-			tokenResponse.Token)
-	}
-
-	// add proper content
-	addPayload := fmt.Sprintf(`{"userID":"user1", "auth": "%s", "contentType":"key", "content":%s}`, tokenResponse.Token, sampleKeyContentBase58)
-
-	addContent(t, vcwalletController, addPayload)
-
-	addPayload = fmt.Sprintf(`{"userID":"user1", "auth": "%s", "contentType":"didResolutionResponse", "content":%s}`, tokenResponse.Token, sampleDIDResolutionResponse)
-
-	addContent(t, vcwalletController, addPayload)
-}
-
-func addContent(t *testing.T, vcwalletController *VCWallet, addPayload string) {
-	t.Helper()
-
-	addReq := &models.RequestEnvelope{Payload: []byte(addPayload)}
-	addResp := vcwalletController.Add(addReq)
-
-	require.NotNil(t, addResp)
-	require.Nil(t, addResp.Error)
 }

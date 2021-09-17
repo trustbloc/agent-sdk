@@ -39,11 +39,7 @@ func getAgent() (*Aries, error) {
 	return NewAries(opts)
 }
 
-func getAgentWithOpts(t *testing.T) (*Aries, error) {
-	t.Helper()
-
-	opts := &config.Options{DocumentLoader: DocumentLoader(t)}
-
+func getAgentWithOpts(opts *config.Options) (*Aries, error) {
 	return NewAries(opts)
 }
 
