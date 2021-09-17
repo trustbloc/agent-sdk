@@ -96,6 +96,22 @@ func (wallet *VCWallet) CreateKeyPair(request *models.RequestEnvelope) *models.R
 	return wallet.createRespEnvelope(request, cmdvcwallet.CreateKeyPairMethod)
 }
 
+// Connect accepts out-of-band invitations and performs DID exchange.
+func (wallet *VCWallet) Connect(request *models.RequestEnvelope) *models.ResponseEnvelope {
+	return wallet.createRespEnvelope(request, cmdvcwallet.ConnectMethod)
+}
+
+// ProposePresentation accepts out-of-band invitation and sends message proposing presentation
+// from wallet to relying party.
+func (wallet *VCWallet) ProposePresentation(request *models.RequestEnvelope) *models.ResponseEnvelope {
+	return wallet.createRespEnvelope(request, cmdvcwallet.ProposePresentationMethod)
+}
+
+// PresentProof sends message present proof message from wallet to relying party.
+func (wallet *VCWallet) PresentProof(request *models.RequestEnvelope) *models.ResponseEnvelope {
+	return wallet.createRespEnvelope(request, cmdvcwallet.PresentProofMethod)
+}
+
 func (wallet *VCWallet) createRespEnvelope(request *models.RequestEnvelope, endpoint string) *models.ResponseEnvelope {
 	return exec(&restOperation{
 		url:        wallet.URL,

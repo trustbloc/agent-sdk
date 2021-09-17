@@ -259,3 +259,52 @@ func (v *VCWallet) CreateKeyPair(request *models.RequestEnvelope) *models.Respon
 
 	return &models.ResponseEnvelope{Payload: response}
 }
+
+// Connect accepts out-of-band invitations and performs DID exchange.
+func (v *VCWallet) Connect(request *models.RequestEnvelope) *models.ResponseEnvelope {
+	args := cmdvcwallet.ConnectRequest{}
+
+	if err := json.Unmarshal(request.Payload, &args); err != nil {
+		return &models.ResponseEnvelope{Error: &models.CommandError{Message: err.Error()}}
+	}
+
+	response, cmdErr := exec(v.handlers[cmdvcwallet.ConnectMethod], args)
+	if cmdErr != nil {
+		return &models.ResponseEnvelope{Error: cmdErr}
+	}
+
+	return &models.ResponseEnvelope{Payload: response}
+}
+
+// ProposePresentation accepts out-of-band invitation and sends message proposing presentation
+// from wallet to relying party.
+func (v *VCWallet) ProposePresentation(request *models.RequestEnvelope) *models.ResponseEnvelope {
+	args := cmdvcwallet.ProposePresentationRequest{}
+
+	if err := json.Unmarshal(request.Payload, &args); err != nil {
+		return &models.ResponseEnvelope{Error: &models.CommandError{Message: err.Error()}}
+	}
+
+	response, cmdErr := exec(v.handlers[cmdvcwallet.ProposePresentationMethod], args)
+	if cmdErr != nil {
+		return &models.ResponseEnvelope{Error: cmdErr}
+	}
+
+	return &models.ResponseEnvelope{Payload: response}
+}
+
+// PresentProof sends present proof message from wallet to relying party.
+func (v *VCWallet) PresentProof(request *models.RequestEnvelope) *models.ResponseEnvelope {
+	args := cmdvcwallet.PresentProofRequest{}
+
+	if err := json.Unmarshal(request.Payload, &args); err != nil {
+		return &models.ResponseEnvelope{Error: &models.CommandError{Message: err.Error()}}
+	}
+
+	response, cmdErr := exec(v.handlers[cmdvcwallet.PresentProofMethod], args)
+	if cmdErr != nil {
+		return &models.ResponseEnvelope{Error: cmdErr}
+	}
+
+	return &models.ResponseEnvelope{Payload: response}
+}
