@@ -37,7 +37,7 @@
     "url": "git://github.com/trustbloc/agent-sdk.git"
   },
   "devDependencies": {
-    "@trustbloc-cicd/agent-sdk-web": "../agent-js-worker",
+    "@trustbloc-cicd/agent-sdk-web": "^0.1.8-snapshot-83a245a",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "html-webpack-plugin": "^5.3.1",
