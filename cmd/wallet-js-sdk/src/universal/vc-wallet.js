@@ -415,14 +415,25 @@ export class UniversalWallet {
    *  @param {String} threadID - threadID of credential interaction.
    *  @param {Object} presentation - to be sent as part of present proof message..
    *
-   * @returns {Promise<Object>} - empty promise or error if operation fails.
+   *  @param {Object} options - (optional) for sending message proposing presentation.
+   *  @param {Bool} options.waitForDone - (optional) If true then wallet will wait for present proof protocol status to be done or abandoned .
+   *  @param {Time} options.WaitForDoneTimeout - (optional) timeout to wait for present proof operation to be done.
+   *
+   * @returns {Promise<Object>} - promise of object containing present prof status & redirect info or error if operation fails.
    */
-  async presentProof(auth, threadID, presentation) {
+  async presentProof(
+    auth,
+    threadID,
+    presentation,
+    { waitForDone, WaitForDoneTimeout } = {}
+  ) {
     return await this.agent.vcwallet.presentProof({
       userID: this.user,
       auth,
       threadID,
       presentation,
+      waitForDone,
+      WaitForDoneTimeout,
     });
   }
 }
