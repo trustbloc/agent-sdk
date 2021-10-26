@@ -619,7 +619,7 @@ didcomm module provides wallet based DIDComm features.
         * _instance_
             * [.connect(auth, invitation, options)](#module_didcomm--exports.DIDComm.DIDComm+connect) ⇒ <code>Promise.&lt;Object&gt;</code>
             * [.initiateCredentialShare(auth, invitation, connectOptions, proposeOptions)](#module_didcomm--exports.DIDComm.DIDComm+initiateCredentialShare) ⇒ <code>Object</code> \| <code>String</code> \| <code>Array.&lt;Object&gt;</code>
-            * [.completeCredentialShare(auth, threadID, presentations, proofOptions, waitForStateCompletion)](#module_didcomm--exports.DIDComm.DIDComm+completeCredentialShare) ⇒ <code>Promise.&lt;Object&gt;</code>
+            * [.completeCredentialShare(auth, threadID, presentations, proofOptions, options)](#module_didcomm--exports.DIDComm.DIDComm+completeCredentialShare) ⇒ <code>Promise.&lt;Object&gt;</code>
         * _static_
             * [.createInvitationFromRouter](#module_didcomm--exports.DIDComm.createInvitationFromRouter)
             * [.getMediatorConnections(agent)](#module_didcomm--exports.DIDComm.getMediatorConnections)
@@ -689,28 +689,30 @@ Initiates WACI credential share interaction from wallet.
 
 <a name="module_didcomm--exports.DIDComm.DIDComm+completeCredentialShare"></a>
 
-#### exports.DIDComm.completeCredentialShare(auth, threadID, presentations, proofOptions, waitForStateCompletion) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### exports.DIDComm.completeCredentialShare(auth, threadID, presentations, proofOptions, options) ⇒ <code>Promise.&lt;Object&gt;</code>
 Completes WACI credential share flow.
 
  Signs presentation(s) and sends them as part of present proof message to relying party.
 
 **Kind**: instance method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - - empty promise or error if operation fails.  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing present prof status & redirect info or error if operation fails.  
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| auth | <code>String</code> |  | authorization token for performing this wallet operation. |
-| threadID | <code>String</code> |  | threadID of credential interaction. |
-| presentations | <code>Array.&lt;Object&gt;</code> |  | to be sent as part of present proof message.. |
-| proofOptions | <code>Object</code> |  | proof options for signing presentation. |
-| proofOptions.controller | <code>String</code> |  | DID to be used for signing. |
-| proofOptions.verificationMethod | <code>String</code> |  | (optional) VerificationMethod is the URI of the verificationMethod used for the proof.  By default, Controller public key matching 'assertion' for issue or 'authentication' for prove functions. |
-| proofOptions.created | <code>String</code> |  | (optional) Created date of the proof.  By default, current system time will be used. |
-| proofOptions.domain | <code>String</code> |  | (optional) operational domain of a digital proof.  By default, domain will not be part of proof. |
-| proofOptions.challenge | <code>String</code> |  | (optional) random or pseudo-random value option authentication.  By default, challenge will not be part of proof. |
-| proofOptions.proofType | <code>String</code> |  | (optional) signature type used for signing.  By default, proof will be generated in Ed25519Signature2018 format. |
-| proofOptions.proofRepresentation | <code>String</code> |  | (optional) type of proof data expected ( "proofValue" or "jws").  By default, 'proofValue' will be used. |
-| waitForStateCompletion | <code>Bool</code> | <code>false</code> | if true, then wallet will wait till 'presentation-sent' state before returning. |
+| Param | Type | Description |
+| --- | --- | --- |
+| auth | <code>String</code> | authorization token for performing this wallet operation. |
+| threadID | <code>String</code> | threadID of credential interaction. |
+| presentations | <code>Array.&lt;Object&gt;</code> | to be sent as part of present proof message.. |
+| proofOptions | <code>Object</code> | proof options for signing presentation. |
+| proofOptions.controller | <code>String</code> | DID to be used for signing. |
+| proofOptions.verificationMethod | <code>String</code> | (optional) VerificationMethod is the URI of the verificationMethod used for the proof.  By default, Controller public key matching 'assertion' for issue or 'authentication' for prove functions. |
+| proofOptions.created | <code>String</code> | (optional) Created date of the proof.  By default, current system time will be used. |
+| proofOptions.domain | <code>String</code> | (optional) operational domain of a digital proof.  By default, domain will not be part of proof. |
+| proofOptions.challenge | <code>String</code> | (optional) random or pseudo-random value option authentication.  By default, challenge will not be part of proof. |
+| proofOptions.proofType | <code>String</code> | (optional) signature type used for signing.  By default, proof will be generated in Ed25519Signature2018 format. |
+| proofOptions.proofRepresentation | <code>String</code> | (optional) type of proof data expected ( "proofValue" or "jws").  By default, 'proofValue' will be used. |
+| options | <code>Object</code> | (optional) for sending message proposing presentation. |
+| options.waitForDone | <code>Bool</code> | (optional) If true then wallet will wait for present proof protocol status to be done or abandoned . |
+| options.WaitForDoneTimeout | <code>Time</code> | (optional) timeout to wait for present proof operation to be done. |
 
 <a name="module_didcomm--exports.DIDComm.createInvitationFromRouter"></a>
 
@@ -771,7 +773,7 @@ vcwallet module provides verifiable credential wallet SDK for aries universal wa
             * [.createKeyPair(request)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+createKeyPair) ⇒ <code>Promise.&lt;Object&gt;</code>
             * [.connect(auth, invitation, options)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+connect) ⇒ <code>Promise.&lt;Object&gt;</code>
             * [.proposePresentation(auth, invitation, connectOptions, proposeOptions)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+proposePresentation) ⇒ <code>Promise.&lt;Object&gt;</code>
-            * [.presentProof(auth, threadID, presentation)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+presentProof) ⇒ <code>Promise.&lt;Object&gt;</code>
+            * [.presentProof(auth, threadID, presentation, options)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+presentProof) ⇒ <code>Promise.&lt;Object&gt;</code>
         * _static_
             * [.contentTypes](#module_vcwallet--exports.UniversalWallet.contentTypes) : <code>enum</code>
             * [.createWalletProfile(agent, userID, profileOptions)](#module_vcwallet--exports.UniversalWallet.createWalletProfile) ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -1043,11 +1045,11 @@ accepts an out of band invitation, sends propose presentation message to inviter
 
 <a name="module_vcwallet--exports.UniversalWallet.UniversalWallet+presentProof"></a>
 
-#### exports.UniversalWallet.presentProof(auth, threadID, presentation) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### exports.UniversalWallet.presentProof(auth, threadID, presentation, options) ⇒ <code>Promise.&lt;Object&gt;</code>
 sends present proof message from wallet to relying party as part of ongoing credential share interaction.
 
 **Kind**: instance method of [<code>exports.UniversalWallet</code>](#exp_module_vcwallet--exports.UniversalWallet)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - - empty promise or error if operation fails.  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing present prof status & redirect info or error if operation fails.  
 **See**: [WACI Present Proof ](https://w3c-ccg.github.io/universal-wallet-interop-spec/#presentproof)  
 
 | Param | Type | Description |
@@ -1055,6 +1057,9 @@ sends present proof message from wallet to relying party as part of ongoing cred
 | auth | <code>String</code> | authorization token for performing this wallet operation. |
 | threadID | <code>String</code> | threadID of credential interaction. |
 | presentation | <code>Object</code> | to be sent as part of present proof message.. |
+| options | <code>Object</code> | (optional) for sending message proposing presentation. |
+| options.waitForDone | <code>Bool</code> | (optional) If true then wallet will wait for present proof protocol status to be done or abandoned . |
+| options.WaitForDoneTimeout | <code>Time</code> | (optional) timeout to wait for present proof operation to be done. |
 
 <a name="module_vcwallet--exports.UniversalWallet.contentTypes"></a>
 

@@ -231,9 +231,11 @@ export class DIDComm {
    *  @param {String} proofOptions.proofRepresentation - (optional) type of proof data expected ( "proofValue" or "jws").
    *  By default, 'proofValue' will be used.
    *
-   *  @param {Bool} waitForStateCompletion=false - if true, then wallet will wait till 'presentation-sent' state before returning.
+   *  @param {Object} options - (optional) for sending message proposing presentation.
+   *  @param {Bool} options.waitForDone - (optional) If true then wallet will wait for present proof protocol status to be done or abandoned .
+   *  @param {Time} options.WaitForDoneTimeout - (optional) timeout to wait for present proof operation to be done.
    *
-   * @returns {Promise<Object>} - empty promise or error if operation fails.
+   * @returns {Promise<Object>} - promise of object containing present prof status & redirect info or error if operation fails.
    */
   async completeCredentialShare(
     auth,
@@ -248,7 +250,7 @@ export class DIDComm {
       proofType,
       proofRepresentation,
     } = {},
-    waitForStateCompletion
+    { waitForDone, WaitForDoneTimeout } = {}
   ) {
     let _prove = async (presentation) => {
       return await this.wallet.prove(
@@ -270,18 +272,18 @@ export class DIDComm {
 
     if (vps.length == 1) {
       let { presentation } = vps[0];
-      await this.wallet.presentProof(auth, threadID, presentation);
+      return await this.wallet.presentProof(auth, threadID, presentation, {
+        waitForDone,
+        WaitForDoneTimeout,
+      });
     } else {
       // typically only one presentation, if there are multiple then send them all as part of single attachment for now.
-      await this.wallet.presentProof(auth, threadID, { presentations: vps });
-    }
-
-    if (waitForStateCompletion) {
-      await waitForEvent(this.agent, {
-        topic: PRESENT_PROOF_STATE_TOPIC,
-        type: POST_STATE,
-        stateID: PRESENTATION_SENT_STATE_ID,
-      });
+      return await this.wallet.presentProof(
+        auth,
+        threadID,
+        { presentations: vps },
+        { waitForDone, WaitForDoneTimeout }
+      );
     }
   }
 }
@@ -317,7 +319,6 @@ export const createInvitationFromRouter = async (endpoint) => {
     `${endpoint}${ROUTER_CREATE_INVITATION_PATH}`
   );
   let response = await axios.get(`${endpoint}${ROUTER_CREATE_INVITATION_PATH}`);
-  console.log("response", JSON.stringify(response));
   return response.data.invitation;
 };
 

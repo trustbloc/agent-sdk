@@ -127,10 +127,16 @@ describe('Wallet DIDComm WACI credential share flow', async function () {
     it('user gives consent and concludes credential interaction by presenting proof to relying party', async function () {
         let {threadID, presentations} = credentialInteraction
 
-        let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
-        await didcomm.completeCredentialShare(auth, threadID, presentations, {controller: did}, true)
+        const redirectURL = "http://example.com/success"
+        let acceptPresentation = rp.acceptPresentProof({redirectURL})
 
-        let presentation = await rp.acceptPresentProof()
+        let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
+        const response = await didcomm.completeCredentialShare(auth, threadID, presentations, {controller: did}, {waitForDone: true})
+        expect(response.status).to.be.equal("OK")
+        expect(response.url).to.be.equal(redirectURL)
+
+
+        let presentation = await acceptPresentation
         expect(presentation.verifiableCredential).to.not.empty
         expect(presentation.verifiableCredential[0].id).to.be.equal(samplePRC.id)
     })

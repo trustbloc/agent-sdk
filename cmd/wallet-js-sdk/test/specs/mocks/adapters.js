@@ -120,14 +120,20 @@ export class VerifierAdapter extends Adapter {
         })
     }
 
-    async acceptPresentProof(timeout) {
+    async acceptPresentProof({timeout, redirectURL} = {}) {
         let presentation
         await waitForEvent(this.agent, {
             topic: PRESENT_PROOF_ACTION_TOPIC,
             timeout,
             callback: async (payload) => {
-                let {Message} = payload
+                let {Message, Properties} = payload
+
                 presentation = Message["presentations~attach"][0].data.json
+                const { piid } = Properties
+
+                return this.agent.presentproof.acceptPresentation({
+                    piid, redirectURL
+                });
             }
         })
 
