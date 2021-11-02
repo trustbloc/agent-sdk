@@ -139,6 +139,26 @@ export class VerifierAdapter extends Adapter {
 
         return presentation
     }
+
+    async declinePresentProof({timeout, redirectURL} = {}) {
+        let presentation
+        await waitForEvent(this.agent, {
+            topic: PRESENT_PROOF_ACTION_TOPIC,
+            timeout,
+            callback: async (payload) => {
+                let {Message, Properties} = payload
+
+                presentation = Message["presentations~attach"][0].data.json
+                const { piid } = Properties
+
+                return this.agent.presentproof.declinePresentation({
+                    piid, redirectURL, reason: "test"
+                });
+            }
+        })
+
+        return presentation
+    }
 }
 
 /**

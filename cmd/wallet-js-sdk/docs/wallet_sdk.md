@@ -713,6 +713,7 @@ Completes WACI credential share flow.
 | options | <code>Object</code> | (optional) for sending message proposing presentation. |
 | options.waitForDone | <code>Bool</code> | (optional) If true then wallet will wait for present proof protocol status to be done or abandoned . |
 | options.WaitForDoneTimeout | <code>Time</code> | (optional) timeout to wait for present proof operation to be done. |
+| options.autoAccept | <code>Bool</code> | (optional) can be used to auto accept any incoming problem reports while waiting for present proof protocol status to be done or abandoned. |
 
 <a name="module_didcomm--exports.DIDComm.createInvitationFromRouter"></a>
 
