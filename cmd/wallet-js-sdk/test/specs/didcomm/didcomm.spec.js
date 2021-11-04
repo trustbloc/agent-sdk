@@ -141,4 +141,42 @@ describe('Wallet DIDComm WACI credential share flow', async function () {
         expect(presentation.verifiableCredential[0].id).to.be.equal(samplePRC.id)
     })
 
+    it('user accepts out-of-band invitation from relying party and initiates WACI credential interaction', async function () {
+        let invitation = await rp.createInvitation()
+        rp.acceptExchangeRequest()
+        rp.acceptPresentationProposal({
+            "id": "22c77155-edf2-4ec5-8d44-b393b4e4fa38",
+            "input_descriptors": [{
+                "id": "20b073bb-cede-4912-9e9d-334e5702077b",
+                "schema": [{"uri": "https://w3id.org/citizenship#PermanentResidentCard"}],
+                "constraints": {"fields": [{"path": ["$.credentialSubject.familyName"]}]}
+            }]
+        })
+
+        let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
+        credentialInteraction = await didcomm.initiateCredentialShare(auth, invitation, {routerConnections})
+
+        let {threadID, presentations} = credentialInteraction
+        expect(threadID).to.not.empty
+        expect(presentations).to.not.empty
+    })
+
+    it('user gives consent and concludes credential interaction by presenting proof to relying party, but relying party rejects it', async function () {
+        let {threadID, presentations} = credentialInteraction
+
+        const redirectURL = "http://example.com/error"
+        let declinePresentProof = rp.declinePresentProof({redirectURL})
+
+
+        let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
+
+        const response = await didcomm.completeCredentialShare(auth, threadID, presentations, {controller: did}, {waitForDone: true, autoAccept: true})
+        expect(response.status).to.be.equal("FAIL")
+        expect(response.url).to.be.equal(redirectURL)
+
+        let presentation = await declinePresentProof
+        expect(presentation.verifiableCredential).to.not.empty
+        expect(presentation.verifiableCredential[0].id).to.be.equal(samplePRC.id)
+    })
+
 })

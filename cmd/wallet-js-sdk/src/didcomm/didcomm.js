@@ -11,6 +11,7 @@ const STATE_COMPLETE_MSG_TOPIC = "didexchange-state-complete";
 const STATE_COMPLETE_MSG_TYPE =
   "https://trustbloc.dev/didexchange/1.0/state-complete";
 const PRESENT_PROOF_STATE_TOPIC = "present-proof_states";
+const PRESENT_PROOF_ACTION_TOPIC = "present-proof_actions";
 const PRESENTATION_SENT_STATE_ID = "presentation-sent";
 
 const DEFAULT_LABEL = "agent-default-label";
@@ -234,6 +235,7 @@ export class DIDComm {
    *  @param {Object} options - (optional) for sending message proposing presentation.
    *  @param {Bool} options.waitForDone - (optional) If true then wallet will wait for present proof protocol status to be done or abandoned .
    *  @param {Time} options.WaitForDoneTimeout - (optional) timeout to wait for present proof operation to be done.
+   *  @param {Bool} options.autoAccept - (optional) can be used to auto accept any incoming problem reports while waiting for present proof protocol status to be done or abandoned.
    *
    * @returns {Promise<Object>} - promise of object containing present prof status & redirect info or error if operation fails.
    */
@@ -250,7 +252,7 @@ export class DIDComm {
       proofType,
       proofRepresentation,
     } = {},
-    { waitForDone, WaitForDoneTimeout } = {}
+    { waitForDone, WaitForDoneTimeout, autoAccept } = {}
   ) {
     let _prove = async (presentation) => {
       return await this.wallet.prove(
@@ -269,6 +271,20 @@ export class DIDComm {
     };
 
     let vps = await Promise.all(presentations.map(_prove));
+
+    if (autoAccept) {
+      waitForEvent(this.agent, {
+        topic: PRESENT_PROOF_ACTION_TOPIC,
+        timeout: WaitForDoneTimeout,
+        callback: async (payload) => {
+          const { piid } = payload.Properties;
+
+          await this.agent.presentproof.acceptProblemReport({
+            piid,
+          });
+        },
+      });
+    }
 
     if (vps.length == 1) {
       let { presentation } = vps[0];
