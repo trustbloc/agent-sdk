@@ -118,7 +118,10 @@ describe('Credential Manager Tests', async function () {
         let docres = await didManager.createOrbDID(auth, {purposes: ["assertionMethod", "authentication"]})
         expect(docres.didDocument.id).to.not.empty
 
+        await wait(5000)
+
         let resolveDID = await didManager.resolveOrbDID(auth, docres.didDocument.id)
+
         expect(resolveDID.didDocument.id).to.not.empty
 
         did = resolveDID.didDocument.id
