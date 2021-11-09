@@ -15,4 +15,7 @@ type DIDClient interface {
 
 	// CreatePeerDID creates a new peer DID.
 	CreatePeerDID(request *models.RequestEnvelope) *models.ResponseEnvelope
+
+	// ResolveOrbDID resolve orb DID.
+	ResolveOrbDID(request *models.RequestEnvelope) *models.ResponseEnvelope
 }

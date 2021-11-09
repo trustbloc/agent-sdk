@@ -36,6 +36,22 @@ func (de *DIDClient) CreateOrbDID(request *models.RequestEnvelope) *models.Respo
 	return &models.ResponseEnvelope{Payload: response}
 }
 
+// ResolveOrbDID resolv orb DID.
+func (de *DIDClient) ResolveOrbDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
+	args := didclient.ResolveOrbDIDRequest{}
+
+	if err := json.Unmarshal(request.Payload, &args); err != nil {
+		return &models.ResponseEnvelope{Error: &models.CommandError{Message: err.Error()}}
+	}
+
+	response, cmdErr := exec(de.handlers[didclient.ResolveOrbDIDCommandMethod], args)
+	if cmdErr != nil {
+		return &models.ResponseEnvelope{Error: cmdErr}
+	}
+
+	return &models.ResponseEnvelope{Payload: response}
+}
+
 // CreatePeerDID creates a new peer DID.
 func (de *DIDClient) CreatePeerDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := didclient.CreatePeerDIDRequest{}

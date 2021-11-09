@@ -25,6 +25,11 @@ func (dc *DIDClient) CreateOrbDID(request *models.RequestEnvelope) *models.Respo
 	return dc.createRespEnvelope(request, didclient.CreateOrbDIDCommandMethod)
 }
 
+// ResolveOrbDID resolve Orb DID.
+func (dc *DIDClient) ResolveOrbDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
+	return dc.createRespEnvelope(request, didclient.ResolveOrbDIDCommandMethod)
+}
+
 // CreatePeerDID creates a new peer DID.
 func (dc *DIDClient) CreatePeerDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	return dc.createRespEnvelope(request, didclient.CreatePeerDIDCommandMethod)

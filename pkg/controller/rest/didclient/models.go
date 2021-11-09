@@ -25,6 +25,19 @@ type createOrbDIDRequest struct { // nolint: unused,deadcode
 	Request didclient.CreateOrbDIDRequest
 }
 
+// resolveOrbDIDRequest model
+//
+// Request to resolve a new orb DID.
+//
+// swagger:parameters resolveOrbDID
+type resolveOrbDIDRequest struct { // nolint: unused,deadcode
+	// Params for resolving Orb DID.
+	//
+	// in: body
+	// required: true
+	Request didclient.ResolveOrbDIDRequest
+}
+
 // createPeerDIDRequest model
 //
 // Request to create a new peer DID.
@@ -44,6 +57,16 @@ type createPeerDIDRequest struct { // nolint: unused,deadcode
 //
 // swagger:response createDIDResp
 type createDIDResp struct { // nolint: unused,deadcode
+	// in: body
+	Response *did.DocResolution
+}
+
+// resolveDIDResp model
+//
+// This is used as the response model for resolve Orb/ DID operations.
+//
+// swagger:response resolveDIDResp
+type resolveDIDResp struct { // nolint: unused,deadcode
 	// in: body
 	Response *did.DocResolution
 }

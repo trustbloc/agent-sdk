@@ -21,6 +21,7 @@ const (
 	OperationID       = "/didclient"
 	CreateOrbDIDPath  = OperationID + "/create-orb-did"
 	CreatePeerDIDPath = OperationID + "/create-peer-did"
+	ResolveOrbDIDPath = OperationID + "/resolve-orb-did"
 )
 
 // Operation is controller REST service controller for DID Client.
@@ -53,6 +54,7 @@ func (c *Operation) registerHandler() {
 	c.handlers = []rest.Handler{
 		cmdutil.NewHTTPHandler(CreateOrbDIDPath, http.MethodPost, c.CreateOrbDID),
 		cmdutil.NewHTTPHandler(CreatePeerDIDPath, http.MethodPost, c.CreatePeerDID),
+		cmdutil.NewHTTPHandler(ResolveOrbDIDPath, http.MethodPost, c.ResolveOrbDID),
 	}
 }
 
@@ -65,6 +67,17 @@ func (c *Operation) registerHandler() {
 //    200: createDIDResp
 func (c *Operation) CreateOrbDID(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.CreateOrbDID, rw, req.Body)
+}
+
+// ResolveOrbDID swagger:route POST /didclient/resolve-orb-did didclient resolveOrbDID
+//
+// Resolve orb DID.
+//
+// Responses:
+//    default: genericError
+//    200: resolveDIDResp
+func (c *Operation) ResolveOrbDID(rw http.ResponseWriter, req *http.Request) {
+	rest.Execute(c.command.ResolveOrbDID, rw, req.Body)
 }
 
 // CreatePeerDID swagger:route POST /didclient/create-peer-did didclient createPeerDID

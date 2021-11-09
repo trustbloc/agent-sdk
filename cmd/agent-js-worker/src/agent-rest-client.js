@@ -497,6 +497,10 @@ const pkgs = {
             path: "/didclient/create-orb-did",
             method: "POST",
         },
+        ResolveOrbDID: {
+            path: "/didclient/resolve-orb-did",
+            method: "POST",
+        },
         CreatePeerDID: {
             path: "/didclient/create-peer-did",
             method: "POST",

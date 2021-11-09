@@ -459,6 +459,7 @@ did-manager module provides DID related features for wallet like creating, impor
         * [.importDID(options)](#module_did-manager--exports.DIDManager.DIDManager+importDID) ⇒ <code>Promise</code>
         * [.getAllDIDs(options)](#module_did-manager--exports.DIDManager.DIDManager+getAllDIDs) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.getDID(options)](#module_did-manager--exports.DIDManager.DIDManager+getDID) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.resolveOrbDID(options)](#module_did-manager--exports.DIDManager.DIDManager+resolveOrbDID) ⇒ <code>Promise.&lt;Object&gt;</code>
 
 <a name="exp_module_did-manager--exports.DIDManager"></a>
 
@@ -466,6 +467,7 @@ did-manager module provides DID related features for wallet like creating, impor
 DID Manger provides DID related features for wallet like,
 
  - Creating Orb DIDs.
+ - Resolving Orb DIDs.
  - Creating Peer DIDs.
  - Saving Custom DIDs along with keys.
  - Getting all Saved DIDs.
@@ -564,6 +566,20 @@ get DID content from wallet content store.
 
 **Kind**: instance method of [<code>exports.DIDManager</code>](#exp_module_did-manager--exports.DIDManager)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - - result.content - DID document resolution from wallet content store.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| options | <code>Object</code> |  |
+| options.auth | <code>string</code> | authorization token for wallet operations. |
+| options.contentID | <code>string</code> | DID ID. |
+
+<a name="module_did-manager--exports.DIDManager.DIDManager+resolveOrbDID"></a>
+
+#### exports.DIDManager.resolveOrbDID(options) ⇒ <code>Promise.&lt;Object&gt;</code>
+get DID content from did resolver.
+
+**Kind**: instance method of [<code>exports.DIDManager</code>](#exp_module_did-manager--exports.DIDManager)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - result.content - DID document resolution from did resolver.
 
 | Param | Type | Description |
 | --- | --- | --- |

@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/hyperledger/aries-framework-go/pkg/controller/command"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/models"
@@ -40,7 +41,7 @@ func TestDIDClient_CreateOrbDID(t *testing.T) {
 	t.Run("creates trust bloc DID", func(t *testing.T) {
 		client := getDIDClient(t)
 
-		response, err := json.Marshal(didclient.CreateDIDResponse{})
+		response, err := json.Marshal(did.DocResolution{})
 		require.NoError(t, err)
 
 		fakeHandler := mockCommandRunner{data: response}
@@ -86,11 +87,61 @@ func TestDIDClient_CreateOrbDID(t *testing.T) {
 	})
 }
 
+func TestDIDClient_ResolveOrbDID(t *testing.T) {
+	t.Run("resolve orb DID", func(t *testing.T) {
+		client := getDIDClient(t)
+
+		response, err := json.Marshal(did.DocResolution{})
+		require.NoError(t, err)
+
+		fakeHandler := mockCommandRunner{data: response}
+		client.handlers[didclient.ResolveOrbDIDCommandMethod] = fakeHandler.exec
+
+		payload, err := json.Marshal(didclient.CreateOrbDIDRequest{})
+		require.NoError(t, err)
+
+		req := &models.RequestEnvelope{Payload: payload}
+		resp := client.ResolveOrbDID(req)
+		require.NotNil(t, resp)
+		require.Nil(t, resp.Error)
+
+		require.Equal(t, string(response), string(resp.Payload))
+	})
+
+	t.Run("custom error", func(t *testing.T) {
+		client := getDIDClient(t)
+
+		client.handlers[didclient.ResolveOrbDIDCommandMethod] = func(rw io.Writer, req io.Reader) command.Error {
+			return command.NewExecuteError(1, errors.New("error"))
+		}
+
+		payload, err := json.Marshal(didclient.ResolveOrbDIDRequest{})
+		require.NoError(t, err)
+
+		req := &models.RequestEnvelope{Payload: payload}
+		resp := client.ResolveOrbDID(req)
+		require.NotNil(t, resp)
+		require.NotNil(t, resp.Error)
+
+		require.Equal(t, &models.CommandError{Message: "error", Code: 1, Type: 1}, resp.Error)
+	})
+
+	t.Run("JSON error", func(t *testing.T) {
+		client := getDIDClient(t)
+
+		req := &models.RequestEnvelope{Payload: []byte(`{`)}
+		resp := client.ResolveOrbDID(req)
+		require.NotNil(t, resp)
+		require.NotNil(t, resp.Error)
+		require.Equal(t, "unexpected end of JSON input", resp.Error.Message)
+	})
+}
+
 func TestDIDClient_CreatePeerDID(t *testing.T) {
 	t.Run("creates peer DID", func(t *testing.T) {
 		client := getDIDClient(t)
 
-		response, err := json.Marshal(didclient.CreateDIDResponse{})
+		response, err := json.Marshal(did.DocResolution{})
 		require.NoError(t, err)
 
 		fakeHandler := mockCommandRunner{data: response}
