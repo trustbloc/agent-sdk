@@ -112,12 +112,16 @@ describe('Credential Manager Tests', async function () {
     })
 
     let did
-    it('user creates Orb DID in wallet', async function () {
+    it('user creates Orb DID in wallet and resolve it', async function () {
         let didManager = new DIDManager({agent: walletUserAgent, user: WALLET_USER})
 
         let docres = await didManager.createOrbDID(auth, {purposes: ["assertionMethod", "authentication"]})
-        expect(docres).to.not.empty
-        did = docres.DIDDocument.id
+        expect(docres.didDocument.id).to.not.empty
+
+        let resolveDID = await didManager.resolveOrbDID(auth, docres.didDocument.id)
+        expect(resolveDID.didDocument.id).to.not.empty
+
+        did = resolveDID.didDocument.id
     })
 
     it('user issues a credential from wallet', async function () {

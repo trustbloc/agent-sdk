@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
@@ -41,6 +42,8 @@ const (
 	CommandName = "didclient"
 	// CreateOrbDIDCommandMethod command method.
 	CreateOrbDIDCommandMethod = "CreateOrbDID"
+	// ResolveOrbDIDCommandMethod command method.
+	ResolveOrbDIDCommandMethod = "ResolveOrbDID"
 	// CreatePeerDIDCommandMethod command method.
 	CreatePeerDIDCommandMethod = "CreatePeerDID"
 	// log constants.
@@ -59,6 +62,8 @@ const (
 
 	// BLS12381G2KeyType BLS12381G2 key type.
 	BLS12381G2KeyType = "bls12381g2"
+
+	maxRetry = 10
 )
 
 const (
@@ -67,6 +72,9 @@ const (
 
 	// CreateDIDErrorCode is typically a code for create did errors.
 	CreateDIDErrorCode
+
+	// ResolveDIDErrorCode is typically a code for resolve did errors.
+	ResolveDIDErrorCode
 
 	// errors.
 	errInvalidRouterConnectionID = "invalid router connection ID"
@@ -83,6 +91,7 @@ type Provider interface {
 
 type didBlocClient interface {
 	Create(did *did.Doc, opts ...vdr.DIDMethodOption) (*did.DocResolution, error)
+	Read(id string, opts ...vdr.DIDMethodOption) (*did.DocResolution, error)
 }
 
 // mediatorClient is client interface for mediator.
@@ -142,7 +151,61 @@ func (c *Command) GetHandlers() []command.Handler {
 	return []command.Handler{
 		cmdutil.NewCommandHandler(CommandName, CreateOrbDIDCommandMethod, c.CreateOrbDID),
 		cmdutil.NewCommandHandler(CommandName, CreatePeerDIDCommandMethod, c.CreatePeerDID),
+		cmdutil.NewCommandHandler(CommandName, ResolveOrbDIDCommandMethod, c.ResolveOrbDID),
 	}
+}
+
+// ResolveOrbDID resolve orb DID.
+func (c *Command) ResolveOrbDID(rw io.Writer, req io.Reader) command.Error {
+	var request ResolveOrbDIDRequest
+
+	err := json.NewDecoder(req).Decode(&request)
+	if err != nil {
+		logutil.LogError(logger, CommandName, ResolveOrbDIDCommandMethod, err.Error())
+
+		return command.NewValidationError(InvalidRequestErrorCode, err)
+	}
+
+	var docResolution *did.DocResolution
+
+	for i := 1; i <= maxRetry; i++ {
+		var errRead error
+
+		docResolution, errRead = c.didBlocClient.Read(request.DID)
+
+		if errRead == nil {
+			break
+		}
+
+		if errRead != nil && !strings.Contains(errRead.Error(), "DID does not exist") {
+			logutil.LogError(logger, CommandName, ResolveOrbDIDCommandMethod, errRead.Error())
+
+			return command.NewExecuteError(ResolveDIDErrorCode, errRead)
+		}
+
+		if i == maxRetry {
+			logutil.LogError(logger, CommandName, ResolveOrbDIDCommandMethod, errRead.Error())
+
+			return command.NewExecuteError(ResolveDIDErrorCode, errRead)
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	bytes, err := docResolution.JSONBytes()
+	if err != nil {
+		logutil.LogError(logger, CommandName, ResolveOrbDIDCommandMethod, err.Error())
+
+		return command.NewExecuteError(ResolveDIDErrorCode, err)
+	}
+
+	logutil.LogDebug(logger, CommandName, ResolveOrbDIDCommandMethod, successString)
+
+	if _, err := rw.Write(bytes); err != nil {
+		logger.Errorf(err.Error())
+	}
+
+	return nil
 }
 
 // CreateOrbDID creates a new orb DID.
@@ -237,9 +300,18 @@ func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { //no
 		return command.NewExecuteError(CreateDIDErrorCode, err)
 	}
 
-	command.WriteNillableResponse(rw, docResolution, logger)
+	bytes, err := docResolution.JSONBytes()
+	if err != nil {
+		logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, err.Error())
+
+		return command.NewExecuteError(CreateDIDErrorCode, err)
+	}
 
 	logutil.LogDebug(logger, CommandName, CreateOrbDIDCommandMethod, successString)
+
+	if _, err := rw.Write(bytes); err != nil {
+		logger.Errorf(err.Error())
+	}
 
 	return nil
 }
@@ -264,7 +336,7 @@ func getKey(keyType string, value []byte) (interface{}, error) {
 }
 
 // CreatePeerDID creates a new peer DID.
-func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //nolint: funlen
+func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //nolint: funlen,gocyclo
 	var request CreatePeerDIDRequest
 
 	err := json.NewDecoder(req).Decode(&request)
@@ -333,9 +405,18 @@ func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //n
 		}
 	}
 
-	command.WriteNillableResponse(rw, docResolution, logger)
+	bytes, err := docResolution.JSONBytes()
+	if err != nil {
+		logutil.LogError(logger, CommandName, CreatePeerDIDCommandMethod, err.Error())
 
-	logutil.LogDebug(logger, CommandName, CreateOrbDIDCommandMethod, successString)
+		return command.NewExecuteError(CreateDIDErrorCode, err)
+	}
+
+	logutil.LogDebug(logger, CommandName, CreatePeerDIDCommandMethod, successString)
+
+	if _, err := rw.Write(bytes); err != nil {
+		logger.Errorf(err.Error())
+	}
 
 	return nil
 }

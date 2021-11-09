@@ -211,16 +211,16 @@ export class IssuerAdapter extends Adapter {
             ]
         };
 
-        let {DIDDocument} = await this.agent.didclient.createOrbDID(createDIDRequest)
+        let {didDocument} = await this.agent.didclient.createOrbDID(createDIDRequest)
 
-        let resolveDID = async () => await this.agent.vdr.resolveDID({id: DIDDocument.id})
+        let resolveDID = async () => await this.agent.vdr.resolveDID({id: didDocument.id})
         await retryWithDelay(resolveDID, 10, 5000)
 
 
         let signVCs = await Promise.all(credential.map(async (credential) => {
                 let {verifiableCredential} = await this.agent.verifiable.signCredential({
                     credential,
-                    "did": DIDDocument.id,
+                    "did": didDocument.id,
                     "signatureType": "Ed25519Signature2018"
                 })
 

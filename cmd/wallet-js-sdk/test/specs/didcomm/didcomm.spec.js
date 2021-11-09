@@ -94,7 +94,7 @@ describe('Wallet DIDComm WACI credential share flow', async function () {
 
         let docres = await didManager.createOrbDID(auth, {purposes: ["assertionMethod", "authentication"]})
         expect(docres).to.not.empty
-        did = docres.DIDDocument.id
+        did = docres.didDocument.id
     })
 
     it('user saves credentials into wallet', async function () {

@@ -101,7 +101,7 @@ export class DIDManager {
 
     console.debug(
       "created and saved Orb DID successfully",
-      content.DIDDocument.id
+      content.didDocument.id
     );
 
     return content;
@@ -213,5 +213,29 @@ export class DIDManager {
       contentType: contentTypes.DID_RESOLUTION_RESPONSE,
       contentID,
     });
+  }
+
+  /**
+   * resolve orb DID.
+   *
+   *  @param {Object} options
+   *  @param {string} options.auth - authorization token for wallet operations.
+   *  @param {string} options.contentID - DID ID.
+   *
+   * @returns {Promise<Object>} - result.content - DID document resolution from did resolver.
+   */
+  async resolveOrbDID(auth, contentID) {
+    const createDIDRequest = {
+      did:contentID
+    };
+
+    let content = await this.agent.didclient.resolveOrbDID(createDIDRequest);
+
+    console.debug(
+        "resolve Orb DID successfully",
+        content.didDocument.id
+    );
+
+    return content;
   }
 }

@@ -1354,6 +1354,16 @@ const Agent = function (opts) {
             },
 
             /**
+             * Resolve Orb DID.
+             *
+             * @param req - json document
+             * @returns {Promise<Object>}
+             */
+            resolveOrbDID: async function (req) {
+                return invoke(aw, pending, this.pkgname, "ResolveOrbDID", req, "timeout while resolving orb did")
+            },
+
+            /**
              * Creates a peer DID.
              *
              * @param req - json document

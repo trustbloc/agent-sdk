@@ -5,14 +5,20 @@ SPDX-License-Identifier: Apache-2.0
 
 package didclient
 
-import "encoding/json"
-
 // CreateOrbDIDRequest model
 //
 // This is used for creating orb DID.
 //
 type CreateOrbDIDRequest struct {
 	PublicKeys []PublicKey `json:"publicKeys,omitempty"`
+}
+
+// ResolveOrbDIDRequest model
+//
+// This is used for resolving orb DID.
+//
+type ResolveOrbDIDRequest struct {
+	DID string `json:"did,omitempty"`
 }
 
 // CreatePeerDIDRequest model
@@ -33,9 +39,4 @@ type PublicKey struct {
 	Recovery bool     `json:"recovery,omitempty"`
 	Update   bool     `json:"update,omitempty"`
 	Value    string   `json:"value,omitempty"`
-}
-
-// CreateDIDResponse contains the newly-create DID doc.
-type CreateDIDResponse struct {
-	DID json.RawMessage
 }

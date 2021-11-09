@@ -36,10 +36,12 @@ describe('DID Manager tests', async function () {
         auth = authResponse.token
     })
 
-    it('rick creates orb DID in wallet', async function () {
+    it('rick creates orb DID in wallet and resolve it', async function () {
         let didManager = new DIDManager({agent: rick, user: RICK_USER})
         let did = await didManager.createOrbDID(auth)
-        expect(did).to.not.empty
+        expect(did.didDocument.id).to.not.empty
+        let resolveDID = await didManager.resolveOrbDID(auth,did.didDocument.id)
+        expect(resolveDID.didDocument.id).to.not.empty
     })
 
     it('user creates BLS12381G2 Orb DID in wallet', async function () {

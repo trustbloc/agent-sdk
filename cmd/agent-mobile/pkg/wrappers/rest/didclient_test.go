@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/stretchr/testify/require"
 
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/models"
@@ -38,7 +39,7 @@ func getDIDClient(t *testing.T) *DIDClient {
 func TestDIDClient_CreatePeerDID(t *testing.T) {
 	dc := getDIDClient(t)
 
-	response, err := json.Marshal(didclient.CreateDIDResponse{})
+	response, err := json.Marshal(did.DocResolution{})
 	require.NoError(t, err)
 
 	dc.httpClient = &mockHTTPClient{
@@ -59,7 +60,7 @@ func TestDIDClient_CreatePeerDID(t *testing.T) {
 func TestDIDClient_CreateOrbDID(t *testing.T) {
 	dc := getDIDClient(t)
 
-	response, err := json.Marshal(didclient.CreateDIDResponse{})
+	response, err := json.Marshal(did.DocResolution{})
 	require.NoError(t, err)
 
 	dc.httpClient = &mockHTTPClient{
@@ -71,6 +72,27 @@ func TestDIDClient_CreateOrbDID(t *testing.T) {
 	require.NoError(t, err)
 
 	resp := dc.CreateOrbDID(&models.RequestEnvelope{Payload: payload})
+
+	require.NotNil(t, resp)
+	require.Nil(t, resp.Error)
+	require.Equal(t, string(response), string(resp.Payload))
+}
+
+func TestDIDClient_ResolveOrbDID(t *testing.T) {
+	dc := getDIDClient(t)
+
+	response, err := json.Marshal(did.DocResolution{})
+	require.NoError(t, err)
+
+	dc.httpClient = &mockHTTPClient{
+		data:   string(response),
+		method: http.MethodPost, url: mockAgentURL + restdidclient.ResolveOrbDIDPath,
+	}
+
+	payload, err := json.Marshal(didclient.ResolveOrbDIDRequest{})
+	require.NoError(t, err)
+
+	resp := dc.ResolveOrbDID(&models.RequestEnvelope{Payload: payload})
 
 	require.NotNil(t, resp)
 	require.Nil(t, resp.Error)

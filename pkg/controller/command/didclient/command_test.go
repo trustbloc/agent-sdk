@@ -84,6 +84,63 @@ func TestNew(t *testing.T) {
 	})
 }
 
+func TestCommand_ResolveOrbDID(t *testing.T) {
+	t.Run("test error from request", func(t *testing.T) {
+		c, err := New("domain", "origin", "", getMockProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		var b bytes.Buffer
+
+		cmdErr := c.ResolveOrbDID(&b, bytes.NewBufferString("--"))
+		require.Error(t, cmdErr)
+		require.Equal(t, InvalidRequestErrorCode, cmdErr.Code())
+		require.Equal(t, command.ValidationError, cmdErr.Type())
+	})
+
+	t.Run("test error from resolve did", func(t *testing.T) {
+		c, err := New("domain", "origin", "", getMockProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		c.didBlocClient = &mockDIDClient{resolveDIDErr: fmt.Errorf("error resolve did")}
+
+		var b bytes.Buffer
+
+		req, err := json.Marshal(ResolveOrbDIDRequest{DID: "did:123"})
+		require.NoError(t, err)
+
+		cmdErr := c.ResolveOrbDID(&b, bytes.NewBuffer(req))
+		require.Error(t, cmdErr)
+		require.Equal(t, ResolveDIDErrorCode, cmdErr.Code())
+		require.Equal(t, command.ExecuteError, cmdErr.Type())
+		require.Contains(t, cmdErr.Error(), "error resolve did")
+	})
+
+	t.Run("test success", func(t *testing.T) {
+		c, err := New("domain", "origin", "", getMockProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		c.didBlocClient = &mockDIDClient{resolveDIDValue: &did.DocResolution{DIDDocument: &did.Doc{
+			ID:      "did:123",
+			Context: []string{"https://www.w3.org/ns/did/v1"},
+		}}}
+
+		req, err := json.Marshal(ResolveOrbDIDRequest{DID: "did:123"})
+		require.NoError(t, err)
+
+		var b bytes.Buffer
+		cmdErr := c.ResolveOrbDID(&b, bytes.NewBuffer(req))
+		require.NoError(t, cmdErr)
+
+		docRes, err := did.ParseDocumentResolution(b.Bytes())
+		require.NoError(t, err)
+		require.NotEmpty(t, docRes)
+		require.Contains(t, "did:123", docRes.DIDDocument.ID)
+	})
+}
+
 func TestCommand_CreateOrbDID(t *testing.T) {
 	t.Run("test error from request", func(t *testing.T) {
 		c, err := New("domain", "origin", "", getMockProvider())
@@ -122,7 +179,7 @@ func TestCommand_CreateOrbDID(t *testing.T) {
 		var b bytes.Buffer
 		cmdErr := c.CreateOrbDID(&b, bytes.NewBufferString("{}"))
 		require.Empty(t, b.Bytes())
-		require.NoError(t, cmdErr)
+		require.Error(t, cmdErr)
 	})
 
 	t.Run("test error unsupported purpose", func(t *testing.T) {
@@ -562,12 +619,18 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 }
 
 type mockDIDClient struct {
-	createDIDValue *did.DocResolution
-	createDIDErr   error
+	createDIDValue  *did.DocResolution
+	createDIDErr    error
+	resolveDIDValue *did.DocResolution
+	resolveDIDErr   error
 }
 
 func (m *mockDIDClient) Create(didDoc *did.Doc, opts ...vdr.DIDMethodOption) (*did.DocResolution, error) {
 	return m.createDIDValue, m.createDIDErr
+}
+
+func (m *mockDIDClient) Read(id string, opts ...vdr.DIDMethodOption) (*did.DocResolution, error) {
+	return m.resolveDIDValue, m.resolveDIDErr
 }
 
 // mockMediatorClient mock mediator client.
