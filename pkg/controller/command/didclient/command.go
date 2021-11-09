@@ -16,7 +16,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"time"
 
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
@@ -62,8 +61,6 @@ const (
 
 	// BLS12381G2KeyType BLS12381G2 key type.
 	BLS12381G2KeyType = "bls12381g2"
-
-	maxRetry = 10
 )
 
 const (
@@ -166,30 +163,11 @@ func (c *Command) ResolveOrbDID(rw io.Writer, req io.Reader) command.Error {
 		return command.NewValidationError(InvalidRequestErrorCode, err)
 	}
 
-	var docResolution *did.DocResolution
+	docResolution, errRead := c.didBlocClient.Read(request.DID)
+	if errRead != nil {
+		logutil.LogError(logger, CommandName, ResolveOrbDIDCommandMethod, errRead.Error())
 
-	for i := 1; i <= maxRetry; i++ {
-		var errRead error
-
-		docResolution, errRead = c.didBlocClient.Read(request.DID)
-
-		if errRead == nil {
-			break
-		}
-
-		if errRead != nil && !strings.Contains(errRead.Error(), "DID does not exist") {
-			logutil.LogError(logger, CommandName, ResolveOrbDIDCommandMethod, errRead.Error())
-
-			return command.NewExecuteError(ResolveDIDErrorCode, errRead)
-		}
-
-		if i == maxRetry {
-			logutil.LogError(logger, CommandName, ResolveOrbDIDCommandMethod, errRead.Error())
-
-			return command.NewExecuteError(ResolveDIDErrorCode, errRead)
-		}
-
-		time.Sleep(1 * time.Second)
+		return command.NewExecuteError(ResolveDIDErrorCode, errRead)
 	}
 
 	bytes, err := docResolution.JSONBytes()

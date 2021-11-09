@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import {expect} from "chai";
-import {loadFrameworks, testConfig} from "../common";
+import {loadFrameworks, retryWithDelay, testConfig, wait} from "../common";
 import {connectToMediator, createWalletProfile, getMediatorConnections, UniversalWallet, DIDManager} from "../../../src";
 
 const RICK_USER = 'rick-agent'
@@ -40,6 +40,9 @@ describe('DID Manager tests', async function () {
         let didManager = new DIDManager({agent: rick, user: RICK_USER})
         let did = await didManager.createOrbDID(auth)
         expect(did.didDocument.id).to.not.empty
+
+        await wait(5000)
+
         let resolveDID = await didManager.resolveOrbDID(auth,did.didDocument.id)
         expect(resolveDID.didDocument.id).to.not.empty
     })
