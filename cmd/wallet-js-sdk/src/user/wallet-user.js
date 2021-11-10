@@ -10,7 +10,7 @@ import {
   profileExists,
   UniversalWallet,
   updateWalletProfile,
-  definedProps,
+  definedProps, DIDManager,
 } from "..";
 
 const JSONLD_CTX_USER_PREFERENCE = [
@@ -47,6 +47,7 @@ export class WalletUser {
     this.agent = agent;
     this.user = user;
     this.wallet = new UniversalWallet({ agent: this.agent, user });
+    this.didManager = new DIDManager({agent: this.agent, user: user});
   }
 
   /**
@@ -255,11 +256,36 @@ export class WalletUser {
    *  @returns {Promise<Object>} - promise containing preference metadata or error if operation fails.
    */
   async getPreferences(auth) {
-    return await this.wallet.get({
+    let result = await this.wallet.get({
       auth,
       contentType: contentTypes.METADATA,
       contentID: `${METADATA_PREFIX}${this.user}`,
     });
+
+    console.info("check controller "+result.content.controller);
+
+    if (result.content.controller && result.content.controller.includes("did:orb:https")){
+      let resolveDID =  this.didManager.resolveOrbDID(result.content.controller)
+      if (resolveDID.didDocumentMetadata && resolveDID.didDocumentMetadata.method) {
+        console.info("check DID if it is published "+resolveDID.didDocumentMetadata.method.published);
+        if (resolveDID.didDocumentMetadata.method.published) {
+          await this.wallet.remove({
+            auth,
+            contentID: `${METADATA_PREFIX}${this.user}`,
+            contentType: contentTypes.METADATA,
+          });
+
+          result.content.controller = resolveDID.didDocumentMetadata.canonicalId
+
+          console.info("did is published will use canonicalId " + result.content.controller);
+
+          await this.saveMetadata(auth, result.content);
+
+          // TODO refresh credential
+        }
+      }
+    }
+    return result;
   }
 
   /**
