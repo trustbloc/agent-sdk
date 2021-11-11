@@ -265,7 +265,7 @@ export class WalletUser {
     console.info("check controller "+result.content.controller);
 
     if (result.content.controller && result.content.controller.includes("did:orb:https")){
-      let resolveDID =  this.didManager.resolveOrbDID(auth,result.content.controller)
+      let resolveDID =  await this.didManager.resolveOrbDID(auth,result.content.controller)
       if (resolveDID.didDocumentMetadata && resolveDID.didDocumentMetadata.method) {
         console.info("check DID if it is published "+resolveDID.didDocumentMetadata.method.published);
         if (resolveDID.didDocumentMetadata.method.published) {
