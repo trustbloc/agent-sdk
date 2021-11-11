@@ -277,7 +277,7 @@ export class WalletUser {
 
           result.content.controller = resolveDID.didDocumentMetadata.canonicalId
 
-          console.info("did is published will use canonicalId " + result.content.controller);
+          console.info("did is published will use canonical id " + result.content.controller);
 
           await this.saveMetadata(auth, result.content);
 
