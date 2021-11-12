@@ -119,34 +119,35 @@ type result struct {
 // agentStartOpts contains opts for starting agent.
 // nolint:lll
 type agentStartOpts struct {
-	Label                string      `json:"agent-default-label"`
-	HTTPResolvers        []string    `json:"http-resolver-url"`
-	AutoAccept           bool        `json:"auto-accept"`
-	OutboundTransport    []string    `json:"outbound-transport"`
-	TransportReturnRoute string      `json:"transport-return-route"`
-	LogLevel             string      `json:"log-level"`
-	StorageType          string      `json:"storageType"`
-	IndexedDBNamespace   string      `json:"indexedDB-namespace"`
-	EDVServerURL         string      `json:"edvServerURL"`            // TODO to be removed/refined after universal wallet migration
-	EDVVaultID           string      `json:"edvVaultID"`              // TODO to be removed/refined after universal wallet migration
-	EDVCapability        string      `json:"edvCapability,omitempty"` // TODO to be removed/refined after universal wallet migration
-	BlocDomain           string      `json:"blocDomain"`
-	TrustblocResolver    string      `json:"trustbloc-resolver"`
-	AuthzKeyStoreURL     string      `json:"authzKeyStoreURL,omitempty"`
-	OpsKeyStoreURL       string      `json:"opsKeyStoreURL,omitempty"` // TODO to be removed/refined after universal wallet migration
-	EDVOpsKIDURL         string      `json:"edvOpsKIDURL,omitempty"`   // TODO to be removed/refined after universal wallet migration
-	EDVHMACKIDURL        string      `json:"edvHMACKIDURL,omitempty"`  // TODO to be removed/refined after universal wallet migration
-	KMSType              string      `json:"kmsType"`                  // TODO to be removed/refined after universal wallet migration
-	UserConfig           *userConfig `json:"userConfig,omitempty"`
-	UseEDVCache          bool        `json:"useEDVCache"`
-	EDVClearCache        string      `json:"edvClearCache"`
-	UseEDVBatch          bool        `json:"useEDVBatch"`
-	EDVBatchSize         int         `json:"edvBatchSize"`
-	CacheSize            int         `json:"cacheSize"`
-	OPSKMSCapability     string      `json:"opsKMSCapability,omitempty"` // TODO to be removed/refined after universal wallet migration
-	DidAnchorOrigin      string      `json:"didAnchorOrigin"`
-	SidetreeToken        string      `json:"sidetreeToken"`
-	ContextProviderURLs  []string    `json:"context-provider-url"`
+	Label                    string      `json:"agent-default-label"`
+	HTTPResolvers            []string    `json:"http-resolver-url"`
+	AutoAccept               bool        `json:"auto-accept"`
+	OutboundTransport        []string    `json:"outbound-transport"`
+	TransportReturnRoute     string      `json:"transport-return-route"`
+	LogLevel                 string      `json:"log-level"`
+	StorageType              string      `json:"storageType"`
+	IndexedDBNamespace       string      `json:"indexedDB-namespace"`
+	EDVServerURL             string      `json:"edvServerURL"`            // TODO to be removed/refined after universal wallet migration
+	EDVVaultID               string      `json:"edvVaultID"`              // TODO to be removed/refined after universal wallet migration
+	EDVCapability            string      `json:"edvCapability,omitempty"` // TODO to be removed/refined after universal wallet migration
+	BlocDomain               string      `json:"blocDomain"`
+	TrustblocResolver        string      `json:"trustbloc-resolver"`
+	AuthzKeyStoreURL         string      `json:"authzKeyStoreURL,omitempty"`
+	OpsKeyStoreURL           string      `json:"opsKeyStoreURL,omitempty"` // TODO to be removed/refined after universal wallet migration
+	EDVOpsKIDURL             string      `json:"edvOpsKIDURL,omitempty"`   // TODO to be removed/refined after universal wallet migration
+	EDVHMACKIDURL            string      `json:"edvHMACKIDURL,omitempty"`  // TODO to be removed/refined after universal wallet migration
+	KMSType                  string      `json:"kmsType"`                  // TODO to be removed/refined after universal wallet migration
+	UserConfig               *userConfig `json:"userConfig,omitempty"`
+	UseEDVCache              bool        `json:"useEDVCache"`
+	EDVClearCache            string      `json:"edvClearCache"`
+	UseEDVBatch              bool        `json:"useEDVBatch"`
+	EDVBatchSize             int         `json:"edvBatchSize"`
+	CacheSize                int         `json:"cacheSize"`
+	OPSKMSCapability         string      `json:"opsKMSCapability,omitempty"` // TODO to be removed/refined after universal wallet migration
+	DidAnchorOrigin          string      `json:"didAnchorOrigin"`
+	SidetreeToken            string      `json:"sidetreeToken"`
+	ContextProviderURLs      []string    `json:"context-provider-url"`
+	UnanchoredDIDMaxLifeTime int         `json:"unanchoredDIDMaxLifeTime"`
 }
 
 type userConfig struct {
@@ -538,7 +539,7 @@ func startOpts(payload map[string]interface{}) (*agentStartOpts, error) {
 	return opts, nil
 }
 
-func createVDRs(resolvers []string, trustblocDomain string) ([]vdr.VDR, error) {
+func createVDRs(resolvers []string, trustblocDomain string, unanchoredDIDMaxLifeTime int) ([]vdr.VDR, error) {
 	const numPartsResolverOption = 2
 	// set maps resolver to its methods
 	// e.g the set of ["trustbloc@http://resolver.com", "v1@http://resolver.com"] will be
@@ -582,9 +583,14 @@ func createVDRs(resolvers []string, trustblocDomain string) ([]vdr.VDR, error) {
 		VDRs[order[url]] = resolverVDR
 	}
 
-	blocVDR, err := orb.New(nil,
-		orb.WithDomain(trustblocDomain),
-	)
+	orbOpts := make([]orb.Option, 0)
+	if unanchoredDIDMaxLifeTime > 0 {
+		orbOpts = append(orbOpts, orb.WithUnanchoredMaxLifeTime(time.Duration(unanchoredDIDMaxLifeTime)*time.Second))
+	}
+
+	orbOpts = append(orbOpts, orb.WithDomain(trustblocDomain))
+
+	blocVDR, err := orb.New(nil, orbOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -632,7 +638,7 @@ func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 		return nil, fmt.Errorf("unexpected failure while adding storage: %w", err)
 	}
 
-	VDRs, err := createVDRs(startOpts.HTTPResolvers, startOpts.BlocDomain)
+	VDRs, err := createVDRs(startOpts.HTTPResolvers, startOpts.BlocDomain, startOpts.UnanchoredDIDMaxLifeTime)
 	if err != nil {
 		return nil, err
 	}
