@@ -92,7 +92,7 @@ func TestCreateVDRs(t *testing.T) {
 	}}
 
 	for _, test := range tests {
-		res, err := createVDRs(test.resolvers, test.blocDomain)
+		res, err := createVDRs(test.resolvers, test.blocDomain, 10)
 
 		for i, methods := range test.accept {
 			for _, method := range methods {
