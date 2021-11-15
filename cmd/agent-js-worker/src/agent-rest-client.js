@@ -271,63 +271,90 @@ const pkgs = {
             path: "/issuecredential/send-offer",
             method: "POST",
         },
+        SendOfferV3: {
+            path: "/issuecredential/v3/send-offer",
+            method: "POST",
+        },
         SendProposal: {
             path: "/issuecredential/send-proposal",
+            method: "POST",
+        },
+        SendProposalV3: {
+            path: "/issuecredential/v3/send-proposal",
             method: "POST",
         },
         SendRequest: {
             path: "/issuecredential/send-request",
             method: "POST",
         },
+        SendRequestV3: {
+            path: "/issuecredential/v3/send-request",
+            method: "POST",
+        },
         AcceptProposal: {
             path: "/issuecredential/{piid}/accept-proposal",
             method: "POST",
-            pathParam:"piid"
+            pathParam: "piid"
+        },
+        AcceptProposalV3: {
+            path: "/issuecredential/v3/{piid}/accept-proposal",
+            method: "POST",
+            pathParam: "piid"
         },
         DeclineProposal: {
             path: "/issuecredential/{piid}/decline-proposal",
             method: "POST",
-            pathParam:"piid"
+            pathParam: "piid"
         },
         AcceptOffer: {
             path: "/issuecredential/{piid}/accept-offer",
             method: "POST",
-            pathParam:"piid"
+            pathParam: "piid"
         },
         AcceptProblemReport: {
             path: "/issuecredential/{piid}/accept-problem-report",
             method: "POST",
-            pathParam:"piid"
+            pathParam: "piid"
         },
         DeclineOffer: {
             path: "/issuecredential/{piid}/decline-offer",
             method: "POST",
-            pathParam:"piid"
+            pathParam: "piid"
         },
         NegotiateProposal: {
             path: "/issuecredential/{piid}/negotiate-proposal",
             method: "POST",
-            pathParam:"piid"
+            pathParam: "piid"
+        },
+        NegotiateProposalV3: {
+            path: "/issuecredential/v3/{piid}/negotiate-proposal",
+            method: "POST",
+            pathParam: "piid"
         },
         AcceptRequest: {
             path: "/issuecredential/{piid}/accept-request",
             method: "POST",
-            pathParam:"piid"
+            pathParam: "piid"
+        },
+        AcceptRequestV3: {
+            path: "/issuecredential/v3/{piid}/accept-request",
+            method: "POST",
+            pathParam: "piid"
         },
         DeclineRequest: {
             path: "/issuecredential/{piid}/decline-request",
             method: "POST",
-            pathParam:"piid"
+            pathParam: "piid"
         },
         AcceptCredential: {
             path: "/issuecredential/{piid}/accept-credential",
             method: "POST",
-            pathParam:"piid"
+            pathParam: "piid"
         },
         DeclineCredential: {
             path: "/issuecredential/{piid}/decline-credential",
             method: "POST",
-            pathParam:"piid"
+            pathParam: "piid"
         },
     },
     presentproof:{
