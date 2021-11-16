@@ -28,12 +28,13 @@ import (
 const wsPath = "/ws"
 
 type allOpts struct {
-	blocDomain      string
-	didAnchorOrigin string
-	sidetreeToken   string
-	msgHandler      ariescmd.MessageHandler
-	notifier        ariescmd.Notifier
-	webhookURLs     []string
+	blocDomain               string
+	unanchoredDIDMaxLifeTime int
+	didAnchorOrigin          string
+	sidetreeToken            string
+	msgHandler               ariescmd.MessageHandler
+	notifier                 ariescmd.Notifier
+	webhookURLs              []string
 }
 
 // Opt represents a controller option.
@@ -57,6 +58,13 @@ func WithDidAnchorOrigin(origin string) Opt {
 func WithSidetreeToken(token string) Opt {
 	return func(opts *allOpts) {
 		opts.sidetreeToken = token
+	}
+}
+
+// WithUnanchoredDIDMaxLifeTime option is max time for unanchored to be trusted .
+func WithUnanchoredDIDMaxLifeTime(seconds int) Opt {
+	return func(opts *allOpts) {
+		opts.unanchoredDIDMaxLifeTime = seconds
 	}
 }
 
@@ -95,7 +103,8 @@ func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, 
 	}
 
 	// did client command operation.
-	didClientCmd, err := didclientcmd.New(cmdOpts.blocDomain, cmdOpts.didAnchorOrigin, cmdOpts.sidetreeToken, ctx)
+	didClientCmd, err := didclientcmd.New(cmdOpts.blocDomain, cmdOpts.didAnchorOrigin, cmdOpts.sidetreeToken,
+		cmdOpts.unanchoredDIDMaxLifeTime, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize DID client: %w", err)
 	}
@@ -141,7 +150,8 @@ func GetRESTHandlers(ctx *context.Provider, opts ...Opt) ([]rest.Handler, error)
 	}
 
 	// DID Client REST operation.
-	didClientOp, err := didclient.New(ctx, restOpts.blocDomain, restOpts.didAnchorOrigin, restOpts.sidetreeToken)
+	didClientOp, err := didclient.New(ctx, restOpts.blocDomain, restOpts.didAnchorOrigin, restOpts.sidetreeToken,
+		restOpts.unanchoredDIDMaxLifeTime)
 	if err != nil {
 		return nil, err
 	}

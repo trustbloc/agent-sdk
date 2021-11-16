@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
@@ -98,8 +99,16 @@ type mediatorClient interface {
 }
 
 // New returns new DID Exchange controller command instance.
-func New(domain, didAnchorOrigin, token string, p Provider) (*Command, error) {
-	client, err := orb.New(nil, orb.WithDomain(domain), orb.WithAuthToken(token))
+func New(domain, didAnchorOrigin, token string, unanchoredDIDMaxLifeTime int, p Provider) (*Command, error) {
+	orbOpts := make([]orb.Option, 0)
+
+	if unanchoredDIDMaxLifeTime > 0 {
+		orbOpts = append(orbOpts, orb.WithUnanchoredMaxLifeTime(time.Duration(unanchoredDIDMaxLifeTime)*time.Second))
+	}
+
+	orbOpts = append(orbOpts, orb.WithDomain(domain), orb.WithAuthToken(token))
+
+	client, err := orb.New(nil, orbOpts...)
 	if err != nil {
 		return nil, err
 	}
