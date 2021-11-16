@@ -405,7 +405,7 @@ func getAgentHandlers(ctx *context.Provider,
 	r controllercmd.MessageHandler, opts *agentStartOpts) ([]commandHandler, error) {
 	handlers, err := agentctrl.GetCommandHandlers(ctx, agentctrl.WithBlocDomain(opts.BlocDomain),
 		agentctrl.WithDidAnchorOrigin(opts.DidAnchorOrigin), agentctrl.WithSidetreeToken(opts.SidetreeToken),
-		agentctrl.WithMessageHandler(r),
+		agentctrl.WithUnanchoredDIDMaxLifeTime(opts.UnanchoredDIDMaxLifeTime), agentctrl.WithMessageHandler(r),
 		agentctrl.WithNotifier(&jsNotifier{}))
 	if err != nil {
 		return nil, err
