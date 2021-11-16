@@ -584,11 +584,11 @@ func createVDRs(resolvers []string, trustblocDomain string, unanchoredDIDMaxLife
 	}
 
 	orbOpts := make([]orb.Option, 0)
+	if unanchoredDIDMaxLifeTime > 0 {
+		orbOpts = append(orbOpts, orb.WithUnanchoredMaxLifeTime(time.Duration(unanchoredDIDMaxLifeTime)*time.Second))
+	}
 
-	logger.Infof("unanchoredDIDMaxLifeTime=%d", unanchoredDIDMaxLifeTime)
-
-	orbOpts = append(orbOpts, orb.WithDomain(trustblocDomain),
-		orb.WithUnanchoredMaxLifeTime(1*time.Second))
+	orbOpts = append(orbOpts, orb.WithDomain(trustblocDomain))
 
 	blocVDR, err := orb.New(nil, orbOpts...)
 	if err != nil {
