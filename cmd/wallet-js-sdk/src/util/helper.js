@@ -4,6 +4,10 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+import jp from "jsonpath";
+
+var uuid = require("uuid/v4");
+
 export const PRE_STATE = "pre_state";
 export const POST_STATE = "post_state";
 
@@ -64,3 +68,103 @@ export function waitForEvent(
 // filter and return defined properties only
 export const definedProps = (obj) =>
   Object.fromEntries(Object.entries(obj).filter(([k, v]) => v !== undefined));
+
+/**
+ *  Scans through @see {@link https://identity.foundation/presentation-exchange/#presentation-submission|Presentation Submission} descriptor map and groups results by descriptor IDs [descriptor_id -> Array of verifiable Credentials].
+ *  In many cases, a single input descriptor can find multiple credentials.
+ *  So this function is useful in cases of grouping results by input descriptor ID and giving option to user to choose only one to avoid over sharing.
+ *
+ *  TODO: support for path_nested in descriptor map.
+ *
+ *  @param {Array<Object>} query - array of query, one of which could have produced the presentation.
+ *  @param {Object} presentation - presentation response of query. If `presentation_submission` is missing, then normalization will treat this as non presentation exchange query
+ *  and normalization logic will only flatten the credentials (grouping duplicate results logic won't be applied).
+ *
+ * @returns {Array<Object>} - Normalized result array with each objects containing input descriptor id, name, purpose, format and array of credentials.
+ */
+export const normalizePresentationSubmission = (query, presentation) => {
+  if (!presentation.presentation_submission) {
+    return presentation.verifiableCredential.map((credential) => {
+      return {
+        id: uuid(),
+        credentials: [credential],
+      };
+    });
+  }
+
+  const queryMatches = jp.query(
+    query,
+    `$[?(@.type=="PresentationExchange")].credentialQuery[?(@.id=="${presentation.presentation_submission.definition_id}")]`
+  );
+  if (queryMatches.length == 0) {
+    throw "couldn't find matching definition in query";
+  }
+
+  const queryMatch = queryMatches[0];
+
+  let result = {};
+  const _forEachDescriptor = (descr) => {
+    const credentials = jp.query(presentation, descr.path);
+
+    if (result[descr.id]) {
+      result[descr.id].credentials.push(...credentials);
+      return;
+    }
+
+    const inputDescrs = jp.query(
+      queryMatch,
+      `$..input_descriptors[?(@.id=="${descr.id}")]`
+    );
+    if (inputDescrs.length == 0) {
+      throw "invalid result, unable to find input descriptor in query.";
+    }
+
+    result[descr.id] = {
+      id: descr.id,
+      name: inputDescrs[0].name,
+      purpose: inputDescrs[0].purpose,
+      format: descr.format,
+      credentials,
+    };
+  };
+
+  presentation.presentation_submission.descriptor_map.forEach(
+    _forEachDescriptor
+  );
+
+  return Object.values(result);
+};
+
+/**
+ *  Updates given presentation submission presentation by removing duplicate descriptor map entries.
+ *
+ *  Descriptor map might contain single input descriptor ID mapped to multiple credentials.
+ *  So returning PresentationSubmission presentation will retain only mappings mentioned in updates Object{<inputDescriptorID>:<credentialID>} parameter.
+ */
+export const updatePresentationSubmission = (presentation, updates) => {
+  if (!presentation.presentation_submission) {
+    return presentation;
+  }
+
+  let verifiableCredential = [];
+  let descriptorMap = [];
+  const _forEach = (descriptor) => {
+    const vcSelected = updates[descriptor.id];
+    const vcMapped = jp.query(presentation, descriptor.path);
+
+    if (vcMapped.length > 0 && vcMapped[0].id == vcSelected) {
+      verifiableCredential.push(vcMapped[0]);
+      descriptor.path = `$.verifiableCredential[${
+        verifiableCredential.length - 1
+      }]`;
+      descriptorMap.push(descriptor);
+    }
+  };
+
+  presentation.presentation_submission.descriptor_map.forEach(_forEach);
+
+  presentation.verifiableCredential = verifiableCredential;
+  presentation.presentation_submission.descriptor_map = descriptorMap;
+
+  return presentation;
+};
