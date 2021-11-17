@@ -226,15 +226,12 @@ export class DIDManager {
    */
   async resolveOrbDID(auth, contentID) {
     const createDIDRequest = {
-      did:contentID
+      did: contentID,
     };
 
     let content = await this.agent.didclient.resolveOrbDID(createDIDRequest);
 
-    console.debug(
-        "resolve Orb DID successfully",
-        content.didDocument.id
-    );
+    console.debug("resolve Orb DID successfully", content.didDocument.id);
 
     return content;
   }

@@ -54,6 +54,22 @@ Refer  Wallet SDK Data Model [documentation](data_models.md) to know about data 
 </dd>
 </dl>
 
+## Constants
+
+<dl>
+<dt><a href="#normalizePresentationSubmission">normalizePresentationSubmission</a> ⇒ <code>Array.&lt;Object&gt;</code></dt>
+<dd><p>Scans through @see <a href="https://identity.foundation/presentation-exchange/#presentation-submission">Presentation Submission</a> descriptor map and groups results by descriptor IDs [descriptor_id -&gt; Array of verifiable Credentials].
+ In many cases, a single input descriptor can find multiple credentials.
+ So this function is useful in cases of grouping results by input descriptor ID and giving option to user to choose only one to avoid over sharing.</p>
+<p> TODO: support for path_nested in descriptor map.</p>
+</dd>
+<dt><a href="#updatePresentationSubmission">updatePresentationSubmission</a></dt>
+<dd><p>Updates given presentation submission presentation by removing duplicate descriptor map entries.</p>
+<p> Descriptor map might contain single input descriptor ID mapped to multiple credentials.
+ So returning PresentationSubmission presentation will retain only mappings mentioned in updates Object{<inputDescriptorID>:<credentialID>} parameter.</p>
+</dd>
+</dl>
+
 <a name="module_collection"></a>
 
 ## collection
@@ -467,7 +483,6 @@ did-manager module provides DID related features for wallet like creating, impor
 DID Manger provides DID related features for wallet like,
 
  - Creating Orb DIDs.
- - Resolving Orb DIDs.
  - Creating Peer DIDs.
  - Saving Custom DIDs along with keys.
  - Getting all Saved DIDs.
@@ -576,10 +591,10 @@ get DID content from wallet content store.
 <a name="module_did-manager--exports.DIDManager.DIDManager+resolveOrbDID"></a>
 
 #### exports.DIDManager.resolveOrbDID(options) ⇒ <code>Promise.&lt;Object&gt;</code>
-get DID content from did resolver.
+resolve orb DID.
 
 **Kind**: instance method of [<code>exports.DIDManager</code>](#exp_module_did-manager--exports.DIDManager)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - - result.content - DID document resolution from did resolver.
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - result.content - DID document resolution from did resolver.  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1350,6 +1365,32 @@ Gets All metadata data models from wallet.
 | --- | --- | --- |
 | auth | <code>String</code> | authorization token for wallet operations. |
 
+<a name="normalizePresentationSubmission"></a>
+
+## normalizePresentationSubmission ⇒ <code>Array.&lt;Object&gt;</code>
+Scans through @see [Presentation Submission](https://identity.foundation/presentation-exchange/#presentation-submission) descriptor map and groups results by descriptor IDs [descriptor_id -> Array of verifiable Credentials].
+ In many cases, a single input descriptor can find multiple credentials.
+ So this function is useful in cases of grouping results by input descriptor ID and giving option to user to choose only one to avoid over sharing.
+
+ TODO: support for path_nested in descriptor map.
+
+**Kind**: global constant  
+**Returns**: <code>Array.&lt;Object&gt;</code> - - Normalized result array with each objects containing input descriptor id, name, purpose, format and array of credentials.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| query | <code>Array.&lt;Object&gt;</code> | array of query, one of which could have produced the presentation. |
+| presentation | <code>Object</code> | presentation response of query. If `presentation_submission` is missing, then normalization will treat this as non presentation exchange query  and normalization logic will only flatten the credentials (grouping duplicate results logic won't be applied). |
+
+<a name="updatePresentationSubmission"></a>
+
+## updatePresentationSubmission
+Updates given presentation submission presentation by removing duplicate descriptor map entries.
+
+ Descriptor map might contain single input descriptor ID mapped to multiple credentials.
+ So returning PresentationSubmission presentation will retain only mappings mentioned in updates Object{<inputDescriptorID>:<credentialID>} parameter.
+
+**Kind**: global constant  
 ## Contributing
 Thank you for your interest in contributing. Please see our [community contribution guidelines](https://github.com/trustbloc/community/blob/main/CONTRIBUTING.md) for more information.
 
