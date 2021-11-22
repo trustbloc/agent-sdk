@@ -4,7 +4,12 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import { UniversalWallet, waitForEvent, POST_STATE } from "..";
+import {
+  UniversalWallet,
+  waitForEvent,
+  POST_STATE,
+  normalizePresentationSubmission,
+} from "..";
 import axios from "axios";
 
 const STATE_COMPLETE_MSG_TOPIC = "didexchange-state-complete";
@@ -200,12 +205,17 @@ export class DIDComm {
       };
     };
 
-    let query = presentationRequest["request_presentations~attach"].map(_query);
+    const query =
+      presentationRequest["request_presentations~attach"].map(_query);
 
-    let { results } = await this.wallet.query(auth, query);
-    let { thid } = presentationRequest["~thread"];
+    const { results } = await this.wallet.query(auth, query);
+    const { thid } = presentationRequest["~thread"];
 
-    return { threadID: thid, presentations: results };
+    const normalized = results.map((result) =>
+      normalizePresentationSubmission(query, result)
+    );
+
+    return { threadID: thid, presentations: results, normalized };
   }
 
   /**

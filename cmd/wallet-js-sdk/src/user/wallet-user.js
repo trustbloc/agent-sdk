@@ -263,8 +263,6 @@ export class WalletUser {
       contentID: `${METADATA_PREFIX}${this.user}`,
     });
 
-    console.debug("check controller " , result.content.controller);
-
     if (
       result.content.controller &&
       result.content.controller.includes("did:orb:https")
@@ -290,7 +288,7 @@ export class WalletUser {
 
           console.info(
             "did is published will use canonical id ",
-              result.content.controller
+            result.content.controller
           );
 
           await this.saveMetadata(auth, result.content);

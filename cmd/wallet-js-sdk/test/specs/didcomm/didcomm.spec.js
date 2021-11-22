@@ -119,9 +119,10 @@ describe('Wallet DIDComm WACI credential share flow', async function () {
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
         credentialInteraction = await didcomm.initiateCredentialShare(auth, invitation, {routerConnections})
 
-        let {threadID, presentations} = credentialInteraction
+        let {threadID, presentations, normalized} = credentialInteraction
         expect(threadID).to.not.empty
         expect(presentations).to.not.empty
+        expect(normalized).to.not.empty
     })
 
     it('user gives consent and concludes credential interaction by presenting proof to relying party', async function () {
