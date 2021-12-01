@@ -90,6 +90,6 @@ describe('DID Manager tests', async function () {
     it('rick lists all DIDs from wallet', async function () {
         let didManager = new DIDManager({agent: rick, user: RICK_USER})
         let {contents} = await didManager.getAllDIDs(auth)
-        expect(Object.keys(contents)).to.have.lengthOf(4)
+        expect(Object.keys(contents)).to.have.lengthOf(2)
     })
 })
