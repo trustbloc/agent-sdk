@@ -291,6 +291,8 @@ export class WalletUser {
             result.content.controller
           );
 
+          await this.didManager.saveDID(auth, { content:resolveDID });
+
           await this.saveMetadata(auth, result.content);
 
           // TODO refresh credential

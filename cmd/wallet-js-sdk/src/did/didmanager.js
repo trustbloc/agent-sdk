@@ -97,8 +97,6 @@ export class DIDManager {
 
     let content = await this.agent.didclient.createOrbDID(createDIDRequest);
 
-    await this.saveDID(auth, { content, collection });
-
     console.debug(
       "created and saved Orb DID successfully",
       content.didDocument.id
