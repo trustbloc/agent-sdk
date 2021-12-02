@@ -90,6 +90,14 @@ describe('DID Manager tests', async function () {
     it('rick lists all DIDs from wallet', async function () {
         let didManager = new DIDManager({agent: rick, user: RICK_USER})
         let {contents} = await didManager.getAllDIDs(auth)
-        expect(Object.keys(contents)).to.have.lengthOf(2)
+        expect(Object.keys(contents)).to.have.lengthOf(4)
+    })
+
+    it('rick removes a DID from wallet', async function () {
+        let didManager = new DIDManager({agent: rick, user: RICK_USER})
+        await didManager.removeDID(auth, 'did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5')
+
+        let {contents} = await didManager.getAllDIDs(auth)
+        expect(Object.keys(contents)).to.have.lengthOf(3)
     })
 })

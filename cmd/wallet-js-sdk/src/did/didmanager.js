@@ -97,6 +97,8 @@ export class DIDManager {
 
     let content = await this.agent.didclient.createOrbDID(createDIDRequest);
 
+    await this.saveDID(auth, { content, collection });
+
     console.debug(
       "created and saved Orb DID successfully",
       content.didDocument.id
@@ -214,6 +216,23 @@ export class DIDManager {
   }
 
   /**
+   * removes given DID from wallet content store.
+   *
+   *  @param {Object} options
+   *  @param {string} options.auth - authorization token for wallet operations.
+   *  @param {string} options.contentID - DID ID of the DID to be deleted.
+   *
+   * @returns {Promise<Object>} - empty promise or an error if operation fails.
+   */
+  async removeDID(auth, contentID) {
+    return await this.wallet.remove({
+      auth,
+      contentType: contentTypes.DID_RESOLUTION_RESPONSE,
+      contentID,
+    });
+  }
+
+  /**
    * resolve orb DID.
    *
    *  @param {Object} options
@@ -223,14 +242,34 @@ export class DIDManager {
    * @returns {Promise<Object>} - result.content - DID document resolution from did resolver.
    */
   async resolveOrbDID(auth, contentID) {
-    const createDIDRequest = {
+    return await this.agent.didclient.resolveOrbDID({
       did: contentID,
-    };
+    });
+  }
 
-    let content = await this.agent.didclient.resolveOrbDID(createDIDRequest);
+  /**
+   * refreshed orb DID if it is published.
+   *
+   *  @param {Object} options
+   *  @param {string} options.auth - authorization token for wallet operations.
+   *  @param {string} options.contentID - DID ID.
+   *
+   * @returns {Promise<Object>} - resolved DID - DID document resolution from did resolver.
+   */
+  async refreshOrbDID(auth, contentID) {
+    let resolvedDID = await this.resolveOrbDID(auth, contentID);
+    if (
+      resolvedDID.didDocumentMetadata &&
+      resolvedDID.didDocumentMetadata.method &&
+      resolvedDID.didDocumentMetadata.method.published
+    ) {
+      await this.didManager.saveDID(auth, { content: resolvedDID });
 
-    console.debug("resolve Orb DID successfully", content.didDocument.id);
+      await this.didManager.removeDID(auth, contentID);
 
-    return content;
+      return resolvedDID;
+    }
+
+    return null;
   }
 }

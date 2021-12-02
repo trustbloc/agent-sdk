@@ -263,42 +263,32 @@ export class WalletUser {
       contentID: `${METADATA_PREFIX}${this.user}`,
     });
 
+    // if controller is orb DID then check if it is published.
     if (
       result.content.controller &&
       result.content.controller.includes("did:orb:https")
     ) {
-      let resolveDID = await this.didManager.resolveOrbDID(
+      let refreshedDID = await this.didManager.refreshOrbDID(
         auth,
         result.content.controller
       );
-      if (
-        resolveDID.didDocumentMetadata &&
-        resolveDID.didDocumentMetadata.method
-      ) {
-        console.debug("check DID if it is published");
-        if (resolveDID.didDocumentMetadata.method.published) {
-          await this.wallet.remove({
-            auth,
-            contentID: `${METADATA_PREFIX}${this.user}`,
-            contentType: contentTypes.METADATA,
-          });
 
-          result.content.controller =
-            resolveDID.didDocumentMetadata.canonicalId;
+      if (!refreshedDID) {
+        await this.wallet.remove({
+          auth,
+          contentID: `${METADATA_PREFIX}${this.user}`,
+          contentType: contentTypes.METADATA,
+        });
 
-          console.info(
-            "did is published will use canonical id ",
-            result.content.controller
-          );
+        result.content.controller =
+          refreshedDID.didDocumentMetadata.canonicalId;
 
-          await this.didManager.saveDID(auth, { content:resolveDID });
+        await this.saveMetadata(auth, result.content);
 
-          await this.saveMetadata(auth, result.content);
-
-          // TODO refresh credential
-        }
+        // TODO refresh credential
       }
     }
+
     return result;
   }
 
