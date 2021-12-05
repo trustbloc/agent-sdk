@@ -7,10 +7,11 @@ module github.com/trustbloc/agent-sdk/cmd/agent-js-worker
 go 1.16
 
 require (
+	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta
 	github.com/google/tink/go v1.6.1-0.20210519071714-58be99b3c4d0
 	github.com/google/uuid v1.2.0
-	github.com/hyperledger/aries-framework-go v0.1.8-0.20211115182008-a05b96ee7ab1
+	github.com/hyperledger/aries-framework-go v0.1.8-0.20211203093644-b7d189cc06f4
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.1.4-0.20211115235232-9c7453f469d0
 	github.com/hyperledger/aries-framework-go/component/storage/edv v0.0.0-20211026175505-52f559aeeb86
 	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20210916154931-0196c3a2d102
@@ -21,7 +22,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/trustbloc/agent-sdk v0.0.0-00010101000000-000000000000
 	github.com/trustbloc/edge-core v0.1.7
-	github.com/trustbloc/kms v0.1.7
 )
 
 replace github.com/trustbloc/agent-sdk => ../..

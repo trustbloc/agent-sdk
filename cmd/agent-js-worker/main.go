@@ -1,3 +1,4 @@
+//go:build js && wasm
 // +build js,wasm
 
 /*
@@ -61,7 +62,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 	jsonld "github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/edge-core/pkg/log"
-	kmszcap "github.com/trustbloc/kms/pkg/restapi/kms/operation"
 
 	"github.com/trustbloc/agent-sdk/pkg/auth/zcapld"
 	agentctrl "github.com/trustbloc/agent-sdk/pkg/controller"
@@ -741,7 +741,7 @@ func createWebkms(opts *agentStartOpts,
 	wKMS := webkms.New(opts.OpsKeyStoreURL, httpClient,
 		webkms.WithHeaders(func(req *http.Request) (*http.Header, error) {
 			if len(capability) != 0 {
-				invocationAction, err := kmszcap.CapabilityInvocationAction(req)
+				invocationAction, err := capabilityInvocationAction(req)
 				if err != nil {
 					return nil, fmt.Errorf("webkms: failed to determine the capability's invocation action: %w", err)
 				}
@@ -764,7 +764,7 @@ func createWebkms(opts *agentStartOpts,
 
 	opt = append(opt, webkms.WithHeaders(func(req *http.Request) (*http.Header, error) {
 		if len(capability) != 0 {
-			invocationAction, err := kmszcap.CapabilityInvocationAction(req)
+			invocationAction, err := capabilityInvocationAction(req)
 			if err != nil {
 				return nil, fmt.Errorf("webcrypto: failed to determine the capability's invocation action: %w", err)
 			}
@@ -799,6 +799,110 @@ func decodeAndGunzip(zcap string) ([]byte, error) {
 	}
 
 	return uncompressed, nil
+}
+
+func capabilityInvocationAction(req *http.Request) (string, error) { //nolint:funlen,gocognit,gocyclo
+	s := strings.Split(req.URL.Path, "/")
+
+	const minPathLen = 5 // /v1/keystores/{key_store_id}/keys
+
+	if len(s) < minPathLen {
+		return "", errors.New("invalid path")
+	}
+
+	op := strings.ToLower(s[4])
+
+	var action string
+
+	switch op {
+	case "keys":
+		op = strings.ToLower(s[len(s)-1])
+
+		switch op {
+		case "sign":
+			if req.Method == http.MethodPost {
+				action = "sign"
+			}
+		case "verify":
+			if req.Method == http.MethodPost {
+				action = "verify"
+			}
+		case "encrypt":
+			if req.Method == http.MethodPost {
+				action = "encrypt"
+			}
+		case "decrypt":
+			if req.Method == http.MethodPost {
+				action = "decrypt"
+			}
+		case "computemac":
+			if req.Method == http.MethodPost {
+				action = "computeMAC"
+			}
+		case "verifymac":
+			if req.Method == http.MethodPost {
+				action = "verifyMAC"
+			}
+		case "signmulti":
+			if req.Method == http.MethodPost {
+				action = "signMulti"
+			}
+		case "verifymulti":
+			if req.Method == http.MethodPost {
+				action = "verifyMulti"
+			}
+		case "deriveproof":
+			if req.Method == http.MethodPost {
+				action = "deriveProof"
+			}
+		case "verifyproof":
+			if req.Method == http.MethodPost {
+				action = "verifyProof"
+			}
+		case "easy":
+			if req.Method == http.MethodPost {
+				action = "easy"
+			}
+		case "wrap": //nolint:goconst
+			if req.Method == http.MethodPost {
+				action = "wrap"
+			}
+		case "unwrap":
+			if req.Method == http.MethodPost {
+				action = "unwrap"
+			}
+		default:
+			if req.Method == http.MethodPost {
+				action = "createKey"
+			}
+
+			if req.Method == http.MethodPut {
+				action = "importKey"
+			}
+
+			if req.Method == http.MethodGet && op != "keys" {
+				action = "exportKey"
+			}
+		}
+	case "wrap":
+		if req.Method == http.MethodPost {
+			action = "wrap"
+		}
+	case "easyopen":
+		if req.Method == http.MethodPost {
+			action = "easyOpen"
+		}
+	case "sealopen":
+		if req.Method == http.MethodPost {
+			action = "sealOpen"
+		}
+	}
+
+	if action == "" {
+		return "", fmt.Errorf("unsupported operation: %s /%s", req.Method, op)
+	}
+
+	return action, nil
 }
 
 func createLocalKMSAndCrypto(indexedDBKMSProvider storage.Provider,
@@ -1203,7 +1307,7 @@ func (w *webKMSHTTPHeaderSigner) SignHeader(req *http.Request, kmsCapability []b
 	}
 
 	if len(capability) != 0 {
-		invocationAction, err := kmszcap.CapabilityInvocationAction(req)
+		invocationAction, err := capabilityInvocationAction(req)
 		if err != nil {
 			return nil, fmt.Errorf("webkms: failed to determine the capability's invocation action: %w", err)
 		}
