@@ -42,11 +42,11 @@ type Service struct {
 }
 
 type signReq struct {
-	Message string `json:"message,omitempty"`
+	Message []byte `json:"message"`
 }
 
 type signResp struct {
-	Signature string `json:"signature,omitempty"`
+	Signature []byte `json:"signature"`
 }
 
 // New return zcap service.
@@ -148,7 +148,7 @@ func (a *didKeySignatureHashAlgorithm) Verify(secret httpsignatures.Secret, data
 
 func (a *didKeySignatureHashAlgorithm) sign(keyID string, data []byte) ([]byte, error) {
 	reqBytes, err := json.Marshal(signReq{
-		Message: base64.URLEncoding.EncodeToString(data),
+		Message: data,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("marshal create sign req : %w", err)
@@ -160,7 +160,7 @@ func (a *didKeySignatureHashAlgorithm) sign(keyID string, data []byte) ([]byte, 
 		return nil, err
 	}
 
-	req.Header.Set("Hub-Kms-Secret", a.s.secretShare)
+	req.Header.Set("Secret-Share", a.s.secretShare)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", a.s.accessToken))
 
 	resp, _, err := sendHTTPRequest(req, a.s.httpClient, http.StatusOK)
@@ -174,12 +174,7 @@ func (a *didKeySignatureHashAlgorithm) sign(keyID string, data []byte) ([]byte, 
 		return nil, fmt.Errorf("failed to unmarshal sign resp: %w", errUnmarshal)
 	}
 
-	signatureBytes, err := base64.URLEncoding.DecodeString(parsedResp.Signature)
-	if err != nil {
-		return nil, err
-	}
-
-	return signatureBytes, nil
+	return parsedResp.Signature, nil
 }
 
 func sendHTTPRequest(req *http.Request, httpClient httpClient, status int) ([]byte, http.Header, error) {
