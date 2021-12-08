@@ -110,6 +110,15 @@ describe('Collection Manager Tests', async function () {
         expect(Object.keys(contents)).to.have.lengthOf(3)
     })
 
+    it.skip('user removes a credential from wallet', async function () {
+        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
+
+        await credentialManager.remove(auth, sampleUDC.id)
+
+        let {contents} = await credentialManager.getAll(auth, {collectionID: previous})
+        expect(Object.keys(contents)).to.have.lengthOf(2)
+    })
+
     it('user removes a collection from wallet', async function () {
         let collectionManager = new CollectionManager({agent: walletUserAgent, user: WALLET_USER})
 

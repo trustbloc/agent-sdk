@@ -168,3 +168,31 @@ export const updatePresentationSubmission = (presentation, updates) => {
 
   return presentation;
 };
+
+/**
+ *  Finds attachment by given format.
+ *  Supporting Attachment Format from DIDComm V1.
+ *
+ *  Note: Currently finding only one attachment per format.
+ */
+export const findAttachmentByFormat = (formats, attachments, format) => {
+  const formatsFound = jp.query(formats, `$[?(@.format=="${format}")]`);
+
+  let attachment;
+  if (formatsFound.length > 0) {
+    const { attach_id } = formatsFound[0];
+
+    // read attachment
+    const attachmentsFound = jp.query(
+      attachments,
+      `$[?(@.@id=="${attach_id}")]`
+    );
+    if (attachmentsFound.length == 1) {
+      attachment = attachmentsFound[0].data.json;
+    } else {
+      throw `invalid attachment found in offer credential message for format : ${format}`;
+    }
+  }
+
+  return attachment;
+};

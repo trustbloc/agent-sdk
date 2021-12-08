@@ -24,7 +24,7 @@ const ISSUER_LABEL = 'vc-issuer-agent'
 const RP_LABEL = 'vc-rp-agent'
 
 
-let walletUserAgent, issuer, rp, sampleUDC, samplePRC
+let walletUserAgent, issuer, rp, sampleUDC, samplePRC, routerConnections, auth, controller
 
 before(async function () {
     this.timeout(0)
@@ -53,6 +53,34 @@ before(async function () {
 
     sampleUDC = vc1
     samplePRC = vc2
+
+    // register wallet to router
+    await connectToMediator(walletUserAgent, testConfig.mediatorEndPoint)
+    let conns = await getMediatorConnections(walletUserAgent, {single: true})
+    expect(conns).to.not.empty
+    routerConnections = [conns]
+
+    // create wallet profile
+    let walletUser = new WalletUser({agent: walletUserAgent, user: WALLET_WACI_USER})
+    await walletUser.createWalletProfile({localKMSPassphrase: testConfig.walletUserPassphrase})
+
+    // unlock wallet
+    let authResponse = await walletUser.unlock({localKMSPassphrase: testConfig.walletUserPassphrase})
+    expect(authResponse.token).to.not.empty
+    auth = authResponse.token
+
+    // create orb DID as controller for signing from wallet.
+    let didManager = new DIDManager({agent: walletUserAgent, user: WALLET_WACI_USER})
+    let docres = await didManager.createOrbDID(auth, {purposes: ["assertionMethod", "authentication"]})
+    expect(docres).to.not.empty
+    controller = docres.didDocument.id
+
+    // pre-load wallet with university degree and permanent resident card credentials.
+    let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_WACI_USER})
+    await credentialManager.save(auth, {credentials: [sampleUDC, samplePRC]})
+    let {contents} = await credentialManager.getAll(auth)
+    expect(contents).to.not.empty
+    expect(Object.keys(contents)).to.have.lengthOf(2)
 });
 
 after(function () {
@@ -61,48 +89,6 @@ after(function () {
 });
 
 describe('Wallet DIDComm WACI credential share flow', async function () {
-    let routerConnections
-    it('wallet agent connected to mediator for DIDComm', async function () {
-        await connectToMediator(walletUserAgent, testConfig.mediatorEndPoint)
-
-        let conns = await getMediatorConnections(walletUserAgent, {single: true})
-        expect(conns).to.not.empty
-
-        routerConnections = [conns]
-    })
-
-    it('user creates his wallet profile', async function () {
-        let walletUser = new WalletUser({agent: walletUserAgent, user: WALLET_WACI_USER})
-
-        await walletUser.createWalletProfile({localKMSPassphrase: testConfig.walletUserPassphrase})
-    })
-
-    let auth
-    it('user opens his wallet', async function () {
-        let walletUser = new WalletUser({agent: walletUserAgent, user: WALLET_WACI_USER})
-
-        let authResponse = await walletUser.unlock({localKMSPassphrase: testConfig.walletUserPassphrase})
-
-        expect(authResponse.token).to.not.empty
-
-        auth = authResponse.token
-    })
-
-    let did
-    it('user creates Orb DID in wallet', async function () {
-        let didManager = new DIDManager({agent: walletUserAgent, user: WALLET_WACI_USER})
-
-        let docres = await didManager.createOrbDID(auth, {purposes: ["assertionMethod", "authentication"]})
-        expect(docres).to.not.empty
-        did = docres.didDocument.id
-    })
-
-    it('user saves credentials into wallet', async function () {
-        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_WACI_USER})
-
-        await credentialManager.save(auth, {credentials: [sampleUDC, samplePRC]})
-    })
-
     let credentialInteraction
     it('user accepts out-of-band invitation from relying party and initiates WACI credential interaction', async function () {
         let invitation = await rp.createInvitation()
@@ -132,7 +118,7 @@ describe('Wallet DIDComm WACI credential share flow', async function () {
         let acceptPresentation = rp.acceptPresentProof({redirectURL})
 
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
-        const response = await didcomm.completeCredentialShare(auth, threadID, presentations, {controller: did}, {waitForDone: true})
+        const response = await didcomm.completeCredentialShare(auth, threadID, presentations, {controller}, {waitForDone: true})
         expect(response.status).to.be.equal("OK")
         expect(response.url).to.be.equal(redirectURL)
 
@@ -171,7 +157,7 @@ describe('Wallet DIDComm WACI credential share flow', async function () {
 
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
 
-        const response = await didcomm.completeCredentialShare(auth, threadID, presentations, {controller: did}, {waitForDone: true, autoAccept: true})
+        const response = await didcomm.completeCredentialShare(auth, threadID, presentations, {controller}, {waitForDone: true, autoAccept: true})
         expect(response.status).to.be.equal("FAIL")
         expect(response.url).to.be.equal(redirectURL)
 
@@ -179,5 +165,167 @@ describe('Wallet DIDComm WACI credential share flow', async function () {
         expect(presentation.verifiableCredential).to.not.empty
         expect(presentation.verifiableCredential[0].id).to.be.equal(samplePRC.id)
     })
+})
 
+
+describe('Wallet DIDComm WACI credential issuance flow', async function () {
+    const fulfillmentJSON =  getJSONTestData("cred-fulfillment-DL.json")
+    const sampleComment = "Offer to issue Drivers License for Mr.Smith"
+    let udcVC = getJSONTestData('udc-vc.json')
+
+    let credentialInteraction
+    it('user accepts out-of-band invitation from issuer and initiates WACI credential interaction - presentation exchange flow', async function () {
+        const manifestJSON =  getJSONTestData("cred-manifest-withdef.json")
+
+        let invitation = await issuer.createInvitation()
+        issuer.acceptExchangeRequest()
+        issuer.acceptCredentialProposal({
+            comment: sampleComment,
+            manifest: manifestJSON,
+            fulfillment:fulfillmentJSON,
+        })
+
+        let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
+        credentialInteraction = await didcomm.initiateCredentialIssuance(auth, invitation, {routerConnections})
+
+        const { threadID, manifest, fulfillment, presentations, normalized, domain, challenge, comment } = credentialInteraction
+
+        expect(threadID).to.not.empty
+        expect(manifest).to.not.empty
+        expect(manifest.id).to.be.equal(manifestJSON.id)
+        expect(fulfillment).to.not.empty
+        expect(presentations).to.not.empty
+        expect(normalized).to.not.empty
+        expect(threadID).to.not.empty
+        expect(domain).to.be.equal(manifestJSON.options.domain)
+        expect(challenge).to.be.equal(manifestJSON.options.challenge)
+        expect(comment).to.be.equal(sampleComment)
+    })
+
+    it('user gives consent and concludes credential interaction by providing credential application in request credential message - presentation exchange flow', async function () {
+        let {threadID, presentations} = credentialInteraction
+
+        // setup issuer.
+        udcVC.id = `http://example.edu/credentials/${uuid()}`
+        let [credential] = await issuer.issue(udcVC)
+        let acceptCredential = issuer.acceptRequestCredential({credential})
+
+        // complete credential interaction.
+        let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
+        const response = await didcomm.completeCredentialIssuance(auth, threadID, presentations[0], {controller}, {waitForDone: true, autoAccept: true})
+        expect(response.status).to.be.equal("OK")
+
+        // verify if issuer got expected message.
+        let presentation = await acceptCredential
+        expect(presentation.verifiableCredential).to.not.empty
+
+        // verify if new credential is saved.
+        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_WACI_USER})
+        let {contents} = await credentialManager.getAll(auth)
+        expect(contents).to.not.empty
+        expect(Object.keys(contents)).to.have.lengthOf(3)
+    })
+
+    it('user accepts out-of-band invitation from issuer and initiates WACI credential interaction - DID Auth flow', async function () {
+        const manifestJSON =  getJSONTestData("cred-manifest-withoptions.json")
+
+        let invitation = await issuer.createInvitation()
+        issuer.acceptExchangeRequest()
+        issuer.acceptCredentialProposal({
+            comment: sampleComment,
+            manifest: manifestJSON,
+            fulfillment:fulfillmentJSON,
+        })
+
+        let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
+        credentialInteraction = await didcomm.initiateCredentialIssuance(auth, invitation, {routerConnections})
+
+        const { threadID, manifest, fulfillment, presentations, normalized, domain, challenge, comment } = credentialInteraction
+
+        expect(threadID).to.not.empty
+        expect(manifest).to.not.empty
+        expect(manifest.id).to.be.equal(manifestJSON.id)
+        expect(fulfillment).to.not.empty
+        expect(presentations).to.not.empty
+        expect(normalized).to.be.undefined
+        expect(domain).to.be.equal(manifestJSON.options.domain)
+        expect(challenge).to.be.equal(manifestJSON.options.challenge)
+        expect(comment).to.be.equal(sampleComment)
+    })
+
+    it('user gives consent and concludes credential interaction by providing credential application in request credential message - DID Auth flow', async function () {
+        let {threadID, presentations} = credentialInteraction
+
+        // setup issuer.
+        udcVC.id = `http://example.edu/credentials/${uuid()}`
+        let [credential] = await issuer.issue(udcVC)
+        let acceptCredential = issuer.acceptRequestCredential({credential})
+
+        // complete credential interaction.
+        let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
+        const response = await didcomm.completeCredentialIssuance(auth, threadID, presentations[0], {controller}, {waitForDone: true, autoAccept: true})
+        expect(response.status).to.be.equal("OK")
+
+        // verify if issuer got expected message.
+        let presentation = await acceptCredential
+        expect(presentation.verifiableCredential).to.be.null
+        expect(presentation.proof).to.not.empty
+
+        // verify if new credential is saved.
+        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_WACI_USER})
+        let {contents} = await credentialManager.getAll(auth)
+        expect(contents).to.not.empty
+        expect(Object.keys(contents)).to.have.lengthOf(4)
+    })
+
+    it('user accepts out-of-band invitation from issuer and initiates WACI credential interaction - Basic flow', async function () {
+        const manifestJSON =  getJSONTestData("cred-manifest.json")
+
+        let invitation = await issuer.createInvitation()
+        issuer.acceptExchangeRequest()
+        issuer.acceptCredentialProposal({
+            comment: sampleComment,
+            manifest: manifestJSON,
+            fulfillment:fulfillmentJSON,
+        })
+
+        let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
+        credentialInteraction = await didcomm.initiateCredentialIssuance(auth, invitation, {routerConnections})
+
+        const { threadID, manifest, fulfillment, presentations, normalized, domain, challenge, comment } = credentialInteraction
+
+        expect(threadID).to.not.empty
+        expect(manifest).to.not.empty
+        expect(manifest.id).to.be.equal(manifestJSON.id)
+        expect(fulfillment).to.not.empty
+        expect(presentations).to.be.undefined
+        expect(normalized).to.be.undefined
+        expect(domain).to.be.undefined
+        expect(challenge).to.be.undefined
+        expect(comment).to.be.equal(sampleComment)
+    })
+
+    it('user gives consent and concludes credential interaction by providing credential application in request credential message - Basic flow', async function () {
+        let {threadID, presentations} = credentialInteraction
+
+        // setup issuer.
+        udcVC.id = `http://example.edu/credentials/${uuid()}`
+        let [credential] = await issuer.issue(udcVC)
+        let acceptCredential = issuer.acceptRequestCredential({credential})
+
+        // complete credential interaction.
+        let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
+        const response = await didcomm.completeCredentialIssuance(auth, threadID, null, {controller}, {waitForDone: true, autoAccept: true})
+        expect(response.status).to.be.equal("OK")
+
+        // verify if issuer got expected message.
+        let presentation = await acceptCredential
+        expect(presentation).to.be.null
+
+        // verify if new credential is saved.
+        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_WACI_USER})
+        let {contents} = await credentialManager.getAll(auth)
+        expect(contents).to.not.empty
+        expect(Object.keys(contents)).to.have.lengthOf(5)
+    })
 })

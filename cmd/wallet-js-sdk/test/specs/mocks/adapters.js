@@ -4,7 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import {connectToMediator, getMediatorConnections, waitForEvent} from "../../../src";
+import {connectToMediator, getMediatorConnections, waitForEvent, findAttachmentByFormat} from "../../../src";
 
 import {
     DIDEXCHANGE_STATE_REQUESTED,
@@ -12,6 +12,11 @@ import {
     loadFrameworks,
     POST_STATE,
     PRESENT_PROOF_ACTION_TOPIC,
+    ISSUE_CREDENTIAL_ACTION_TOPIC,
+    MSG_TYPE_OFFER_CREDENTIAL_V2,
+    ATTACH_FORMAT_CREDENTIAL_MANIFEST,
+    ATTACH_FORMAT_CREDENTIAL_FULFILLMENT,
+    ATTACH_FORMAT_ISSUE_CREDENTIAL,
     retryWithDelay,
     testConfig
 } from "../common";
@@ -230,4 +235,104 @@ export class IssuerAdapter extends Adapter {
 
         return signVCs
     }
+
+    async acceptCredentialProposal({comment, manifest, fulfillment} = {}, timeout) {
+        return await waitForEvent(this.agent, {
+            topic: ISSUE_CREDENTIAL_ACTION_TOPIC,
+            timeout,
+            callback: async (payload) => {
+                let {piid} = payload.Properties
+                let attachID1 = uuid()
+                let attachID2 = uuid()
+
+                let formats = []
+                let attachments = []
+
+                if (manifest) {
+                    let attachId = uuid()
+                    formats.push({
+                        "attach_id": attachId,
+                        "format": ATTACH_FORMAT_CREDENTIAL_MANIFEST
+                    })
+                    attachments.push({
+                        "@id": attachId,
+                        "mime-type": "application/json",
+                        data: {
+                            json: manifest
+                        }
+                    },)
+                }
+
+                if (fulfillment) {
+                    let attachId = uuid()
+                    formats.push({
+                        "attach_id": attachId,
+                        "format": ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
+                    })
+                    attachments.push({
+                        "@id": attachId,
+                        "mime-type": "application/json",
+                        data: {
+                            json: fulfillment
+                        }
+                    },)
+                }
+
+                await this.agent.issuecredential.acceptProposal({
+                    piid,
+                    offer_credential: {
+                        "@type": MSG_TYPE_OFFER_CREDENTIAL_V2,
+                        comment,
+                        formats,
+                        "offers~attach": attachments,
+                    }
+                });
+            }
+        })
+    }
+
+    async acceptRequestCredential({timeout, credential} = {}) {
+        let attachment
+        await waitForEvent(this.agent, {
+            topic: ISSUE_CREDENTIAL_ACTION_TOPIC,
+            timeout,
+            callback: async (payload) => {
+                const {Message, Properties, formats} = payload
+                const { piid } = Properties
+
+                attachment = findAttachmentByFormat(Message.formats, Message["requests~attach"],"application/ld+json")
+
+                let attachID = uuid()
+                let icFormats = []
+                let icAttachments = []
+
+                if (credential) {
+                    icFormats.push({
+                        "attach_id": attachID,
+                        "format": ATTACH_FORMAT_ISSUE_CREDENTIAL
+                    })
+
+                    icAttachments.push({
+                        "@id": attachID,
+                        "mime-type": "application/ld+json",
+                        data: {
+                            json: credential
+                        }
+                    },)
+                }
+
+                return this.agent.issuecredential.acceptRequest({
+                    piid,
+                    issue_credential: {
+                        "@type": "https://didcomm.org/issue-credential/2.0/issue-credential",
+                        formats: icFormats,
+                        "credentials~attach": icAttachments,
+                    }
+                });
+            }
+        })
+
+        return attachment
+    }
+
 }
