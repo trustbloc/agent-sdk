@@ -415,11 +415,11 @@ export class UniversalWallet {
    *  @param {String} threadID - threadID of credential interaction.
    *  @param {Object} presentation - to be sent as part of present proof message..
    *
-   *  @param {Object} options - (optional) for sending message proposing presentation.
+   *  @param {Object} options - (optional) for sending present proof message.
    *  @param {Bool} options.waitForDone - (optional) If true then wallet will wait for present proof protocol status to be done or abandoned .
    *  @param {Time} options.WaitForDoneTimeout - (optional) timeout to wait for present proof operation to be done.
    *
-   * @returns {Promise<Object>} - promise of object containing present prof status & redirect info or error if operation fails.
+   * @returns {Promise<Object>} - promise of object containing present proof status & redirect info or error if operation fails.
    */
   async presentProof(
     auth,
@@ -428,6 +428,87 @@ export class UniversalWallet {
     { waitForDone, WaitForDoneTimeout } = {}
   ) {
     return await this.agent.vcwallet.presentProof({
+      userID: this.user,
+      auth,
+      threadID,
+      presentation,
+      waitForDone,
+      WaitForDoneTimeout,
+    });
+  }
+
+  /**
+   *  accepts an out of band invitation, sends propose credential message to issuer to initiate credential issuance interaction
+   *  and waits for offer credential message from inviter as a response.
+   *
+   *  @see {@link https://w3c-ccg.github.io/universal-wallet-interop-spec/#proposecredential|WACI Propose Credential }
+   *
+   *  @param {String} auth -  authorization token for performing this wallet operation.
+   *  @param {Object} invitation - out of band invitation.
+   *
+   *  @param {Object} connectOptions - (optional) for accepting incoming out-of-band invitation and connecting to inviter.
+   *  @param {String} connectOptions.myLabel - (optional) for providing label to be shared with the other agent during the subsequent did-exchange.
+   *  @param {Array<string>} connectOptions.routerConnections - (optional) to provide router connection to be used.
+   *  @param {String} connectOptions.reuseConnection - (optional) to provide DID to be used when reusing a connection.
+   *  @param {Bool} connectOptions.reuseAnyConnection=false - (optional) to use any recognized DID in the services array for a reusable connection.
+   *  @param {timeout} connectOptions.connectionTimeout - (optional) to wait for connection status to be 'completed'.
+   *
+   *  @param {Object} proposeOptions - (optional) for sending message proposing credential.
+   *  @param {String} proposeOptions.from - (optional) option from DID option to customize sender DID..
+   *  @param {Time} proposeOptions.timeout - (optional) to wait for offer credential message from relying party.
+   *
+   * @returns {Promise<Object>} - promise of object containing offer credential message from relying party or error if operation fails.
+   */
+  async proposeCredential(
+    auth,
+    invitation = {},
+    {
+      myLabel,
+      routerConnections,
+      reuseConnection,
+      reuseAnyConnection = false,
+      connectionTimeout,
+    },
+    { from, timeout } = {}
+  ) {
+    return await this.agent.vcwallet.proposeCredential({
+      userID: this.user,
+      auth,
+      invitation,
+      from,
+      timeout,
+      connectOptions: {
+        myLabel,
+        routerConnections,
+        reuseConnection,
+        reuseAnyConnection,
+        timeout: connectionTimeout,
+      },
+    });
+  }
+
+  /**
+   *  sends request credential message from wallet to issuer as part of ongoing credential issuance interaction.
+   *
+   *  @see {@link https://w3c-ccg.github.io/universal-wallet-interop-spec/#requestcredential|WACI Request Credential }
+   *
+   *  @param {String} auth -  authorization token for performing this wallet operation.
+   *  @param {String} threadID - threadID of credential interaction.
+   *  @param {Object} presentation - to be sent as part of request credential message..
+   *
+   *  @param {Object} options - (optional) for sending request credential message.
+   *  @param {Bool} options.waitForDone - (optional) If true then wallet will wait for credential fulfillment message or problem report .
+   *  @param {Time} options.WaitForDoneTimeout - (optional) timeout to wait for credential fulfillment or problem report.
+   *
+   * @returns {Promise<Object>} - promise of object containing request credential status & redirect info or error if operation fails.
+   */
+  async requestCredential(
+    auth,
+    threadID,
+    presentation,
+    { waitForDone, WaitForDoneTimeout } = {}
+  ) {
+    return await this.agent.vcwallet.requestCredential({
       userID: this.user,
       auth,
       threadID,

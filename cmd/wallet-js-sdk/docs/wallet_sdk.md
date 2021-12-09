@@ -68,6 +68,11 @@ Refer  Wallet SDK Data Model [documentation](data_models.md) to know about data 
 <p> Descriptor map might contain single input descriptor ID mapped to multiple credentials.
  So returning PresentationSubmission presentation will retain only mappings mentioned in updates Object{<inputDescriptorID>:<credentialID>} parameter.</p>
 </dd>
+<dt><a href="#findAttachmentByFormat">findAttachmentByFormat</a></dt>
+<dd><p>Finds attachment by given format.
+ Supporting Attachment Format from DIDComm V1.</p>
+<p> Note: Currently finding only one attachment per format.</p>
+</dd>
 </dl>
 
 <a name="module_collection"></a>
@@ -649,8 +654,10 @@ didcomm module provides wallet based DIDComm features.
         * [new exports.DIDComm(agent, user)](#new_module_didcomm--exports.DIDComm_new)
         * _instance_
             * [.connect(auth, invitation, options)](#module_didcomm--exports.DIDComm.DIDComm+connect) ⇒ <code>Promise.&lt;Object&gt;</code>
-            * [.initiateCredentialShare(auth, invitation, connectOptions, proposeOptions)](#module_didcomm--exports.DIDComm.DIDComm+initiateCredentialShare) ⇒ <code>Object</code> \| <code>String</code> \| <code>Array.&lt;Object&gt;</code>
+            * [.initiateCredentialShare(auth, invitation, connectOptions, proposeOptions)](#module_didcomm--exports.DIDComm.DIDComm+initiateCredentialShare) ⇒ <code>Object</code> \| <code>String</code> \| <code>Array.&lt;Object&gt;</code> \| <code>Array.&lt;Object&gt;</code>
             * [.completeCredentialShare(auth, threadID, presentations, proofOptions, options)](#module_didcomm--exports.DIDComm.DIDComm+completeCredentialShare) ⇒ <code>Promise.&lt;Object&gt;</code>
+            * [.initiateCredentialIssuance(auth, invitation, connectOptions, proposeOptions)](#module_didcomm--exports.DIDComm.DIDComm+initiateCredentialIssuance) ⇒ <code>Object</code> \| <code>String</code> \| <code>Array.&lt;Object&gt;</code> \| <code>Array.&lt;Object&gt;</code>
+            * [.completeCredentialIssuance(auth, threadID, presentation, proofOptions, options)](#module_didcomm--exports.DIDComm.DIDComm+completeCredentialIssuance) ⇒ <code>Promise.&lt;Object&gt;</code>
         * _static_
             * [.createInvitationFromRouter](#module_didcomm--exports.DIDComm.createInvitationFromRouter)
             * [.getMediatorConnections(agent)](#module_didcomm--exports.DIDComm.getMediatorConnections)
@@ -694,14 +701,16 @@ accepts an out of band invitation, performs did-exchange and returns connection 
 
 <a name="module_didcomm--exports.DIDComm.DIDComm+initiateCredentialShare"></a>
 
-#### exports.DIDComm.initiateCredentialShare(auth, invitation, connectOptions, proposeOptions) ⇒ <code>Object</code> \| <code>String</code> \| <code>Array.&lt;Object&gt;</code>
+#### exports.DIDComm.initiateCredentialShare(auth, invitation, connectOptions, proposeOptions) ⇒ <code>Object</code> \| <code>String</code> \| <code>Array.&lt;Object&gt;</code> \| <code>Array.&lt;Object&gt;</code>
 Initiates WACI credential share interaction from wallet.
 
  accepts an out of band invitation, sends propose presentation message to inviter, waits for request presentation message reply from inviter.
  reads presentation definition(s) from request presentation, performs query in wallet and returns response presentation(s) to be shared.
 
 **Kind**: instance method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
-**Returns**: <code>Object</code> - response - promise of object containing presentation request message from relying party or error if operation fails.<code>String</code> - response.threadID - thread ID of credential interaction to be used for correlation.<code>Array.&lt;Object&gt;</code> - response.presentations - array of presentation responses from wallet query.  
+**Returns**: <code>Object</code> - response - promise of object containing presentation request message from relying party or error if operation fails.<code>String</code> - response.threadID - thread ID of credential interaction to be used for correlation.<code>Array.&lt;Object&gt;</code> - response.presentations - array of presentation responses from wallet query.<code>Array.&lt;Object&gt;</code> - response.normalized - normalized version of `response.presentations` where response credentials are grouped by input descriptors.
+Can be used to detect multiple credential result for same query.  
+**See**: [WACI Presentation flow ](https://identity.foundation/waci-presentation-exchange/#presentation-2) for more details.  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -745,6 +754,68 @@ Completes WACI credential share flow.
 | options.waitForDone | <code>Bool</code> | (optional) If true then wallet will wait for present proof protocol status to be done or abandoned . |
 | options.WaitForDoneTimeout | <code>Time</code> | (optional) timeout to wait for present proof operation to be done. |
 | options.autoAccept | <code>Bool</code> | (optional) can be used to auto accept any incoming problem reports while waiting for present proof protocol status to be done or abandoned. |
+
+<a name="module_didcomm--exports.DIDComm.DIDComm+initiateCredentialIssuance"></a>
+
+#### exports.DIDComm.initiateCredentialIssuance(auth, invitation, connectOptions, proposeOptions) ⇒ <code>Object</code> \| <code>String</code> \| <code>Array.&lt;Object&gt;</code> \| <code>Array.&lt;Object&gt;</code>
+Initiates WACI credential issuance interaction from wallet.
+
+ accepts an out of band invitation, sends request credential message to inviter, waits for offer credential message response from inviter.
+
+ If present, reads presentation definition(s) from offer credential message, performs query in wallet and returns response presentation(s) to be shared.
+
+**Kind**: instance method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
+**Returns**: <code>Object</code> - response - promise of object containing offer credential message from issuer or error if operation fails.<code>String</code> - response.threadID - thread ID of credential interaction, to be used for correlation in future.<code>Array.&lt;Object&gt;</code> - response.presentations - array of presentation responses from wallet query.<code>Array.&lt;Object&gt;</code> - response.normalized - normalized version of `response.presentations` where response credentials are grouped by input descriptors.
+Can be used to detect multiple credential result for same query.  
+**See**: [WACI Issuance flow ](https://identity.foundation/waci-presentation-exchange/#issuance-2) for more details.  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| auth | <code>String</code> |  | authorization token for performing this wallet operation. |
+| invitation | <code>Object</code> |  | out of band invitation. |
+| connectOptions | <code>Object</code> |  | (optional) for accepting incoming out-of-band invitation and connecting to inviter. |
+| connectOptions.myLabel | <code>String</code> |  | (optional) for providing label to be shared with the other agent during the subsequent did-exchange. |
+| connectOptions.routerConnections | <code>Array.&lt;string&gt;</code> |  | (optional) to provide router connection to be used. |
+| options.userAnyRouterConnection | <code>Bool</code> | <code>false</code> | (optional) if true and options.routerConnections not provided then wallet will find  an existing router connection and will use it for accepting invitation. |
+| connectOptions.reuseConnection | <code>String</code> |  | (optional) to provide DID to be used when reusing a connection. |
+| connectOptions.reuseAnyConnection | <code>Bool</code> | <code>false</code> | (optional) to use any recognized DID in the services array for a reusable connection. |
+| connectOptions.connectionTimeout | <code>timeout</code> |  | (optional) to wait for connection status to be 'completed'. |
+| proposeOptions | <code>Object</code> |  | (optional) for sending message proposing credential. |
+| proposeOptions.from | <code>String</code> |  | (optional) option from DID option to customize sender DID.. |
+| proposeOptions.timeout | <code>Time</code> |  | (optional) to wait for offer credential message from relying party. |
+
+<a name="module_didcomm--exports.DIDComm.DIDComm+completeCredentialIssuance"></a>
+
+#### exports.DIDComm.completeCredentialIssuance(auth, threadID, presentation, proofOptions, options) ⇒ <code>Promise.&lt;Object&gt;</code>
+Completes WACI credential issuance flow.
+
+ Sends request credential message to issuer as part of ongoing WACI issuance flow and waits for credential fulfillment response from issuer.
+ Optionally sends presentations as credential application attachments as part of request credential message.
+
+ Response credentials from credential fulfillment will be saved to collection of choice.
+
+**Kind**: instance method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing request credential status & redirect info or error if operation fails.  
+**See**: [WACI Issuance flow ](https://identity.foundation/waci-presentation-exchange/#issuance-2) for more details.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| auth | <code>String</code> | authorization token for performing this wallet operation. |
+| threadID | <code>String</code> | threadID of credential interaction. |
+| presentation | <code>Object</code> | to be sent as part of credential fulfillment. This presentations will be converted into credential fulfillment format |
+| proofOptions | <code>Object</code> | proof options for signing presentation. |
+| proofOptions.controller | <code>String</code> | DID to be used for signing. |
+| proofOptions.verificationMethod | <code>String</code> | (optional) VerificationMethod is the URI of the verificationMethod used for the proof.  By default, Controller public key matching 'assertion' for issue or 'authentication' for prove functions. |
+| proofOptions.created | <code>String</code> | (optional) Created date of the proof.  By default, current system time will be used. |
+| proofOptions.domain | <code>String</code> | (optional) operational domain of a digital proof.  By default, domain will not be part of proof. |
+| proofOptions.challenge | <code>String</code> | (optional) random or pseudo-random value option authentication.  By default, challenge will not be part of proof. |
+| proofOptions.proofType | <code>String</code> | (optional) signature type used for signing.  By default, proof will be generated in Ed25519Signature2018 format. |
+| proofOptions.proofRepresentation | <code>String</code> | (optional) type of proof data expected ( "proofValue" or "jws").  By default, 'proofValue' will be used. |
+| options | <code>Object</code> | (optional) for sending message requesting credential. |
+| options.waitForDone | <code>Bool</code> | (optional) If true then wallet will wait for credential fulfillment message or problem report to arrive. |
+| options.WaitForDoneTimeout | <code>Time</code> | (optional) timeout to wait for for credential fulfillment message or problem report to arrive. Will be considered only  when `options.waitForDone` is true. |
+| options.autoAccept | <code>Bool</code> | (optional) if enabled then incoming issue credential or problem report will be auto accepted. If not provided then  wallet will rely on underlying agent to accept incoming actions. |
+| options.collection | <code>String</code> | (optional) ID of the wallet collection to which the credential should belong. |
 
 <a name="module_didcomm--exports.DIDComm.createInvitationFromRouter"></a>
 
@@ -806,6 +877,8 @@ vcwallet module provides verifiable credential wallet SDK for aries universal wa
             * [.connect(auth, invitation, options)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+connect) ⇒ <code>Promise.&lt;Object&gt;</code>
             * [.proposePresentation(auth, invitation, connectOptions, proposeOptions)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+proposePresentation) ⇒ <code>Promise.&lt;Object&gt;</code>
             * [.presentProof(auth, threadID, presentation, options)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+presentProof) ⇒ <code>Promise.&lt;Object&gt;</code>
+            * [.proposeCredential(auth, invitation, connectOptions, proposeOptions)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+proposeCredential) ⇒ <code>Promise.&lt;Object&gt;</code>
+            * [.requestCredential(auth, threadID, presentation, options)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+requestCredential) ⇒ <code>Promise.&lt;Object&gt;</code>
         * _static_
             * [.contentTypes](#module_vcwallet--exports.UniversalWallet.contentTypes) : <code>enum</code>
             * [.createWalletProfile(agent, userID, profileOptions)](#module_vcwallet--exports.UniversalWallet.createWalletProfile) ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -1081,7 +1154,7 @@ accepts an out of band invitation, sends propose presentation message to inviter
 sends present proof message from wallet to relying party as part of ongoing credential share interaction.
 
 **Kind**: instance method of [<code>exports.UniversalWallet</code>](#exp_module_vcwallet--exports.UniversalWallet)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing present prof status & redirect info or error if operation fails.  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing present proof status & redirect info or error if operation fails.  
 **See**: [WACI Present Proof ](https://w3c-ccg.github.io/universal-wallet-interop-spec/#presentproof)  
 
 | Param | Type | Description |
@@ -1089,9 +1162,51 @@ sends present proof message from wallet to relying party as part of ongoing cred
 | auth | <code>String</code> | authorization token for performing this wallet operation. |
 | threadID | <code>String</code> | threadID of credential interaction. |
 | presentation | <code>Object</code> | to be sent as part of present proof message.. |
-| options | <code>Object</code> | (optional) for sending message proposing presentation. |
+| options | <code>Object</code> | (optional) for sending present proof message. |
 | options.waitForDone | <code>Bool</code> | (optional) If true then wallet will wait for present proof protocol status to be done or abandoned . |
 | options.WaitForDoneTimeout | <code>Time</code> | (optional) timeout to wait for present proof operation to be done. |
+
+<a name="module_vcwallet--exports.UniversalWallet.UniversalWallet+proposeCredential"></a>
+
+#### exports.UniversalWallet.proposeCredential(auth, invitation, connectOptions, proposeOptions) ⇒ <code>Promise.&lt;Object&gt;</code>
+accepts an out of band invitation, sends propose credential message to issuer to initiate credential issuance interaction
+ and waits for offer credential message from inviter as a response.
+
+**Kind**: instance method of [<code>exports.UniversalWallet</code>](#exp_module_vcwallet--exports.UniversalWallet)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing offer credential message from relying party or error if operation fails.  
+**See**: [WACI Propose Credential ](https://w3c-ccg.github.io/universal-wallet-interop-spec/#proposecredential)  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| auth | <code>String</code> |  | authorization token for performing this wallet operation. |
+| invitation | <code>Object</code> |  | out of band invitation. |
+| connectOptions | <code>Object</code> |  | (optional) for accepting incoming out-of-band invitation and connecting to inviter. |
+| connectOptions.myLabel | <code>String</code> |  | (optional) for providing label to be shared with the other agent during the subsequent did-exchange. |
+| connectOptions.routerConnections | <code>Array.&lt;string&gt;</code> |  | (optional) to provide router connection to be used. |
+| connectOptions.reuseConnection | <code>String</code> |  | (optional) to provide DID to be used when reusing a connection. |
+| connectOptions.reuseAnyConnection | <code>Bool</code> | <code>false</code> | (optional) to use any recognized DID in the services array for a reusable connection. |
+| connectOptions.connectionTimeout | <code>timeout</code> |  | (optional) to wait for connection status to be 'completed'. |
+| proposeOptions | <code>Object</code> |  | (optional) for sending message proposing credential. |
+| proposeOptions.from | <code>String</code> |  | (optional) option from DID option to customize sender DID.. |
+| proposeOptions.timeout | <code>Time</code> |  | (optional) to wait for offer credential message from relying party. |
+
+<a name="module_vcwallet--exports.UniversalWallet.UniversalWallet+requestCredential"></a>
+
+#### exports.UniversalWallet.requestCredential(auth, threadID, presentation, options) ⇒ <code>Promise.&lt;Object&gt;</code>
+sends request credential message from wallet to issuer as part of ongoing credential issuance interaction.
+
+**Kind**: instance method of [<code>exports.UniversalWallet</code>](#exp_module_vcwallet--exports.UniversalWallet)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing request credential status & redirect info or error if operation fails.  
+**See**: [WACI Request Credential ](https://w3c-ccg.github.io/universal-wallet-interop-spec/#requestcredential)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| auth | <code>String</code> | authorization token for performing this wallet operation. |
+| threadID | <code>String</code> | threadID of credential interaction. |
+| presentation | <code>Object</code> | to be sent as part of request credential message.. |
+| options | <code>Object</code> | (optional) for sending request credential message. |
+| options.waitForDone | <code>Bool</code> | (optional) If true then wallet will wait for credential fulfillment message or problem report . |
+| options.WaitForDoneTimeout | <code>Time</code> | (optional) timeout to wait for credential fulfillment or problem report. |
 
 <a name="module_vcwallet--exports.UniversalWallet.contentTypes"></a>
 
@@ -1389,6 +1504,15 @@ Updates given presentation submission presentation by removing duplicate descrip
 
  Descriptor map might contain single input descriptor ID mapped to multiple credentials.
  So returning PresentationSubmission presentation will retain only mappings mentioned in updates Object{<inputDescriptorID>:<credentialID>} parameter.
+
+**Kind**: global constant  
+<a name="findAttachmentByFormat"></a>
+
+## findAttachmentByFormat
+Finds attachment by given format.
+ Supporting Attachment Format from DIDComm V1.
+
+ Note: Currently finding only one attachment per format.
 
 **Kind**: global constant  
 ## Contributing

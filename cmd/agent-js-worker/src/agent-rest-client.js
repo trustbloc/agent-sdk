@@ -529,6 +529,14 @@ const pkgs = {
             path: "/vcwallet/present-proof",
             method: "POST",
         },
+        ProposeCredential: {
+            path: "/vcwallet/propose-credential",
+            method: "POST",
+        },
+        RequestCredential: {
+            path: "/vcwallet/request-credential",
+            method: "POST",
+        },
     },
     didclient: {
         CreateOrbDID: {

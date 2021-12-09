@@ -13,6 +13,12 @@ export const POST_STATE = "post_state"
 export const DIDEXCHANGE_STATE_REQUESTED = "requested"
 export const DIDEXCHANGE_STATE_COMPLETED = "completed"
 export const PRESENT_PROOF_ACTION_TOPIC = "present-proof_actions"
+export const ISSUE_CREDENTIAL_STATE_TOPIC = "issue-credential_states"
+export const ISSUE_CREDENTIAL_ACTION_TOPIC = "issue-credential_actions"
+export const MSG_TYPE_OFFER_CREDENTIAL_V2 = "https://didcomm.org/issue-credential/2.0/offer-credential"
+export const ATTACH_FORMAT_CREDENTIAL_MANIFEST = "dif/credential-manifest/manifest@v1.0"
+export const ATTACH_FORMAT_CREDENTIAL_FULFILLMENT = "dif/credential-manifest/fulfillment@v1.0"
+export const ATTACH_FORMAT_ISSUE_CREDENTIAL = "aries/ld-proof-vc@v1.0"
 
 export const testConfig = window.__ini__ ? window.__ini__['test/fixtures/config.ini'] : {}
 testConfig.walletUserPassphrase = uuid()

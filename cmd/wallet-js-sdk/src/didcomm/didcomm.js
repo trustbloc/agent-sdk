@@ -5,22 +5,34 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import {
+  contentTypes,
+  findAttachmentByFormat,
+  normalizePresentationSubmission,
   UniversalWallet,
   waitForEvent,
-  POST_STATE,
-  normalizePresentationSubmission,
 } from "..";
+
 import axios from "axios";
+import jp from "jsonpath";
 
 const STATE_COMPLETE_MSG_TOPIC = "didexchange-state-complete";
 const STATE_COMPLETE_MSG_TYPE =
   "https://trustbloc.dev/didexchange/1.0/state-complete";
 const PRESENT_PROOF_STATE_TOPIC = "present-proof_states";
 const PRESENT_PROOF_ACTION_TOPIC = "present-proof_actions";
+const ISSUE_CREDENTIAL_ACTION_TOPIC = "issue-credential_actions";
 const PRESENTATION_SENT_STATE_ID = "presentation-sent";
 
 const DEFAULT_LABEL = "agent-default-label";
 const ROUTER_CREATE_INVITATION_PATH = `/didcomm/invitation`;
+const ATTACH_FORMAT_CREDENTIAL_MANIFEST =
+  "dif/credential-manifest/manifest@v1.0";
+const ATTACH_FORMAT_CREDENTIAL_FULFILLMENT =
+  "dif/credential-manifest/fulfillment@v1.0";
+const MSG_TYPE_ISSUE_CREDENTIAL_V2 =
+  "https://didcomm.org/issue-credential/2.0/issue-credential";
+const MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2 =
+  "https://didcomm.org/issue-credential/2.0/problem-report";
 
 /**
  * didcomm module provides wallet based DIDComm features.
@@ -115,7 +127,7 @@ export class DIDComm {
                 record.result.TheirDID == msg.payload.theirdid
               ) {
                 stop();
-                console.debug("received state complete msg received.");
+                console.debug("received state complete msg!.");
                 resolve(msg.payload.message);
               }
             },
@@ -136,6 +148,8 @@ export class DIDComm {
    *  accepts an out of band invitation, sends propose presentation message to inviter, waits for request presentation message reply from inviter.
    *  reads presentation definition(s) from request presentation, performs query in wallet and returns response presentation(s) to be shared.
    *
+   *  @see {@link https://identity.foundation/waci-presentation-exchange/#presentation-2|WACI Presentation flow } for more details.
+   *
    *  @param {String} auth -  authorization token for performing this wallet operation.
    *  @param {Object} invitation - out of band invitation.
    *
@@ -155,6 +169,9 @@ export class DIDComm {
    * @returns {Object} response - promise of object containing presentation request message from relying party or error if operation fails.
    * @returns {String} response.threadID - thread ID of credential interaction to be used for correlation.
    * @returns {Array<Object>} response.presentations - array of presentation responses from wallet query.
+   * @returns {Array<Object>} response.normalized - normalized version of `response.presentations` where response credentials are grouped by input descriptors.
+   * Can be used to detect multiple credential result for same query.
+   *
    */
   async initiateCredentialShare(
     auth,
@@ -311,6 +328,274 @@ export class DIDComm {
         { waitForDone, WaitForDoneTimeout }
       );
     }
+  }
+
+  /**
+   *  Initiates WACI credential issuance interaction from wallet.
+   *
+   *  accepts an out of band invitation, sends request credential message to inviter, waits for offer credential message response from inviter.
+   *
+   *  If present, reads presentation definition(s) from offer credential message, performs query in wallet and returns response presentation(s) to be shared.
+   *
+   *  @see {@link https://identity.foundation/waci-presentation-exchange/#issuance-2|WACI Issuance flow } for more details.
+   *
+   *  @param {String} auth -  authorization token for performing this wallet operation.
+   *  @param {Object} invitation - out of band invitation.
+   *
+   *  @param {Object} connectOptions - (optional) for accepting incoming out-of-band invitation and connecting to inviter.
+   *  @param {String} connectOptions.myLabel - (optional) for providing label to be shared with the other agent during the subsequent did-exchange.
+   *  @param {Array<string>} connectOptions.routerConnections - (optional) to provide router connection to be used.
+   *  @param {Bool} options.userAnyRouterConnection=false - (optional) if true and options.routerConnections not provided then wallet will find
+   *  an existing router connection and will use it for accepting invitation.
+   *  @param {String} connectOptions.reuseConnection - (optional) to provide DID to be used when reusing a connection.
+   *  @param {Bool} connectOptions.reuseAnyConnection=false - (optional) to use any recognized DID in the services array for a reusable connection.
+   *  @param {timeout} connectOptions.connectionTimeout - (optional) to wait for connection status to be 'completed'.
+   *
+   *  @param {Object} proposeOptions - (optional) for sending message proposing credential.
+   *  @param {String} proposeOptions.from - (optional) option from DID option to customize sender DID..
+   *  @param {Time} proposeOptions.timeout - (optional) to wait for offer credential message from relying party.
+   *
+   * @returns {Object} response - promise of object containing offer credential message from issuer or error if operation fails.
+   * @returns {String} response.threadID - thread ID of credential interaction, to be used for correlation in future.
+   * @returns {Array<Object>} response.presentations - array of presentation responses from wallet query.
+   * @returns {Array<Object>} response.normalized - normalized version of `response.presentations` where response credentials are grouped by input descriptors.
+   * Can be used to detect multiple credential result for same query.
+   */
+  async initiateCredentialIssuance(
+    auth,
+    invitation = {},
+    {
+      myLabel,
+      routerConnections = [],
+      userAnyRouterConnection = false,
+      reuseConnection,
+      reuseAnyConnection = false,
+      connectionTimeout,
+    },
+    { from, timeout } = {}
+  ) {
+    // propose credential and expect offer credential response.
+    let { offerCredential } = await this.wallet.proposeCredential(
+      auth,
+      invitation,
+      {
+        myLabel,
+        routerConnections:
+          routerConnections.length == 0 && userAnyRouterConnection
+            ? [
+                await getMediatorConnections(this.agent, {
+                  single: true,
+                }),
+              ]
+            : routerConnections,
+        reuseConnection,
+        reuseAnyConnection,
+        connectionTimeout,
+      },
+      {
+        from,
+        timeout,
+      }
+    );
+
+    console.debug(
+      "offer credential from issuer",
+      JSON.stringify(offerCredential, null, 2)
+    );
+
+    // find manifest
+    // TODO : for now, assuming there will only be one manifest per offer credential msg
+    const manifest = findAttachmentByFormat(
+      offerCredential.formats,
+      offerCredential["offers~attach"],
+      ATTACH_FORMAT_CREDENTIAL_MANIFEST
+    );
+
+    const { presentation_definition, options } = manifest;
+    const { domain, challenge } = options ? options : {};
+
+    // perform presentation-exchange or DID Auth.
+    let presentations, normalized;
+    if (presentation_definition) {
+      const query = [
+        {
+          type: "PresentationExchange",
+          credentialQuery: [presentation_definition],
+        },
+      ];
+
+      // supporting only one presentation definition for now.
+      const { results } = await this.wallet.query(auth, query);
+
+      // for grouping duplicate query results
+      normalized = results.map((result) =>
+        normalizePresentationSubmission(query, result)
+      );
+      presentations = results;
+    } else if (domain || challenge) {
+      const { results } = await this.wallet.query(auth, [
+        {
+          type: "DIDAuth",
+        },
+      ]);
+
+      presentations = results;
+    }
+
+    // find fulfillment
+    // TODO : for now, assuming there will only be one fulfillment per offer credential msg
+    const fulfillment = findAttachmentByFormat(
+      offerCredential.formats,
+      offerCredential["offers~attach"],
+      ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
+    );
+
+    // TODO read descriptors from manifests & fulfillments for credential preview in UI. (Pending support in vcwallet).
+
+    const { comment } = offerCredential;
+    const { thid } = offerCredential["~thread"];
+
+    return {
+      threadID: thid,
+      manifest,
+      fulfillment,
+      presentations,
+      normalized,
+      domain,
+      challenge,
+      comment,
+    };
+  }
+
+  /**
+   *  Completes WACI credential issuance flow.
+   *
+   *  Sends request credential message to issuer as part of ongoing WACI issuance flow and waits for credential fulfillment response from issuer.
+   *  Optionally sends presentations as credential application attachments as part of request credential message.
+   *
+   *  Response credentials from credential fulfillment will be saved to collection of choice.
+   *
+   *  @see {@link https://identity.foundation/waci-presentation-exchange/#issuance-2|WACI Issuance flow } for more details.
+   *
+   *  @param {String} auth -  authorization token for performing this wallet operation.
+   *  @param {String} threadID - threadID of credential interaction.
+   *  @param {Object} presentation - to be sent as part of credential fulfillment. This presentations will be converted into credential fulfillment format
+   *
+   *  @param {Object} proofOptions - proof options for signing presentation.
+   *  @param {String} proofOptions.controller -  DID to be used for signing.
+   *  @param {String} proofOptions.verificationMethod - (optional) VerificationMethod is the URI of the verificationMethod used for the proof.
+   *  By default, Controller public key matching 'assertion' for issue or 'authentication' for prove functions.
+   *  @param {String} proofOptions.created - (optional) Created date of the proof.
+   *  By default, current system time will be used.
+   *  @param {String} proofOptions.domain - (optional) operational domain of a digital proof.
+   *  By default, domain will not be part of proof.
+   *  @param {String} proofOptions.challenge - (optional) random or pseudo-random value option authentication.
+   *  By default, challenge will not be part of proof.
+   *  @param {String} proofOptions.proofType - (optional) signature type used for signing.
+   *  By default, proof will be generated in Ed25519Signature2018 format.
+   *  @param {String} proofOptions.proofRepresentation - (optional) type of proof data expected ( "proofValue" or "jws").
+   *  By default, 'proofValue' will be used.
+   *
+   *  @param {Object} options - (optional) for sending message requesting credential.
+   *  @param {Bool} options.waitForDone - (optional) If true then wallet will wait for credential fulfillment message or problem report to arrive.
+   *  @param {Time} options.WaitForDoneTimeout - (optional) timeout to wait for for credential fulfillment message or problem report to arrive. Will be considered only
+   *  when `options.waitForDone` is true.
+   *  @param {Bool} options.autoAccept - (optional) if enabled then incoming issue credential or problem report will be auto accepted. If not provided then
+   *  wallet will rely on underlying agent to accept incoming actions.
+   *  @param {String} options.collection - (optional) ID of the wallet collection to which the credential should belong.
+   *
+   * @returns {Promise<Object>} - promise of object containing request credential status & redirect info or error if operation fails.
+   */
+  async completeCredentialIssuance(
+    auth,
+    threadID,
+    presentation,
+    {
+      controller,
+      verificationMethod,
+      created,
+      domain,
+      challenge,
+      proofType,
+      proofRepresentation,
+    } = {},
+    { waitForDone, WaitForDoneTimeout, autoAccept, collectionID } = {}
+  ) {
+    // TODO convert presentation to credential fulfillment type and then sign.
+    let signedPresentation;
+    if (presentation) {
+      let signed = await this.wallet.prove(
+        auth,
+        { presentation },
+        {
+          controller,
+          verificationMethod,
+          created,
+          domain,
+          challenge,
+          proofType,
+          proofRepresentation,
+        }
+      );
+
+      signedPresentation = signed.presentation;
+    }
+
+    let credentials;
+    if (autoAccept) {
+      waitForEvent(this.agent, {
+        topic: ISSUE_CREDENTIAL_ACTION_TOPIC,
+        timeout: WaitForDoneTimeout,
+        callback: async (payload) => {
+          const { Message, Properties } = payload;
+          const { piid } = Properties;
+          const type = Message["@type"];
+
+          if (type === MSG_TYPE_ISSUE_CREDENTIAL_V2) {
+            await this.agent.issuecredential.acceptCredential({
+              piid,
+              skipStore: true,
+            });
+
+            credentials = jp.query(
+              Message["credentials~attach"],
+              `$[*].data.json`
+            );
+          } else if (type === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2) {
+            await this.agent.issuecredential.acceptProblemReport({
+              piid,
+            });
+          }
+        },
+      });
+    }
+
+    const status = await this.wallet.requestCredential(
+      auth,
+      threadID,
+      signedPresentation,
+      { waitForDone, WaitForDoneTimeout }
+    );
+
+    // expecting only one credential for now,  TODO it has to be credential fulfillment
+    if (credentials.length == 0) {
+      throw "no incoming credentials found";
+    }
+
+    const contentType = contentTypes.CREDENTIAL;
+    await Promise.all(
+      credentials.map(
+        async (content) =>
+          await this.wallet.add({
+            auth,
+            contentType,
+            content,
+            collectionID,
+          })
+      )
+    );
+
+    return status;
   }
 }
 

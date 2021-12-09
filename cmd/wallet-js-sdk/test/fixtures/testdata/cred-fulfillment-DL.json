@@ -1,0 +1,39 @@
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://identity.foundation/credential-manifest/fulfillment/v1"
+  ],
+  "credential_fulfillment": {
+    "descriptor_map": [
+      {
+        "format": "ldp_vc",
+        "id": "driver_license_output",
+        "path": "$.verifiableCredential[0]"
+      }
+    ],
+    "id": "a30e3b91-fb77-4d22-95fa-871689c322e2",
+    "manifest_id": "dcc75a16-19f5-4273-84ce-4da69ee2b7fe"
+  },
+  "type": [
+    "VerifiablePresentation",
+    "CredentialFulfillment"
+  ],
+  "verifiableCredential": [
+    {
+      "@context": "https://www.w3.org/2018/credentials/v1",
+      "credentialSubject": {
+        "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+        "license": {
+          "dob": "07/13/80",
+          "number": "34DGE352"
+        }
+      },
+      "id": "https://eu.com/claims/DriversLicense",
+      "issuanceDate": "2010-01-01T19:73:24Z",
+      "issuer": "did:foo:123",
+      "type": [
+        "EUDriversLicense"
+      ]
+    }
+  ]
+}
