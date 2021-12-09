@@ -11,7 +11,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/go-kivik/couchdb/v3 v3.2.8 // indirect
 	github.com/gorilla/mux v1.8.0
-	github.com/hyperledger/aries-framework-go v0.1.8-0.20211203093644-b7d189cc06f4
+	github.com/hyperledger/aries-framework-go v0.1.8-0.20211208145806-1d5cb83caea7
 	github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20210909220549-ce3a2ee13e22
 	github.com/hyperledger/aries-framework-go-ext/component/storage/mongodb v0.0.0-20211001130226-2e3422b613aa
 	github.com/hyperledger/aries-framework-go-ext/component/storage/mysql v0.0.0-20210909220549-ce3a2ee13e22

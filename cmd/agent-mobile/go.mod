@@ -8,7 +8,7 @@ go 1.16
 
 require (
 	github.com/google/uuid v1.2.0
-	github.com/hyperledger/aries-framework-go v0.1.8-0.20211203093644-b7d189cc06f4
+	github.com/hyperledger/aries-framework-go v0.1.8-0.20211208145806-1d5cb83caea7
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.1.4-0.20211115235232-9c7453f469d0
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20211026175505-52f559aeeb86
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20211026175505-52f559aeeb86
