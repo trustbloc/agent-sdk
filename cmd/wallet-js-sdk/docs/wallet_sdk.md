@@ -656,7 +656,7 @@ didcomm module provides wallet based DIDComm features.
             * [.connect(auth, invitation, options)](#module_didcomm--exports.DIDComm.DIDComm+connect) ⇒ <code>Promise.&lt;Object&gt;</code>
             * [.initiateCredentialShare(auth, invitation, connectOptions, proposeOptions)](#module_didcomm--exports.DIDComm.DIDComm+initiateCredentialShare) ⇒ <code>Object</code> \| <code>String</code> \| <code>Array.&lt;Object&gt;</code> \| <code>Array.&lt;Object&gt;</code>
             * [.completeCredentialShare(auth, threadID, presentations, proofOptions, options)](#module_didcomm--exports.DIDComm.DIDComm+completeCredentialShare) ⇒ <code>Promise.&lt;Object&gt;</code>
-            * [.initiateCredentialIssuance(auth, invitation, connectOptions, proposeOptions)](#module_didcomm--exports.DIDComm.DIDComm+initiateCredentialIssuance) ⇒ <code>Object</code> \| <code>String</code> \| <code>Array.&lt;Object&gt;</code> \| <code>Array.&lt;Object&gt;</code>
+            * [.initiateCredentialIssuance(auth, invitation, connectOptions, proposeOptions)](#module_didcomm--exports.DIDComm.DIDComm+initiateCredentialIssuance) ⇒ <code>Object</code> \| <code>String</code> \| <code>Object</code> \| <code>Object</code> \| <code>Object</code> \| <code>Array.&lt;Object&gt;</code> \| <code>Array.&lt;Object&gt;</code> \| <code>String</code> \| <code>String</code> \| <code>String</code>
             * [.completeCredentialIssuance(auth, threadID, presentation, proofOptions, options)](#module_didcomm--exports.DIDComm.DIDComm+completeCredentialIssuance) ⇒ <code>Promise.&lt;Object&gt;</code>
         * _static_
             * [.createInvitationFromRouter](#module_didcomm--exports.DIDComm.createInvitationFromRouter)
@@ -757,7 +757,7 @@ Completes WACI credential share flow.
 
 <a name="module_didcomm--exports.DIDComm.DIDComm+initiateCredentialIssuance"></a>
 
-#### exports.DIDComm.initiateCredentialIssuance(auth, invitation, connectOptions, proposeOptions) ⇒ <code>Object</code> \| <code>String</code> \| <code>Array.&lt;Object&gt;</code> \| <code>Array.&lt;Object&gt;</code>
+#### exports.DIDComm.initiateCredentialIssuance(auth, invitation, connectOptions, proposeOptions) ⇒ <code>Object</code> \| <code>String</code> \| <code>Object</code> \| <code>Object</code> \| <code>Object</code> \| <code>Array.&lt;Object&gt;</code> \| <code>Array.&lt;Object&gt;</code> \| <code>String</code> \| <code>String</code> \| <code>String</code>
 Initiates WACI credential issuance interaction from wallet.
 
  accepts an out of band invitation, sends request credential message to inviter, waits for offer credential message response from inviter.
@@ -765,7 +765,7 @@ Initiates WACI credential issuance interaction from wallet.
  If present, reads presentation definition(s) from offer credential message, performs query in wallet and returns response presentation(s) to be shared.
 
 **Kind**: instance method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
-**Returns**: <code>Object</code> - response - promise of object containing offer credential message from issuer or error if operation fails.<code>String</code> - response.threadID - thread ID of credential interaction, to be used for correlation in future.<code>Array.&lt;Object&gt;</code> - response.presentations - array of presentation responses from wallet query.<code>Array.&lt;Object&gt;</code> - response.normalized - normalized version of `response.presentations` where response credentials are grouped by input descriptors.
+**Returns**: <code>Object</code> - response - promise of object containing offer credential message from issuer or error if operation fails.<code>String</code> - response.threadID - thread ID of credential interaction, to be used for correlation in future.<code>Object</code> - response.error - error containing status, code and redirect URL if requested by issuer.<code>Object</code> - manifest - credential manifest sent by issuer.<code>Object</code> - fulfillment - credential fulfillment sent by issuer.<code>Array.&lt;Object&gt;</code> - response.presentations - array of presentation responses from wallet query.<code>Array.&lt;Object&gt;</code> - response.normalized - normalized version of `response.presentations` where response credentials are grouped by input descriptors.<code>String</code> - domain - domain parameter sent by issuer for proving ownership of DID or freshness of proof.<code>String</code> - challenge - challenge parameter sent by issuer for proving ownership of DID or freshness of proof..<code>String</code> - comment - custom comment sent by issuer along with credential fulfillment.
 Can be used to detect multiple credential result for same query.  
 **See**: [WACI Issuance flow ](https://identity.foundation/waci-presentation-exchange/#issuance-2) for more details.  
 
