@@ -291,7 +291,7 @@ export class IssuerAdapter extends Adapter {
         })
     }
 
-    async acceptRequestCredential({timeout, credential} = {}) {
+    async acceptRequestCredential({timeout, credential, redirect} = {}) {
         let attachment
         await waitForEvent(this.agent, {
             topic: ISSUE_CREDENTIAL_ACTION_TOPIC,
@@ -327,12 +327,46 @@ export class IssuerAdapter extends Adapter {
                         "@type": "https://didcomm.org/issue-credential/2.0/issue-credential",
                         formats: icFormats,
                         "credentials~attach": icAttachments,
+                        "~web-redirect": {
+                            status: "OK",
+                            url: redirect
+                        },
                     }
                 });
             }
         })
 
         return attachment
+    }
+
+    async declineCredentialProposal({redirectURL} = {}, timeout) {
+        return await waitForEvent(this.agent, {
+            topic: ISSUE_CREDENTIAL_ACTION_TOPIC,
+            timeout,
+            callback: async (payload) => {
+                let {piid} = payload.Properties
+
+                await this.agent.issuecredential.declineProposal({
+                    piid,
+                    redirectURL
+                });
+            }
+        })
+    }
+
+    async declineRequestCredential({redirectURL} = {}, timeout) {
+        await waitForEvent(this.agent, {
+            topic: ISSUE_CREDENTIAL_ACTION_TOPIC,
+            timeout,
+            callback: async (payload) => {
+                const { piid } = payload.Properties
+
+                return this.agent.issuecredential.declineRequest({
+                    piid,
+                    redirectURL
+                });
+            }
+        })
     }
 
 }

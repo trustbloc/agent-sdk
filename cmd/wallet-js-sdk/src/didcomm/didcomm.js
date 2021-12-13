@@ -33,6 +33,7 @@ const MSG_TYPE_ISSUE_CREDENTIAL_V2 =
   "https://didcomm.org/issue-credential/2.0/issue-credential";
 const MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2 =
   "https://didcomm.org/issue-credential/2.0/problem-report";
+const WEB_REDIRECT_STATUS_OK = "OK";
 
 /**
  * didcomm module provides wallet based DIDComm features.
@@ -357,8 +358,14 @@ export class DIDComm {
    *
    * @returns {Object} response - promise of object containing offer credential message from issuer or error if operation fails.
    * @returns {String} response.threadID - thread ID of credential interaction, to be used for correlation in future.
+   * @returns {Object} response.error - error containing status, code and redirect URL if requested by issuer.
+   * @returns {Object} manifest - credential manifest sent by issuer.
+   * @returns {Object} fulfillment - credential fulfillment sent by issuer.
    * @returns {Array<Object>} response.presentations - array of presentation responses from wallet query.
    * @returns {Array<Object>} response.normalized - normalized version of `response.presentations` where response credentials are grouped by input descriptors.
+   * @returns {String} domain - domain parameter sent by issuer for proving ownership of DID or freshness of proof.
+   * @returns {String} challenge - challenge parameter sent by issuer for proving ownership of DID or freshness of proof..
+   * @returns {String} comment - custom comment sent by issuer along with credential fulfillment.
    * Can be used to detect multiple credential result for same query.
    */
   async initiateCredentialIssuance(
@@ -402,6 +409,15 @@ export class DIDComm {
       "offer credential from issuer",
       JSON.stringify(offerCredential, null, 2)
     );
+
+    if (
+      offerCredential["@type"] === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2
+    ) {
+      const { status, url } = offerCredential["~web-redirect"];
+      const { code } = offerCredential["description"];
+
+      return { error: { status, url, code } };
+    }
 
     // find manifest
     // TODO : for now, assuming there will only be one manifest per offer credential msg
@@ -570,14 +586,18 @@ export class DIDComm {
       });
     }
 
-    const status = await this.wallet.requestCredential(
+    const response = await this.wallet.requestCredential(
       auth,
       threadID,
       signedPresentation,
       { waitForDone, WaitForDoneTimeout }
     );
 
-    // expecting only one credential for now,  TODO it has to be credential fulfillment
+    if (response.status != WEB_REDIRECT_STATUS_OK) {
+      return response;
+    }
+
+    // expecting only one credential for now,  TODO it has to be in credential fulfillment
     if (credentials.length == 0) {
       throw "no incoming credentials found";
     }
@@ -595,7 +615,7 @@ export class DIDComm {
       )
     );
 
-    return status;
+    return response;
   }
 }
 

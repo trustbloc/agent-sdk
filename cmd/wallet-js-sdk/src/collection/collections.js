@@ -120,7 +120,9 @@ export class CollectionManager {
     });
 
     let vcIDs = Object.keys(contents);
-    console.debug(`deleting ${vcIDs.length} credentials from ${collectionID} vault`);
+    console.debug(
+      `deleting ${vcIDs.length} credentials from ${collectionID} vault`
+    );
 
     await Promise.all([
       vcIDs.forEach(
