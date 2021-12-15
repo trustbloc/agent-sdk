@@ -91,7 +91,7 @@ after(function () {
 describe('Wallet DIDComm WACI credential share flow', async function () {
     let credentialInteraction
     it('user accepts out-of-band invitation from relying party and initiates WACI credential interaction', async function () {
-        let invitation = await rp.createInvitation()
+        let invitation = await rp.createInvitation({goal_code: 'streamlined-vp'})
         rp.acceptExchangeRequest()
         rp.acceptPresentationProposal({
             "id": "22c77155-edf2-4ec5-8d44-b393b4e4fa38",
@@ -129,7 +129,7 @@ describe('Wallet DIDComm WACI credential share flow', async function () {
     })
 
     it('user accepts out-of-band invitation from relying party and initiates WACI credential interaction', async function () {
-        let invitation = await rp.createInvitation()
+        let invitation = await rp.createInvitation({goal_code: 'streamlined-vp'})
         rp.acceptExchangeRequest()
         rp.acceptPresentationProposal({
             "id": "22c77155-edf2-4ec5-8d44-b393b4e4fa38",
@@ -177,7 +177,7 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
     it('user accepts out-of-band invitation from issuer and initiates WACI credential interaction - presentation exchange flow', async function () {
         const manifestJSON =  getJSONTestData("cred-manifest-withdef.json")
 
-        let invitation = await issuer.createInvitation()
+        let invitation = await issuer.createInvitation({goal_code: 'streamlined-vc'})
         issuer.acceptExchangeRequest()
         issuer.acceptCredentialProposal({
             comment: sampleComment,
@@ -230,7 +230,7 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
     it('user accepts out-of-band invitation from issuer and initiates WACI credential interaction - DID Auth flow', async function () {
         const manifestJSON =  getJSONTestData("cred-manifest-withoptions.json")
 
-        let invitation = await issuer.createInvitation()
+        let invitation = await issuer.createInvitation({goal_code: 'streamlined-vc'})
         issuer.acceptExchangeRequest()
         issuer.acceptCredentialProposal({
             comment: sampleComment,
@@ -285,7 +285,7 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
     it('user accepts out-of-band invitation from issuer and initiates WACI credential interaction - Basic flow', async function () {
         const manifestJSON =  getJSONTestData("cred-manifest.json")
 
-        let invitation = await issuer.createInvitation()
+        let invitation = await issuer.createInvitation({goal_code: 'streamlined-vc'})
         issuer.acceptExchangeRequest()
         issuer.acceptCredentialProposal({
             comment: sampleComment,
@@ -344,7 +344,7 @@ describe('Wallet DIDComm WACI credential issuance flow - failure scenarios', asy
         const manifestJSON =  getJSONTestData("cred-manifest-withdef.json")
         const redirectURL = "https://example.com/error"
 
-        let invitation = await issuer.createInvitation()
+        let invitation = await issuer.createInvitation({goal_code: 'streamlined-vc'})
         issuer.acceptExchangeRequest()
         issuer.declineCredentialProposal({redirectURL})
 
@@ -374,7 +374,7 @@ describe('Wallet DIDComm WACI credential issuance flow - failure scenarios', asy
     it('user accepts out-of-band invitation from issuer and initiates WACI credential interaction', async function () {
         const manifestJSON =  getJSONTestData("cred-manifest-withdef.json")
 
-        let invitation = await issuer.createInvitation()
+        let invitation = await issuer.createInvitation({goal_code: 'streamlined-vc'})
         issuer.acceptExchangeRequest()
         issuer.acceptCredentialProposal({
             comment: sampleComment,
