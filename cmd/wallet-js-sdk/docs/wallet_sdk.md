@@ -73,6 +73,10 @@ Refer  Wallet SDK Data Model [documentation](data_models.md) to know about data 
  Supporting Attachment Format from DIDComm V1.</p>
 <p> Note: Currently finding only one attachment per format.</p>
 </dd>
+<dt><a href="#extractOOBGoalCode">extractOOBGoalCode</a></dt>
+<dd><p>Reads out-of-band invitation goal code.
+ Supports DIDComm V1 &amp; V2</p>
+</dd>
 </dl>
 
 <a name="module_collection"></a>
@@ -1513,6 +1517,13 @@ Finds attachment by given format.
  Supporting Attachment Format from DIDComm V1.
 
  Note: Currently finding only one attachment per format.
+
+**Kind**: global constant  
+<a name="extractOOBGoalCode"></a>
+
+## extractOOBGoalCode
+Reads out-of-band invitation goal code.
+ Supports DIDComm V1 & V2
 
 **Kind**: global constant  
 ## Contributing

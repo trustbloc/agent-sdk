@@ -7,7 +7,13 @@ SPDX-License-Identifier: Apache-2.0
 import {expect} from "chai";
 import jp from 'jsonpath';
 import {getJSONTestData, loadFrameworks, testConfig} from "../common";
-import {WalletUser, normalizePresentationSubmission, updatePresentationSubmission, CredentialManager} from "../../../src";
+import {
+    CredentialManager,
+    normalizePresentationSubmission,
+    updatePresentationSubmission,
+    WalletUser,
+    extractOOBGoalCode
+} from "../../../src";
 import {IssuerAdapter} from "../mocks/adapters";
 
 var uuid = require("uuid/v4");
@@ -64,7 +70,7 @@ describe('Presentation Submission Normalization Tests', async function () {
 
         // save sample credentials
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_QUERY_USER})
-        await credentialManager.save(auth, {credentials:[sampleUDC, samplePRC, sampleUDCBBS]})
+        await credentialManager.save(auth, {credentials: [sampleUDC, samplePRC, sampleUDCBBS]})
         let {contents} = await credentialManager.getAll(auth)
         expect(contents).to.not.empty
         expect(Object.keys(contents)).to.have.lengthOf(3)
@@ -102,7 +108,7 @@ describe('Presentation Submission Normalization Tests', async function () {
 
     it('user selects only one credential and updates presentation', async function () {
         let updated = updatePresentationSubmission(presentation, {
-            "20b073bb-cede-4912-9e9d-334e5702077b" : samplePRC.id
+            "20b073bb-cede-4912-9e9d-334e5702077b": samplePRC.id
         })
 
         expect(updated).to.not.empty
@@ -240,5 +246,124 @@ describe('Presentation Submission Normalization Tests', async function () {
         let updated = updatePresentationSubmission(results[0])
         expect(updated).to.not.empty
         expect(updated.verifiableCredential).to.have.lengthOf(2)
+    })
+})
+
+
+describe('Testing generic util functions', async function () {
+    it('test extracting goal code from invitation', async function () {
+        expect(extractOOBGoalCode({
+            "@id": "6c6fbda3-60f4-4821-ab9f-dcbda4b94faa",
+            "@type": "https://didcomm.org/out-of-band/1.0/invitation",
+            "accept": [
+                "didcomm/aip2;env=rfc19"
+            ],
+            "goal_code": "streamlined-vc",
+            "handshake_protocols": [
+                "https://didcomm.org/didexchange/1.0"
+            ],
+            "label": "vc-issuer-agent",
+            "services": [
+                {
+                    "id": "b10028a4-b71a-4113-a932-d3893e6cdfe9",
+                    "recipientKeys": [
+                        "did:key:z6MkmiqyKcWh9Ee8iE3DPjoCHiZmdnP4armLD9Wjmm7PFZwP"
+                    ],
+                    "routingKeys": [
+                        "did:key:z6MkmyYKpBNAtGK2BuTdDZNZajnJiSYtVDYiX21kanLr7uor"
+                    ],
+                    "serviceEndpoint": "https://hub-router.trustbloc.local:10091",
+                    "type": "did-communication"
+                }
+            ]
+        })).to.be.equal("streamlined-vc")
+
+        expect(extractOOBGoalCode({
+            "@id": "6c6fbda3-60f4-4821-ab9f-dcbda4b94faa",
+            "@type": "https://didcomm.org/out-of-band/1.0/invitation",
+            "accept": [
+                "didcomm/aip2;env=rfc19"
+            ],
+            "handshake_protocols": [
+                "https://didcomm.org/didexchange/1.0"
+            ],
+            "label": "vc-issuer-agent",
+            "services": [
+                {
+                    "id": "b10028a4-b71a-4113-a932-d3893e6cdfe9",
+                    "recipientKeys": [
+                        "did:key:z6MkmiqyKcWh9Ee8iE3DPjoCHiZmdnP4armLD9Wjmm7PFZwP"
+                    ],
+                    "routingKeys": [
+                        "did:key:z6MkmyYKpBNAtGK2BuTdDZNZajnJiSYtVDYiX21kanLr7uor"
+                    ],
+                    "serviceEndpoint": "https://hub-router.trustbloc.local:10091",
+                    "type": "did-communication"
+                }
+            ]
+        })).to.be.undefined
+
+        expect(extractOOBGoalCode({
+            "type": "https://didcomm.org/out-of-band/2.0/invitation",
+            "id": "f137e0db-db7b-4776-9530-83c808a34a42",
+            "from": "did:example:issuer",
+            "body": {
+                "goal_code": "streamlined-vc",
+                "accept": [
+                    "didcomm/v2"
+                ]
+            }
+        })).to.be.equal("streamlined-vc")
+
+        expect(extractOOBGoalCode({
+            "type": "https://didcomm.org/out-of-band/2.0/invitation",
+            "id": "599f3638-b563-4937-9487-dfe55099d900",
+            "from": "did:example:verifier",
+            "body": {
+                "goal_code": "streamlined-vp",
+                "accept": ["didcomm/v2"]
+            }
+        })).to.be.equal("streamlined-vp")
+
+        expect(extractOOBGoalCode({
+            "type": "https://didcomm.org/out-of-band/2.0/invitation",
+            "id": "f137e0db-db7b-4776-9530-83c808a34a42",
+            "from": "did:example:issuer"
+        })).to.be.null
+
+        expect(extractOOBGoalCode({
+            "type": "https://didcomm.org/out-of-band/2.0/invitation",
+            "id": "f137e0db-db7b-4776-9530-83c808a34a42",
+            "from": "did:example:issuer",
+            "body": {
+                "accept": [
+                    "didcomm/v2"
+                ]
+            }
+        })).to.be.null
+
+        expect(extractOOBGoalCode({
+            "type": "https://didcomm.org/out-of-band/2.0/invitation",
+            "id": "f137e0db-db7b-4776-9530-83c808a34a42",
+            "from": "did:example:issuer",
+            "body": {
+                "goal_code": "",
+                "accept": [
+                    "didcomm/v2"
+                ]
+            }
+        })).to.be.null
+
+        expect(extractOOBGoalCode({
+            "type": "https://didcomm.org/out-of-band/2.0/invitation",
+            "id": "f137e0db-db7b-4776-9530-83c808a34a42",
+            "from": "did:example:issuer",
+            "body": {
+                "goal_code": "",
+                "accept": [
+                    "didcomm/v2"
+                ]
+            }
+        })).to.be.null
     })
 })

@@ -46,10 +46,11 @@ export class Adapter {
         expect(conns).to.not.empty
     }
 
-    async createInvitation() {
+    async createInvitation({goal_code}={}) {
         let response = await this.agent.mediatorclient.createInvitation({
             label: this.label,
-            router_connection_id: await getMediatorConnections(this.agent, {single: true})
+            router_connection_id: await getMediatorConnections(this.agent, {single: true}),
+            goal_code,
         })
 
         return response.invitation

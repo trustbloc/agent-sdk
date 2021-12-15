@@ -196,3 +196,25 @@ export const findAttachmentByFormat = (formats, attachments, format) => {
 
   return attachment;
 };
+
+/**
+ *  Reads out-of-band invitation goal code.
+ *  Supports DIDComm V1 & V2
+ */
+export const extractOOBGoalCode = (oob) => {
+  if (oob["@type"] == "https://didcomm.org/out-of-band/1.0/invitation") {
+    return oob.goal_code;
+  } else if (
+    oob.type == "https://didcomm.org/out-of-band/2.0/invitation" &&
+    oob.body
+  ) {
+    // support for both goal_code & goal-code.
+    if (oob.body["goal-code"]) {
+      return oob.body["goal-code"];
+    } else if (oob.body["goal_code"]) {
+      return oob.body["goal_code"];
+    }
+  }
+
+  return null;
+};
