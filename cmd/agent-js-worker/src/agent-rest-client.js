@@ -261,6 +261,14 @@ const pkgs = {
             path: "/outofband/accept-invitation",
             method: "POST",
         },
+        CreateInvitationV2: {
+            path: "/outofband/2.0/create-invitation",
+            method: "POST",
+        },
+        AcceptInvitationV2: {
+            path: "/outofband/2.0/accept-invitation",
+            method: "POST",
+        },
     },
     issuecredential: {
         Actions: {
