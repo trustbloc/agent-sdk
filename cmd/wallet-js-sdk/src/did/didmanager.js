@@ -5,9 +5,12 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import { contentTypes, getMediatorConnections, UniversalWallet } from "..";
+import {expect} from "chai";
 
 const DEFAULT_KEY_TYPE = "ED25519";
 const DEFAULT_SIGNATURE_TYPE = "Ed25519VerificationKey2018";
+const DEFAULT_KEYAGREEMENT_KEY_TYPE = "X25519ECDHKW";
+const DEFAULT_KEYAGREEMENT_TYPE = "X25519KeyAgreementKey2019";
 const JSONLD_CTX_KEY = ["https://w3id.org/wallet/v1"];
 
 /**
@@ -45,7 +48,9 @@ export class DIDManager {
    *  @param {string} auth - authorization token for wallet operations.
    *  @param {Object} options - options for creating Orb DID.
    *  @param {Object} options.keyType=ED25519 - (optional, default ED25519) type of the key to be used for creating keys for the DID, Refer agent documentation for supported key types.
+   *  @param {Object} options.keyAgreementKeyType=X25519ECDHKW - (optional, default X25519ECDHKW) type of the key to be used for creating keyAgreements for the DID, Refer agent documentation for supported key types.
    *  @param {String} options.signatureType=Ed25519VerificationKey2018 - (optional, default Ed25519VerificationKey2018) signature type to be used for DID verification methods.
+   *  @param {String} options.keyAgreementType=X25519KeyAgreementKey2019 - (optional, default X25519KeyAgreementKey2019) keyAgreement VM type to be used for DID key agreement (payload encryption). For JWK type, use `JsonWebKey2020`.
    *  @param {Array<String>} options.purposes=authentication - (optional, default "authentication") purpose of the key.
    *  @param {String} options.collection - (optional, default no collection) collection to which this DID should belong in wallet content store.
    *
@@ -55,15 +60,18 @@ export class DIDManager {
     auth,
     {
       keyType = DEFAULT_KEY_TYPE,
+      keyAgreementKeyType = DEFAULT_KEYAGREEMENT_KEY_TYPE,
       signatureType = DEFAULT_SIGNATURE_TYPE,
+      keyAgreementType = DEFAULT_KEYAGREEMENT_TYPE,
       purposes = ["authentication"],
       collection,
     } = {}
   ) {
-    const [keySet, recoveryKeySet, updateKeySet] = await Promise.all([
+    const [keySet, recoveryKeySet, updateKeySet, keyAgreementKeySet] = await Promise.all([
       this.wallet.createKeyPair(auth, { keyType }),
       this.wallet.createKeyPair(auth, { keyType: DEFAULT_KEY_TYPE }),
       this.wallet.createKeyPair(auth, { keyType: DEFAULT_KEY_TYPE }),
+      this.wallet.createKeyPair(auth, { keyType: keyAgreementKeyType }),
     ]);
 
     const createDIDRequest = {
@@ -92,10 +100,25 @@ export class DIDManager {
           keyType: DEFAULT_KEY_TYPE,
           update: true,
         },
+        {
+          id: keyAgreementKeySet.keyID,
+          type: keyAgreementType,
+          value: keyAgreementKeySet.publicKey,
+          encoding: "JWK",
+          keyType: keyAgreementKeyType,
+          purposes: ["keyAgreement"],
+        },
       ],
     };
 
-    let content = await this.agent.didclient.createOrbDID(createDIDRequest);
+    let content
+    try {
+      content = await this.agent.didclient.createOrbDID(createDIDRequest);
+    } catch (e) {
+      console.error('failed to create orbDID',e)
+      expect.fail(e);
+    }
+
 
     console.debug(
       "created and saved Orb DID successfully",

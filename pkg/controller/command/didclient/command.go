@@ -15,15 +15,18 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
 	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
+	"github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 	mediatorservice "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	jwk2 "github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk/jwksupport"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
@@ -62,6 +65,9 @@ const (
 
 	// BLS12381G2KeyType BLS12381G2 key type.
 	BLS12381G2KeyType = "bls12381g2"
+
+	// x25519ECDHKW key agreement type.
+	x25519ECDHKW = "x25519ecdhkw"
 )
 
 const (
@@ -106,7 +112,7 @@ func New(domain, didAnchorOrigin, token string, unanchoredDIDMaxLifeTime int, p 
 		orbOpts = append(orbOpts, orb.WithUnanchoredMaxLifeTime(time.Duration(unanchoredDIDMaxLifeTime)*time.Second))
 	}
 
-	orbOpts = append(orbOpts, orb.WithDomain(domain), orb.WithAuthToken(token))
+	orbOpts = append(orbOpts, orb.WithDomain(domain), orb.WithAuthToken(token), orb.WithHTTPClient(&http.Client{}))
 
 	client, err := orb.New(nil, orbOpts...)
 	if err != nil {
@@ -208,6 +214,12 @@ func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { //no
 
 	didDoc := did.Doc{}
 
+	didcommv2Servicetype := "DIDCommMessaging"
+	serviceID := "sidetree"
+	serviceEndpoint := "https://testnet.orb.local"
+
+	didDoc.Service = []did.Service{{ID: serviceID, Type: didcommv2Servicetype, ServiceEndpoint: serviceEndpoint}}
+
 	var didMethodOpt []vdr.DIDMethodOption
 
 	for _, v := range request.PublicKeys {
@@ -237,11 +249,25 @@ func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { //no
 			continue
 		}
 
-		jwk, errJWK := jwksupport.JWKFromKey(k)
-		if errJWK != nil {
-			logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, errJWK.Error())
+		var (
+			jwk    *jwk2.JWK
+			errJWK error
+		)
 
-			return command.NewExecuteError(CreateDIDErrorCode, errJWK)
+		if strings.EqualFold(v.KeyType, x25519ECDHKW) {
+			jwk, errJWK = jwksupport.JWKFromX25519Key(k.(*crypto.PublicKey).X)
+			if errJWK != nil {
+				logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, errJWK.Error())
+
+				return command.NewExecuteError(CreateDIDErrorCode, errJWK)
+			}
+		} else {
+			jwk, errJWK = jwksupport.JWKFromKey(k)
+			if errJWK != nil {
+				logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, errJWK.Error())
+
+				return command.NewExecuteError(CreateDIDErrorCode, errJWK)
+			}
 		}
 
 		vm, errVM := did.NewVerificationMethodFromJWK(v.ID, v.Type, "", jwk)
@@ -317,6 +343,15 @@ func getKey(keyType string, value []byte) (interface{}, error) {
 		return &ecdsa.PublicKey{X: x, Y: y, Curve: elliptic.P384()}, nil
 	case BLS12381G2KeyType:
 		return bbs12381g2pub.UnmarshalPublicKey(value)
+	case x25519ECDHKW:
+		pubKey := &crypto.PublicKey{}
+
+		err := json.Unmarshal(value, pubKey)
+		if err != nil {
+			return nil, fmt.Errorf("unmarshal key type: %s failed: %w", keyType, err)
+		}
+
+		return pubKey, nil
 	default:
 		return nil, fmt.Errorf("invalid key type: %s", keyType)
 	}

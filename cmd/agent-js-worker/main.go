@@ -588,7 +588,7 @@ func createVDRs(resolvers []string, trustblocDomain string, unanchoredDIDMaxLife
 		orbOpts = append(orbOpts, orb.WithUnanchoredMaxLifeTime(time.Duration(unanchoredDIDMaxLifeTime)*time.Second))
 	}
 
-	orbOpts = append(orbOpts, orb.WithDomain(trustblocDomain))
+	orbOpts = append(orbOpts, orb.WithDomain(trustblocDomain), orb.WithHTTPClient(&http.Client{}))
 
 	blocVDR, err := orb.New(nil, orbOpts...)
 	if err != nil {

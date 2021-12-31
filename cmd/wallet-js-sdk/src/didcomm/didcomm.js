@@ -30,7 +30,9 @@ const ATTACH_FORMAT_CREDENTIAL_MANIFEST =
 const ATTACH_FORMAT_CREDENTIAL_FULFILLMENT =
   "dif/credential-manifest/fulfillment@v1.0";
 const MSG_TYPE_ISSUE_CREDENTIAL_V2 =
-  "https://didcomm.org/issue-credential/2.0/issue-credential";
+    "https://didcomm.org/issue-credential/2.0/issue-credential";
+const MSG_TYPE_ISSUE_CREDENTIAL_V3 =
+    "https://didcomm.org/issue-credential/3.0/issue-credential";
 const MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2 =
   "https://didcomm.org/issue-credential/2.0/problem-report";
 const WEB_REDIRECT_STATUS_OK = "OK";
@@ -567,7 +569,7 @@ export class DIDComm {
           const { piid } = Properties;
           const type = Message["@type"];
 
-          if (type === MSG_TYPE_ISSUE_CREDENTIAL_V2) {
+          if (type === MSG_TYPE_ISSUE_CREDENTIAL_V2 || type === MSG_TYPE_ISSUE_CREDENTIAL_V3) {
             await this.agent.issuecredential.acceptCredential({
               piid,
               skipStore: true,

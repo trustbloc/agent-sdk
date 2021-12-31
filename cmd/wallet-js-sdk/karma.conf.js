@@ -37,7 +37,7 @@ module.exports = function (config) {
             }
         },
         client: {
-            captureConsole: false,
+            captureConsole: true,
             mocha: {
                 timeout: 30000
             }

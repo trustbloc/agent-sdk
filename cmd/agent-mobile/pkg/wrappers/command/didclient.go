@@ -36,7 +36,7 @@ func (de *DIDClient) CreateOrbDID(request *models.RequestEnvelope) *models.Respo
 	return &models.ResponseEnvelope{Payload: response}
 }
 
-// ResolveOrbDID resolv orb DID.
+// ResolveOrbDID resolve orb DID.
 func (de *DIDClient) ResolveOrbDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := didclient.ResolveOrbDIDRequest{}
 
