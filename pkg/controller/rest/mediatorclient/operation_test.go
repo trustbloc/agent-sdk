@@ -17,6 +17,7 @@ import (
 	didexchangesvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/didexchange"
 	mediatorsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	outofbandsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/outofband"
+	outofbandv2svc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/outofbandv2"
 	mockmsghandler "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/msghandler"
 	mockdidexchange "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/didexchange"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
@@ -139,6 +140,11 @@ func TestOperation_Connect(t *testing.T) {
 					return sampleConnID, nil
 				},
 			},
+			outofbandv2svc.Name: &sdkmockprotocol.MockOobServiceV2{
+				AcceptInvitationHandle: func(_ *outofbandv2svc.Invitation) (string, error) {
+					return sampleConnID, nil
+				},
+			},
 		})
 
 		cmd, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
@@ -168,6 +174,11 @@ func TestOperation_Connect(t *testing.T) {
 					return "", fmt.Errorf(sampleErr)
 				},
 			},
+			outofbandv2svc.Name: &sdkmockprotocol.MockOobServiceV2{
+				AcceptInvitationHandle: func(_ *outofbandv2svc.Invitation) (string, error) {
+					return "", fmt.Errorf(sampleErr)
+				},
+			},
 		})
 
 		cmd, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
@@ -193,6 +204,7 @@ func TestOperation_CreateInvitation(t *testing.T) {
 			},
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
 			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+			outofbandv2svc.Name:        &sdkmockprotocol.MockOobServiceV2{},
 		})
 
 		cmd, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
@@ -236,6 +248,7 @@ func TestOperation_SendCreateConnectionRequest(t *testing.T) {
 			},
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
 			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+			outofbandv2svc.Name:        &sdkmockprotocol.MockOobServiceV2{},
 		})
 
 		record := &connection.Record{
@@ -312,6 +325,7 @@ func newMockProvider(serviceMap map[string]interface{}) *sdkmockprotocol.MockPro
 			mediatorsvc.Coordination:   &mockroute.MockMediatorSvc{},
 			didexchangesvc.DIDExchange: &mockdidexchange.MockDIDExchangeSvc{},
 			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+			outofbandv2svc.Name:        &sdkmockprotocol.MockOobServiceV2{},
 		}
 	}
 

@@ -25,12 +25,15 @@ const PRESENTATION_SENT_STATE_ID = "presentation-sent";
 
 const DEFAULT_LABEL = "agent-default-label";
 const ROUTER_CREATE_INVITATION_PATH = `/didcomm/invitation`;
+const ROUTER_CREATE_INVITATION_V2_PATH = `/didcomm/invitation-v2`;
 const ATTACH_FORMAT_CREDENTIAL_MANIFEST =
   "dif/credential-manifest/manifest@v1.0";
 const ATTACH_FORMAT_CREDENTIAL_FULFILLMENT =
   "dif/credential-manifest/fulfillment@v1.0";
 const MSG_TYPE_ISSUE_CREDENTIAL_V2 =
-  "https://didcomm.org/issue-credential/2.0/issue-credential";
+    "https://didcomm.org/issue-credential/2.0/issue-credential";
+const MSG_TYPE_ISSUE_CREDENTIAL_V3 =
+    "https://didcomm.org/issue-credential/3.0/issue-credential";
 const MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2 =
   "https://didcomm.org/issue-credential/2.0/problem-report";
 const WEB_REDIRECT_STATUS_OK = "OK";
@@ -187,6 +190,7 @@ export class DIDComm {
     },
     { from, timeout } = {}
   ) {
+
     let { presentationRequest } = await this.wallet.proposePresentation(
       auth,
       invitation,
@@ -223,17 +227,15 @@ export class DIDComm {
       };
     };
 
-    const query =
-      presentationRequest["request_presentations~attach"].map(_query);
-
+    let {attachment, threadID} = getPresentationAttachmentAndThreadID(presentationRequest)
+    const query = attachment.map(_query);
     const { results } = await this.wallet.query(auth, query);
-    const { thid } = presentationRequest["~thread"];
 
     const normalized = results.map((result) =>
       normalizePresentationSubmission(query, result)
     );
 
-    return { threadID: thid, presentations: results, normalized };
+    return { threadID: threadID, presentations: results, normalized };
   }
 
   /**
@@ -567,7 +569,7 @@ export class DIDComm {
           const { piid } = Properties;
           const type = Message["@type"];
 
-          if (type === MSG_TYPE_ISSUE_CREDENTIAL_V2) {
+          if (type === MSG_TYPE_ISSUE_CREDENTIAL_V2 || type === MSG_TYPE_ISSUE_CREDENTIAL_V3) {
             await this.agent.issuecredential.acceptCredential({
               piid,
               skipStore: true,
@@ -620,6 +622,40 @@ export class DIDComm {
 }
 
 /**
+ * Get attachment and threadID from presentationRequest instance based on DIDComm V1 or V2 formats.
+ *
+ * @param presentationRequest instance
+ */
+function getPresentationAttachmentAndThreadID(presentationRequest) {
+    let attachment, threadID
+    if (presentationRequest["request_presentations~attach"]) { // didcomm v1
+        attachment = presentationRequest["request_presentations~attach"]
+        console.log("GetPresentationAttachmentAndThreadID - didcomm v1 attachment key set: "+attachment)
+    } else if (presentationRequest["attachments"]) { // didcomm v2
+        attachment = presentationRequest["attachments"]
+        console.log("GetPresentationAttachmentAndThreadID - didcomm v2 attachment key set: "+attachment)
+    } else {
+        console.error("GetPresentationAttachmentAndThreadID - unrecognized presentationRequest object: '"+ JSON.stringify(presentationRequest, undefined, 2) + "'\n   attachments key not found")
+        return
+    }
+
+    if (presentationRequest["~thread"]) { // didcomm v1
+        const { thid } = presentationRequest["~thread"];
+        threadID = thid
+    } else if (presentationRequest["thid"]) { // didcomm v2
+        threadID = presentationRequest["thid"]
+    } else {
+        console.error("GetPresentationAttachmentAndThreadID - unrecognized presentationRequest object: '"+ JSON.stringify(presentationRequest, undefined, 2) + "'\n   thread ID key not found")
+        return
+    }
+
+    return {
+        attachment: attachment,
+        threadID: threadID
+    }
+}
+
+/**
  * Get router/mediator connections from agent.
  *
  * @param agent instance
@@ -643,13 +679,23 @@ export async function getMediatorConnections(agent, { single } = {}) {
  * Get DID Invitation from edge router.
  *
  * @param endpoint edge router endpoint
+ * @param isDIDCommV2 flag using DIDComm V2
  */
-export const createInvitationFromRouter = async (endpoint) => {
+export const createInvitationFromRouter = async (endpoint, { isDIDCommV2 = false } = {}) => {
+  let routerInvitationURL = `${endpoint}`
+  console.log("createInvitationFromRouter isDIDCommV2 ? " + isDIDCommV2);
+
+  if (isDIDCommV2 == true) {
+      routerInvitationURL += `${ROUTER_CREATE_INVITATION_V2_PATH}`
+  } else {
+      routerInvitationURL += `${ROUTER_CREATE_INVITATION_PATH}`
+  }
+
   console.log(
     "getting invitation from ",
-    `${endpoint}${ROUTER_CREATE_INVITATION_PATH}`
+    `${routerInvitationURL}`
   );
-  let response = await axios.get(`${endpoint}${ROUTER_CREATE_INVITATION_PATH}`);
+  let response = await axios.get(`${routerInvitationURL}`);
   return response.data.invitation;
 };
 
@@ -658,16 +704,19 @@ export const createInvitationFromRouter = async (endpoint) => {
  *
  * @param agent trustbloc agent
  * @param endpoint edge router endpoint
- * @param wait for did exchange state complete message
+ * @param waitForStateComplete wait for did exchange state complete message
+ * @param isDIDCommV2 flag using DIDComm V2
  */
 export async function connectToMediator(
   agent,
   mediatorEndpoint,
-  { waitForStateComplete = true } = {}
+  { waitForStateComplete = true } = {},
+  { isDIDCommV2 = false } = {},
 ) {
+  let inv = await createInvitationFromRouter(mediatorEndpoint, {isDIDCommV2: isDIDCommV2})
   let resp = await agent.mediatorclient.connect({
     myLabel: "agent-default-label",
-    invitation: await createInvitationFromRouter(mediatorEndpoint),
+    invitation: inv,
     stateCompleteMessageType: waitForStateComplete
       ? STATE_COMPLETE_MSG_TYPE
       : "",
@@ -678,4 +727,13 @@ export async function connectToMediator(
   } else {
     console.log("router was not registered!");
   }
+
+  console.debug("in connectToMediator() - invitation: "+ JSON.stringify(inv))
+
+  let invID = inv["@id"]
+  if (!invID) {
+      invID = inv["from"]
+  }
+
+  return resp.connectionID, invID
 }

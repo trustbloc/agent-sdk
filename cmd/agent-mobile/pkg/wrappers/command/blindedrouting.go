@@ -4,7 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package command
+package command //nolint:dupl // blindedrouting is a unique command
 
 import (
 	"encoding/json"

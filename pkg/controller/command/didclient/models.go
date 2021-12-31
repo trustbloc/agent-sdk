@@ -10,7 +10,12 @@ package didclient
 // This is used for creating orb DID.
 //
 type CreateOrbDIDRequest struct {
-	PublicKeys []PublicKey `json:"publicKeys,omitempty"`
+	ServiceID          string      `json:"serviceID,omitempty"`
+	ServiceEndpoint    string      `json:"serviceEndpoint,omitempty"`
+	DIDcommServiceType string      `json:"didcommServiceType,omitempty"`
+	PublicKeys         []PublicKey `json:"publicKeys,omitempty"`
+	RoutersKeyAgrIDS   []string    `json:"routerKAIDS,omitempty"`
+	RouterConnections  []string    `json:"routerConnections,omitempty"`
 }
 
 // ResolveOrbDIDRequest model
