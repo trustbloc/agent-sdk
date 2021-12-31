@@ -11,18 +11,31 @@ services:
     image: ${HUB_ROUTER_IMAGE}:${HUB_ROUTER_IMAGE_TAG}
     environment:
       - HUB_ROUTER_HOST_URL=${EDGE_ROUTER_HOST}:${EDGE_ROUTER_API_PORT}
+      - HUB_ROUTER_TLS_CACERTS=/etc/tls/ec-cacert.pem
+      - HUB_ROUTER_TLS_SYSTEMCERTPOOL=true
+      - HUB_ROUTER_TLS_SERVE_CERT=/etc/tls/ec-pubCert.pem
+      - HUB_ROUTER_TLS_SERVE_KEY=/etc/tls/ec-key.pem
       - HUB_ROUTER_DIDCOMM_HTTP_HOST=${EDGE_ROUTER_HOST}:${EDGE_ROUTER_HTTP_INBOUND_PORT}
-      - HUB_ROUTER_DIDCOMM_HTTP_HOST_EXTERNAL=http://localhost:${EDGE_ROUTER_HTTP_INBOUND_PORT}
+      - HUB_ROUTER_DIDCOMM_HTTP_HOST_EXTERNAL=https://localhost:${EDGE_ROUTER_HTTP_INBOUND_PORT}
       - HUB_ROUTER_DIDCOMM_WS_HOST=${EDGE_ROUTER_HOST}:${EDGE_ROUTER_WS_INBOUND_PORT}
-      - HUB_ROUTER_DIDCOMM_WS_HOST_EXTERNAL=ws://localhost:${EDGE_ROUTER_WS_INBOUND_PORT}
+      - HUB_ROUTER_DIDCOMM_WS_HOST_EXTERNAL=wss://localhost:${EDGE_ROUTER_WS_INBOUND_PORT}
       - HUB_ROUTER_DSN_PERSISTENT=mem://tests
       - HUB_ROUTER_DSN_TRANSIENT=mem://tests
       - HUB_ROUTER_DSN_TIMEOUT=45
+      - HUB_ROUTER_HTTP_RESOLVER=orb@https://testnet.orb.local/sidetree/v1/identifiers
+      - HUB_ROUTER_DIDCOMM_V2=${HUB_ROUTER_DIDCOMM_V2}
+      - HUB_ROUTER_ORB_DOMAINS=${HUB_ROUTER_ORB_DOMAINS}
+      - HUB_ROUTER_KEY_TYPE=ecdsap256ieee1363
+      - HUB_ROUTER_KEY_AGREEMENT_TYPE=p256kw
+      - TLS_CERT_FILE=/etc/tls/ec-pubCert.pem
+      - TLS_KEY_FILE=/etc/tls/ec-key.pem
     ports:
       - ${EDGE_ROUTER_API_PORT}:${EDGE_ROUTER_API_PORT}
       - ${EDGE_ROUTER_HTTP_INBOUND_PORT}:${EDGE_ROUTER_HTTP_INBOUND_PORT}
       - ${EDGE_ROUTER_WS_INBOUND_PORT}:${EDGE_ROUTER_WS_INBOUND_PORT}
     entrypoint: ""
+    volumes:
+      - ../../../../deployments/keys/tls/tls:/etc/tls
     command: /bin/sh -c "hub-router start"
 
   sidetree:
@@ -40,7 +53,7 @@ services:
     ports:
       - 443:443
     volumes:
-      - ./keys/tls:/etc/sidetree/tls
+      - ../../../../deployments/keys/tls:/etc/sidetree/tls
 
   file-server.example.com: # file server for hosting static resources (e.g. JSON-LD contexts)
     container_name: file-server.example.com
@@ -48,7 +61,10 @@ services:
     environment:
       - PORT=10096
       - FOLDER=/data
+      - TLS_CERT=/etc/tls/ec-pubCert.pem
+      - TLS_KEY=/etc/tls/ec-key.pem
     ports:
       - "10096:10096"
     volumes:
       - ./testdata/contexts:/data
+      - ../../../../deployments/keys/tls:/etc/tls

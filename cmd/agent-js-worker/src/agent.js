@@ -90,6 +90,7 @@ function newMsg(pkg, fn, payload) {
  *      "agent-rest-url": "http://controller.api.example.com",
  *      "agent-rest-wshook": "ws://controller.api.example.com"
  *      "context-provider-url": ["https://context-provider.example.com/ld_contexts.json"]
+ *      "media-type-profiles": ["didcomm/v2"]
  * }
  *
  * @param opts agent initialization options.
@@ -365,7 +366,32 @@ const Agent = function (opts) {
                 return invoke(aw, pending, this.pkgname, "AcceptInvitation", req, "timeout while accepting an invitation")
             },
         },
+        /**
+         * Outofbandv2 methods - Refer to [OpenAPI spec](docs/rest/openapi_spec.md#generate-openapi-spec) for
+         * input params and output return json values.
+         */
+        outofbandv2: {
+            pkgname: "outofbandv2",
+            /**
+             * CreateInvitation creates and saves an out-of-band invitation.
+             *
+             * @param req - json document
+             * @returns {Promise<Object>}
+             */
+            createInvitation: async function (req) {
+                return invoke(aw, pending, this.pkgname, "CreateInvitation", req, "timeout while creating an invitation")
+            },
 
+            /**
+             * AcceptInvitation from another agent and return the ID of the new connection records.
+             *
+             * @param req - json document
+             * @returns {Promise<Object>}
+             */
+            acceptInvitation: async function (req) {
+                return invoke(aw, pending, this.pkgname, "AcceptInvitation", req, "timeout while accepting an invitation")
+            },
+        },
         /**
          * Issue Credential methods - Refer to [OpenAPI spec](docs/rest/openapi_spec.md#generate-openapi-spec) for
          * input params and output return json values.

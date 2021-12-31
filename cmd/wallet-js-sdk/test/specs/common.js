@@ -36,10 +36,18 @@ export function getJSONTestData(filename) {
 }
 
 // loadFrameworks loads agent instance
-export async function loadFrameworks({name = 'user-agent', logLevel = ''} = {}) {
+export async function loadFrameworks({
+      name = 'user-agent',
+      logLevel = '',
+      mediaTypeProfiles = ["didcomm/aip2;env=rfc19"],
+      keyType = 'ed25519',
+      keyAgreementType = 'p256kw'} = {}) {
     let agentOpts = JSON.parse(JSON.stringify(agentStartupOpts))
     agentOpts["indexedDB-namespace"] = `${name}db`
     agentOpts["agent-default-label"] = `${name}-wallet-web`
+    agentOpts["media-type-profiles"] = mediaTypeProfiles
+    agentOpts["key-type"] = keyType
+    agentOpts["key-agreement-type"] = keyAgreementType
 
     if (logLevel) {
         agentOpts["log-level"] = logLevel

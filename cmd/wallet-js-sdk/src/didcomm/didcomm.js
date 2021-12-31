@@ -25,12 +25,15 @@ const PRESENTATION_SENT_STATE_ID = "presentation-sent";
 
 const DEFAULT_LABEL = "agent-default-label";
 const ROUTER_CREATE_INVITATION_PATH = `/didcomm/invitation`;
+const ROUTER_CREATE_INVITATION_V2_PATH = `/didcomm/invitation-v2`;
 const ATTACH_FORMAT_CREDENTIAL_MANIFEST =
   "dif/credential-manifest/manifest@v1.0";
 const ATTACH_FORMAT_CREDENTIAL_FULFILLMENT =
   "dif/credential-manifest/fulfillment@v1.0";
 const MSG_TYPE_ISSUE_CREDENTIAL_V2 =
-  "https://didcomm.org/issue-credential/2.0/issue-credential";
+    "https://didcomm.org/issue-credential/2.0/issue-credential";
+const MSG_TYPE_ISSUE_CREDENTIAL_V3 =
+    "https://didcomm.org/issue-credential/3.0/issue-credential";
 const MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2 =
   "https://didcomm.org/issue-credential/2.0/problem-report";
 const WEB_REDIRECT_STATUS_OK = "OK";
@@ -567,7 +570,7 @@ export class DIDComm {
           const { piid } = Properties;
           const type = Message["@type"];
 
-          if (type === MSG_TYPE_ISSUE_CREDENTIAL_V2) {
+          if (type === MSG_TYPE_ISSUE_CREDENTIAL_V2 || type === MSG_TYPE_ISSUE_CREDENTIAL_V3) {
             await this.agent.issuecredential.acceptCredential({
               piid,
               skipStore: true,
@@ -643,13 +646,21 @@ export async function getMediatorConnections(agent, { single } = {}) {
  * Get DID Invitation from edge router.
  *
  * @param endpoint edge router endpoint
+ * @param isDIDCommV2 flag using DIDComm V2
  */
-export const createInvitationFromRouter = async (endpoint) => {
+export const createInvitationFromRouter = async (endpoint, { isDIDCommV2 = false } = {}) => {
+  let routerInvitationURL = `${endpoint}`
+  if (isDIDCommV2 == true) {
+      routerInvitationURL += `${ROUTER_CREATE_INVITATION_V2_PATH}`
+  } else {
+      routerInvitationURL += `${ROUTER_CREATE_INVITATION_PATH}`
+  }
+
   console.log(
     "getting invitation from ",
-    `${endpoint}${ROUTER_CREATE_INVITATION_PATH}`
+    `${routerInvitationURL}`
   );
-  let response = await axios.get(`${endpoint}${ROUTER_CREATE_INVITATION_PATH}`);
+  let response = await axios.get(`${routerInvitationURL}`);
   return response.data.invitation;
 };
 
@@ -658,16 +669,19 @@ export const createInvitationFromRouter = async (endpoint) => {
  *
  * @param agent trustbloc agent
  * @param endpoint edge router endpoint
- * @param wait for did exchange state complete message
+ * @param waitForStateComplete wait for did exchange state complete message
+ * @param isDIDCommV2 flag using DIDComm V2
  */
 export async function connectToMediator(
   agent,
   mediatorEndpoint,
-  { waitForStateComplete = true } = {}
+  { waitForStateComplete = true } = {},
+  { isDIDCommV2 = false } = {},
 ) {
+  let inv = await createInvitationFromRouter(mediatorEndpoint, {isDIDCommV2: isDIDCommV2})
   let resp = await agent.mediatorclient.connect({
     myLabel: "agent-default-label",
-    invitation: await createInvitationFromRouter(mediatorEndpoint),
+    invitation: inv,
     stateCompleteMessageType: waitForStateComplete
       ? STATE_COMPLETE_MSG_TYPE
       : "",

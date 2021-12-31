@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 
 	"github.com/hyperledger/aries-framework-go/pkg/client/outofband"
+	"github.com/hyperledger/aries-framework-go/pkg/didcomm/common/service"
+	"github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/outofbandv2"
 )
 
 // ConnectionRequest model
@@ -16,8 +18,8 @@ import (
 // This is used for connecting to given router.
 //
 type ConnectionRequest struct {
-	// Invitation is out-of-band invitation from mediator.
-	Invitation *outofband.Invitation `json:"invitation"`
+	// Invitation is out-of-band (V1 or V2) invitation from mediator.
+	Invitation *service.DIDCommMsgMap `json:"invitation"`
 
 	// MyLabel is custom label to be used as receiver label of this invitation
 	// Optional: if missing, agent default label will be used.
@@ -55,6 +57,8 @@ type CreateInvitationRequest struct {
 type CreateInvitationResponse struct {
 	// Invitation is out-of-band invitation from mediator.
 	Invitation *outofband.Invitation `json:"invitation"`
+
+	InvitationV2 *outofbandv2.Invitation `json:"invitation-v2"`
 }
 
 // CreateConnectionRequest model

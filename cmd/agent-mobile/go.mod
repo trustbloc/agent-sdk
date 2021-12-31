@@ -8,11 +8,11 @@ go 1.17
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/hyperledger/aries-framework-go v0.1.8-0.20220106195936-a9d6794663ed
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.1.4-0.20220114172935-0e96d787f80f
-	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220106195936-a9d6794663ed
-	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220106195936-a9d6794663ed
-	github.com/hyperledger/aries-framework-go/test/component v0.0.0-20220106195936-a9d6794663ed
+	github.com/hyperledger/aries-framework-go v0.1.8-0.20220113212443-580fa917bbd3
+	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.1.4-0.20211229160742-30796de12ba6
+	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220113212443-580fa917bbd3
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220113212443-580fa917bbd3
+	github.com/hyperledger/aries-framework-go/test/component v0.0.0-20220113212443-580fa917bbd3
 	github.com/piprate/json-gold v0.4.1-0.20210813112359-33b90c4ca86c
 	github.com/stretchr/testify v1.7.0
 	github.com/trustbloc/agent-sdk v0.0.0-00010101000000-000000000000
@@ -38,7 +38,7 @@ require (
 	github.com/google/tink/go v1.6.1-0.20210519071714-58be99b3c4d0 // indirect
 	github.com/google/trillian v1.3.14-0.20210520152752-ceda464a95a3 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v0.0.0-20211217171603-637696af6620 // indirect
+	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v0.0.0-20211229160742-30796de12ba6 // indirect
 	github.com/hyperledger/aries-framework-go/component/storage/edv v0.0.0-20211214153431-5c8a10d6e6ad // indirect
 	github.com/ipfs/go-cid v0.0.7 // indirect
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a // indirect

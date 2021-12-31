@@ -20,9 +20,11 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/client/messaging"
 	"github.com/hyperledger/aries-framework-go/pkg/client/outofband"
+	"github.com/hyperledger/aries-framework-go/pkg/client/outofbandv2"
 	ariescmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/common/service"
 	didexchangeSvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/didexchange"
+	oobv2 "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/outofbandv2"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
@@ -98,6 +100,7 @@ type Provider interface {
 type Command struct {
 	didExchange    *didexchange.Client
 	outOfBand      *outofband.Client
+	outOfBandV2    *outofbandv2.Client
 	mediator       *mediator.Client
 	messenger      *messaging.Client
 	didExchTimeout time.Duration
@@ -126,9 +129,15 @@ func New(p Provider, msgHandler ariescmd.MessageHandler, notifier ariescmd.Notif
 		return nil, fmt.Errorf("failed to create out-of-band client : %w", err)
 	}
 
+	outOfBandClientV2, err := outofbandv2.New(p)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create out-of-band v2 client : %w", err)
+	}
+
 	return &Command{
 		didExchange:    didExchangeClient,
 		outOfBand:      outOfBandClient,
+		outOfBandV2:    outOfBandClientV2,
 		mediator:       mediatorClient,
 		messenger:      messengerClient,
 		didExchTimeout: didExchangeTimeOut,
@@ -146,8 +155,12 @@ func (c *Command) GetHandlers() []command.Handler {
 }
 
 // Connect connects agent to given router endpoint.
-func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:funlen,gocyclo
-	var request ConnectionRequest
+func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error {
+	var (
+		request ConnectionRequest
+		connID  string
+		isV2    bool
+	)
 
 	err := json.NewDecoder(req).Decode(&request)
 	if err != nil {
@@ -162,57 +175,32 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:
 		return command.NewValidationError(InvalidRequestErrorCode, fmt.Errorf(errInvalidConnectionRequest))
 	}
 
-	var notificationCh chan messaging.NotificationPayload
+	//nolint:nestif
+	if isV2, err = service.IsDIDCommV2(request.Invitation); isV2 && err == nil {
+		inv := &oobv2.Invitation{}
 
-	var statusCh chan service.StateMsg
+		err = request.Invitation.Decode(inv)
+		if err != nil {
+			return command.NewExecuteError(ConnectMediatorError, err)
+		}
 
-	if request.StateCompleteMessageType != "" { //nolint:nestif
-		notificationCh = make(chan messaging.NotificationPayload)
-
-		err = c.msgHandler.Register(msghandler.NewMessageService(stateCompleteTopic, request.StateCompleteMessageType,
-			nil, messaging.NewNotifier(notificationCh, nil)))
+		connID, err = c.outOfBandV2.AcceptInvitation(inv)
 		if err != nil {
 			logutil.LogError(logger, CommandName, Connect, err.Error())
 
 			return command.NewExecuteError(ConnectMediatorError, err)
 		}
-
-		defer func() {
-			e := c.msgHandler.Unregister(stateCompleteTopic)
-			if e != nil {
-				logger.Warnf("Failed to unregister state completion notifier: %w", e)
-			}
-		}()
 	} else {
-		statusCh = make(chan service.StateMsg, msgEventBufferSize)
-
-		err = c.didExchange.RegisterMsgEvent(statusCh)
+		inv := &outofband.Invitation{}
+		err = request.Invitation.Decode(inv)
 		if err != nil {
-			logutil.LogError(logger, CommandName, Connect, err.Error())
-
 			return command.NewExecuteError(ConnectMediatorError, err)
 		}
 
-		defer func() {
-			e := c.didExchange.UnregisterMsgEvent(statusCh)
-			if e != nil {
-				logger.Warnf("Failed to unregister msg event: %w", e)
-			}
-		}()
-	}
-
-	connID, err := c.outOfBand.AcceptInvitation(request.Invitation, request.MyLabel)
-	if err != nil {
-		logutil.LogError(logger, CommandName, Connect, err.Error())
-
-		return command.NewExecuteError(ConnectMediatorError, err)
-	}
-
-	err = c.waitForConnect(statusCh, notificationCh, connID)
-	if err != nil {
-		logutil.LogError(logger, CommandName, Connect, err.Error())
-
-		return command.NewExecuteError(ConnectMediatorError, err)
+		connID, err = c.createOOBInvitation(inv, request.MyLabel, request.StateCompleteMessageType)
+		if err != nil {
+			return command.NewExecuteError(ConnectMediatorError, err)
+		}
 	}
 
 	err = c.mediator.Register(connID)
@@ -227,6 +215,64 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error { //nolint:
 	logutil.LogDebug(logger, CommandName, Connect, successString)
 
 	return nil
+}
+
+func (c *Command) createOOBInvitation(inv *outofband.Invitation,
+	myLabel, stateCompleteMessageType string) (string, error) {
+	var notificationCh chan messaging.NotificationPayload
+
+	var statusCh chan service.StateMsg
+
+	if stateCompleteMessageType != "" { //nolint:nestif
+		notificationCh = make(chan messaging.NotificationPayload)
+
+		err := c.msgHandler.Register(msghandler.NewMessageService(stateCompleteTopic, stateCompleteMessageType,
+			nil, messaging.NewNotifier(notificationCh, nil)))
+		if err != nil {
+			logutil.LogError(logger, CommandName, Connect, err.Error())
+
+			return "", err
+		}
+
+		defer func() {
+			e := c.msgHandler.Unregister(stateCompleteTopic)
+			if e != nil {
+				logger.Warnf("Failed to unregister state completion notifier: %w", e)
+			}
+		}()
+	} else {
+		statusCh = make(chan service.StateMsg, msgEventBufferSize)
+
+		err := c.didExchange.RegisterMsgEvent(statusCh)
+		if err != nil {
+			logutil.LogError(logger, CommandName, Connect, err.Error())
+
+			return "", err
+		}
+
+		defer func() {
+			e := c.didExchange.UnregisterMsgEvent(statusCh)
+			if e != nil {
+				logger.Warnf("Failed to unregister msg event: %w", e)
+			}
+		}()
+	}
+
+	connID, err := c.outOfBand.AcceptInvitation(inv, myLabel)
+	if err != nil {
+		logutil.LogError(logger, CommandName, Connect, err.Error())
+
+		return "", err
+	}
+
+	err = c.waitForConnect(statusCh, notificationCh, connID)
+	if err != nil {
+		logutil.LogError(logger, CommandName, Connect, err.Error())
+
+		return "", err
+	}
+
+	return connID, nil
 }
 
 // CreateInvitation creates out-of-band invitation from one of the mediator connections.

@@ -16,6 +16,7 @@ import (
 	didexchangesvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/didexchange"
 	mediatorsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	outofbandsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/outofband"
+	outofbandv2svc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/outofbandv2"
 	mockmsghandler "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/msghandler"
 	mockdidexchange "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/didexchange"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
@@ -188,6 +189,11 @@ func TestCommand_Connect(t *testing.T) {
 					return sampleConnID, nil
 				},
 			},
+			outofbandv2svc.Name: &sdkmockprotocol.MockOobServiceV2{
+				AcceptInvitationHandle: func(_ *outofbandv2svc.Invitation) (string, error) {
+					return sampleConnID, nil
+				},
+			},
 		})
 
 		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
@@ -214,6 +220,11 @@ func TestCommand_Connect(t *testing.T) {
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{ConnID: sampleConnID},
 			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
 				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ outofbandsvc.Options) (s string, e error) {
+					return sampleConnID, nil
+				},
+			},
+			outofbandv2svc.Name: &sdkmockprotocol.MockOobServiceV2{
+				AcceptInvitationHandle: func(_ *outofbandv2svc.Invitation) (string, error) {
 					return sampleConnID, nil
 				},
 			},
@@ -289,7 +300,8 @@ func TestCommand_Connect(t *testing.T) {
 			didexchangesvc.DIDExchange: &mockdidexchange.MockDIDExchangeSvc{
 				RegisterMsgEventErr: fmt.Errorf(sampleErr),
 			},
-			outofbandsvc.Name: &sdkmockprotocol.MockOobService{},
+			outofbandsvc.Name:   &sdkmockprotocol.MockOobService{},
+			outofbandv2svc.Name: &sdkmockprotocol.MockOobServiceV2{},
 		})
 
 		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
@@ -310,6 +322,11 @@ func TestCommand_Connect(t *testing.T) {
 			didexchangesvc.DIDExchange: &mockdidexchange.MockDIDExchangeSvc{},
 			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
 				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ outofbandsvc.Options) (s string, e error) {
+					return "", fmt.Errorf(sampleErr)
+				},
+			},
+			outofbandv2svc.Name: &sdkmockprotocol.MockOobServiceV2{
+				AcceptInvitationHandle: func(_ *outofbandv2svc.Invitation) (string, error) {
 					return "", fmt.Errorf(sampleErr)
 				},
 			},
@@ -343,6 +360,11 @@ func TestCommand_Connect(t *testing.T) {
 					return sampleConnID, nil
 				},
 			},
+			outofbandv2svc.Name: &sdkmockprotocol.MockOobServiceV2{
+				AcceptInvitationHandle: func(_ *outofbandv2svc.Invitation) (string, error) {
+					return sampleConnID, nil
+				},
+			},
 		})
 
 		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
@@ -373,6 +395,11 @@ func TestCommand_Connect(t *testing.T) {
 					return sampleConnID, nil
 				},
 			},
+			outofbandv2svc.Name: &sdkmockprotocol.MockOobServiceV2{
+				AcceptInvitationHandle: func(_ *outofbandv2svc.Invitation) (string, error) {
+					return sampleConnID, nil
+				},
+			},
 		})
 
 		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
@@ -395,6 +422,7 @@ func TestCommand_Connect(t *testing.T) {
 			mediatorsvc.Coordination:   &mockroute.MockMediatorSvc{},
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
 			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+			outofbandv2svc.Name:        &sdkmockprotocol.MockOobServiceV2{},
 		})
 
 		c, err := New(prov, &mockmsghandler.MockMsgSvcProvider{
@@ -423,6 +451,11 @@ func TestCommand_Connect(t *testing.T) {
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{ConnID: sampleConnID},
 			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
 				AcceptInvitationHandle: func(_ *outofbandsvc.Invitation, _ outofbandsvc.Options) (s string, e error) {
+					return sampleConnID, nil
+				},
+			},
+			outofbandv2svc.Name: &sdkmockprotocol.MockOobServiceV2{
+				AcceptInvitationHandle: func(_ *outofbandv2svc.Invitation) (string, error) {
 					return sampleConnID, nil
 				},
 			},
@@ -463,6 +496,7 @@ func TestCommand_CreateInvitation(t *testing.T) {
 			},
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
 			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+			outofbandv2svc.Name:        &sdkmockprotocol.MockOobServiceV2{},
 		})
 
 		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
@@ -482,6 +516,7 @@ func TestCommand_CreateInvitation(t *testing.T) {
 			},
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
 			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+			outofbandv2svc.Name:        &sdkmockprotocol.MockOobServiceV2{},
 		})
 
 		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
@@ -501,6 +536,7 @@ func TestCommand_CreateInvitation(t *testing.T) {
 			},
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
 			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+			outofbandv2svc.Name:        &sdkmockprotocol.MockOobServiceV2{},
 		})
 
 		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
@@ -519,6 +555,9 @@ func TestCommand_CreateInvitation(t *testing.T) {
 			},
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
 			outofbandsvc.Name: &sdkmockprotocol.MockOobService{
+				SaveInvitationErr: fmt.Errorf(sampleErr),
+			},
+			outofbandv2svc.Name: &sdkmockprotocol.MockOobServiceV2{
 				SaveInvitationErr: fmt.Errorf(sampleErr),
 			},
 		})
@@ -548,6 +587,7 @@ func TestCommand_SendCreateConnectionRequest(t *testing.T) {
 			},
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
 			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+			outofbandv2svc.Name:        &sdkmockprotocol.MockOobServiceV2{},
 		})
 
 		record := &connection.Record{
@@ -624,6 +664,7 @@ func TestCommand_SendCreateConnectionRequest(t *testing.T) {
 			},
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
 			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+			outofbandv2svc.Name:        &sdkmockprotocol.MockOobServiceV2{},
 		})
 
 		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
@@ -651,6 +692,7 @@ func TestCommand_SendCreateConnectionRequest(t *testing.T) {
 			},
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
 			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+			outofbandv2svc.Name:        &sdkmockprotocol.MockOobServiceV2{},
 		})
 
 		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
@@ -677,6 +719,7 @@ func TestCommand_SendCreateConnectionRequest(t *testing.T) {
 			},
 			didexchangesvc.DIDExchange: &sdkmockprotocol.MockDIDExchangeSvc{},
 			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+			outofbandv2svc.Name:        &sdkmockprotocol.MockOobServiceV2{},
 		})
 
 		c, err := New(prov, mockmsghandler.NewMockMsgServiceProvider(), mocks.NewMockNotifier())
@@ -696,6 +739,7 @@ func newMockProvider(serviceMap map[string]interface{}) *sdkmockprotocol.MockPro
 			mediatorsvc.Coordination:   &mockroute.MockMediatorSvc{},
 			didexchangesvc.DIDExchange: &mockdidexchange.MockDIDExchangeSvc{},
 			outofbandsvc.Name:          &sdkmockprotocol.MockOobService{},
+			outofbandv2svc.Name:        &sdkmockprotocol.MockOobServiceV2{},
 		}
 	}
 

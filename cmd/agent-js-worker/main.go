@@ -148,6 +148,9 @@ type agentStartOpts struct {
 	SidetreeToken            string      `json:"sidetreeToken"`
 	ContextProviderURLs      []string    `json:"context-provider-url"`
 	UnanchoredDIDMaxLifeTime int         `json:"unanchoredDIDMaxLifeTime"`
+	KeyType                  string      `json:"key-type"`
+	KeyAgreementType         string      `json:"key-agreement-type"`
+	MediaTypeProfiles        []string    `json:"media-type-profiles"`
 }
 
 type userConfig struct {
@@ -600,6 +603,28 @@ func createVDRs(resolvers []string, trustblocDomain string, unanchoredDIDMaxLife
 	return VDRs, nil
 }
 
+var (
+	//nolint:gochecknoglobals // translation tables copied from afgo for consistency
+	keyTypes = map[string]kms.KeyType{
+		"ed25519":           kms.ED25519Type,
+		"ecdsap256ieee1363": kms.ECDSAP256TypeIEEEP1363,
+		"ecdsap256der":      kms.ECDSAP256TypeDER,
+		"ecdsap384ieee1363": kms.ECDSAP384TypeIEEEP1363,
+		"ecdsap384der":      kms.ECDSAP384TypeDER,
+		"ecdsap521ieee1363": kms.ECDSAP521TypeIEEEP1363,
+		"ecdsap521der":      kms.ECDSAP521TypeDER,
+	}
+
+	//nolint:gochecknoglobals // translation tables copied from afgo for consistency
+	keyAgreementTypes = map[string]kms.KeyType{
+		"x25519kw": kms.X25519ECDHKWType,
+		"p256kw":   kms.NISTP256ECDHKWType,
+		"p384kw":   kms.NISTP384ECDHKWType,
+		"p521kw":   kms.NISTP521ECDHKWType,
+	}
+)
+
+//nolint:gocyclo
 func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 	msgHandler := msghandler.NewRegistrar()
 
@@ -645,6 +670,18 @@ func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 
 	for i := range VDRs {
 		options = append(options, aries.WithVDR(VDRs[i]))
+	}
+
+	if len(startOpts.MediaTypeProfiles) > 0 {
+		options = append(options, aries.WithMediaTypeProfiles(startOpts.MediaTypeProfiles))
+	}
+
+	if len(startOpts.KeyType) > 0 {
+		options = append(options, aries.WithKeyType(keyTypes[startOpts.KeyType]))
+	}
+
+	if len(startOpts.KeyAgreementType) > 0 {
+		options = append(options, aries.WithKeyAgreementType(keyAgreementTypes[startOpts.KeyAgreementType]))
 	}
 
 	return addOutboundTransports(startOpts, options)

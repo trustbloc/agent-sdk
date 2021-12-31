@@ -9,14 +9,14 @@ go 1.17
 require (
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/gorilla/mux v1.8.0
-	github.com/hyperledger/aries-framework-go v0.1.8-0.20220106195936-a9d6794663ed
-	github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20210909220549-ce3a2ee13e22
-	github.com/hyperledger/aries-framework-go-ext/component/storage/mongodb v0.0.0-20211219215001-23cd75276fdc
-	github.com/hyperledger/aries-framework-go-ext/component/storage/mysql v0.0.0-20210909220549-ce3a2ee13e22
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.1.4-0.20220114172935-0e96d787f80f
-	github.com/hyperledger/aries-framework-go/component/storage/leveldb v0.0.0-20220106195936-a9d6794663ed
-	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220106195936-a9d6794663ed
-	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220106195936-a9d6794663ed
+	github.com/hyperledger/aries-framework-go v0.1.8-0.20220113212443-580fa917bbd3
+	github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20211229160742-30796de12ba6
+	github.com/hyperledger/aries-framework-go-ext/component/storage/mongodb v0.0.0-20211229160742-30796de12ba6
+	github.com/hyperledger/aries-framework-go-ext/component/storage/mysql v0.0.0-20211229160742-30796de12ba6
+	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.1.4-0.20211229160742-30796de12ba6
+	github.com/hyperledger/aries-framework-go/component/storage/leveldb v0.0.0-20220113212443-580fa917bbd3
+	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220113212443-580fa917bbd3
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220113212443-580fa917bbd3
 	github.com/rs/cors v1.7.0
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
@@ -46,7 +46,7 @@ require (
 	github.com/google/tink/go v1.6.1-0.20210519071714-58be99b3c4d0 // indirect
 	github.com/google/trillian v1.3.14-0.20210520152752-ceda464a95a3 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v0.0.0-20211217171603-637696af6620 // indirect
+	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v0.0.0-20211229160742-30796de12ba6 // indirect
 	github.com/hyperledger/aries-framework-go/component/storage/edv v0.0.0-20211214153431-5c8a10d6e6ad // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/ipfs/go-cid v0.0.7 // indirect

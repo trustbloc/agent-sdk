@@ -37,8 +37,8 @@ export class Adapter {
         this.label = label
     }
 
-    async init() {
-        this.agent = await loadFrameworks({name: this.label})
+    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc19"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
+        this.agent = await loadFrameworks({name: this.label, mediaTypeProfiles:mediaTypeProfiles, keyType:keyType, keyAgreementType:keyAgreementType})
 
         await connectToMediator(this.agent, testConfig.mediatorEndPoint)
 
@@ -87,8 +87,8 @@ export class VerifierAdapter extends Adapter {
         super(label)
     }
 
-    async init() {
-        return await super.init()
+    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc19"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
+        return await super.init({mediaTypeProfiles:mediaTypeProfiles, keyType:keyType, keyAgreementType:keyAgreementType})
     }
 
     async acceptPresentationProposal(query = {}, timeout) {
@@ -178,8 +178,8 @@ export class IssuerAdapter extends Adapter {
         super(label)
     }
 
-    async init() {
-        return await super.init()
+    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc19"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
+        return await super.init({mediaTypeProfiles:mediaTypeProfiles, keyType:keyType, keyAgreementType:keyAgreementType})
     }
 
     async issue(...credential) {

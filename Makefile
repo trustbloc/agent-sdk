@@ -6,7 +6,7 @@
 GOBIN_PATH             = $(abspath .)/build/bin
 ARIES_AGENT_REST_PATH=cmd/agent-rest
 ARIES_AGENT_MOBILE_PATH=cmd/agent-mobile
-ARIES_FRAMEWORK_COMMIT=a9d6794663ede57f2f16d253b5cc3a2e595f5805
+ARIES_FRAMEWORK_COMMIT=580fa917bbd3d39a1c2330b56bca0f06b6cb23dc
 PROJECT_ROOT = github.com/trustbloc/agent-sdk
 OPENAPI_SPEC_PATH=build/rest/openapi/spec
 OPENAPI_DOCKER_IMG=quay.io/goswagger/swagger
@@ -70,7 +70,7 @@ aries-js-bdd: clean agent-server-docker
 	@ARIES_FRAMEWORK_COMMIT=$(ARIES_FRAMEWORK_COMMIT) scripts/aries_js_bdd_tests.sh
 
 .PHONY: wallet-sdk-tests
-wallet-sdk-tests:
+wallet-sdk-tests: generate-test-keys
 	@set -e
 	@cd cmd/agent-js-worker && npm install
 	@cd cmd/wallet-js-sdk && npm install && npm run test
