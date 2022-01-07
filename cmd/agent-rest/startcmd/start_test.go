@@ -738,6 +738,8 @@ func TestStartAriesWithAutoAccept(t *testing.T) {
 				dbParam:              &dbParam{dbType: databaseTypeMemOption},
 				defaultLabel:         "x",
 				autoAccept:           true,
+				keyType:              "ed25519",
+				keyAgreementType:     "x25519kw",
 			}
 
 			err := startAgent(parameters)
@@ -746,6 +748,25 @@ func TestStartAriesWithAutoAccept(t *testing.T) {
 		}()
 
 		waitForServerToStart(t, testHostURL, testInboundHostURL)
+	})
+}
+
+func TestCreateAriesAgent(t *testing.T) {
+	t.Run("fail to create aries instance", func(t *testing.T) {
+		testHostURL := randomURL()
+		testInboundHostURL := randomURL()
+
+		parameters := &agentParameters{
+			server:               &HTTPServer{},
+			host:                 testHostURL,
+			inboundHostInternals: []string{httpProtocol + "@" + testInboundHostURL},
+			dbParam:              &dbParam{dbType: databaseTypeMemOption},
+			defaultLabel:         "x",
+			contextProviderURLs:  []string{"foo", "bar", "baz"},
+		}
+
+		err := startAgent(parameters)
+		require.Error(t, err)
 	})
 }
 
