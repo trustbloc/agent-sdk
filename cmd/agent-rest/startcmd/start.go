@@ -35,6 +35,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/defaults"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
+	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/rs/cors"
@@ -201,6 +202,22 @@ const (
 		" Alternatively, this can be set with the following environment variable (in CSV format): " +
 		agentContextProviderEnvKey
 
+	// default verification key type flag.
+	agentKeyTypeFlagName = "key-type"
+	agentKeyTypeEnvKey   = "ARIESD_KEY_TYPE"
+	agentKeyTypeUsage    = "Default key type supported by this agent." +
+		" This flag sets the verification (and for DIDComm V1 encryption as well) key type used for key creation in the agent." + //nolint:lll
+		" Alternatively, this can be set with the following environment variable: " +
+		agentKeyTypeEnvKey
+
+	// default key agreement type flag.
+	agentKeyAgreementTypeFlagName = "key-agreement-type"
+	agentKeyAgreementTypeEnvKey   = "ARIESD_KEY_AGREEMENT_TYPE"
+	agentKeyAgreementTypeUsage    = "Default key agreement type supported by this agent." +
+		" Default encryption (used in DIDComm V2) key type used for key agreement creation in the agent." +
+		" Alternatively, this can be set with the following environment variable: " +
+		agentKeyAgreementTypeEnvKey
+
 	httpProtocol      = "http"
 	websocketProtocol = "ws"
 
@@ -230,6 +247,8 @@ type agentParameters struct {
 	autoAccept                                     bool
 	msgHandler                                     command.MessageHandler
 	dbParam                                        *dbParam
+	keyType                                        string
+	keyAgreementType                               string
 }
 
 type dbParam struct {
@@ -284,7 +303,7 @@ func Cmd(server server) (*cobra.Command, error) {
 	return startCmd, nil
 }
 
-func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo, gocognit
+func createStartCMD(server server) *cobra.Command { // nolint: funlen, gocyclo, gocognit
 	return &cobra.Command{
 		Use:   "start",
 		Short: "Start an agent",
@@ -389,6 +408,16 @@ func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo, g
 				return err
 			}
 
+			keyType, err := getUserSetVar(cmd, agentKeyTypeFlagName, agentKeyTypeEnvKey, true)
+			if err != nil {
+				return err
+			}
+
+			keyAgreementType, err := getUserSetVar(cmd, agentKeyAgreementTypeFlagName, agentKeyAgreementTypeEnvKey, true)
+			if err != nil {
+				return err
+			}
+
 			parameters := &agentParameters{
 				server:               server,
 				host:                 host,
@@ -408,6 +437,8 @@ func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo, g
 				contextProviderURLs:  contextProviderURLs,
 				tlsCertFile:          tlsCertFile,
 				tlsKeyFile:           tlsKeyFile,
+				keyType:              keyType,
+				keyAgreementType:     keyAgreementType,
 			}
 
 			return startAgent(parameters)
@@ -539,6 +570,10 @@ func createFlags(startCmd *cobra.Command) { // nolint: funlen
 
 	// remote JSON-LD context provider url flag
 	startCmd.Flags().StringSliceP(agentContextProviderFlagName, "", []string{}, agentContextProviderFlagUsage)
+
+	// key types
+	startCmd.Flags().StringP(agentKeyTypeFlagName, "", "", agentKeyTypeUsage)
+	startCmd.Flags().StringP(agentKeyAgreementTypeFlagName, "", "", agentKeyAgreementTypeUsage)
 }
 
 func getUserSetVar(cmd *cobra.Command, flagName, envKey string, isOptional bool) (string, error) {
@@ -818,7 +853,28 @@ func startAgent(parameters *agentParameters) error {
 	return nil
 }
 
-func createAriesAgent(parameters *agentParameters) (*context.Provider, error) {
+var (
+	//nolint:gochecknoglobals
+	keyTypes = map[string]kms.KeyType{
+		"ed25519":           kms.ED25519Type,
+		"ecdsap256ieee1363": kms.ECDSAP256TypeIEEEP1363,
+		"ecdsap256der":      kms.ECDSAP256TypeDER,
+		"ecdsap384ieee1363": kms.ECDSAP384TypeIEEEP1363,
+		"ecdsap384der":      kms.ECDSAP384TypeDER,
+		"ecdsap521ieee1363": kms.ECDSAP521TypeIEEEP1363,
+		"ecdsap521der":      kms.ECDSAP521TypeDER,
+	}
+
+	//nolint:gochecknoglobals
+	keyAgreementTypes = map[string]kms.KeyType{
+		"x25519kw": kms.X25519ECDHKWType,
+		"p256kw":   kms.NISTP256ECDHKWType,
+		"p384kw":   kms.NISTP384ECDHKWType,
+		"p521kw":   kms.NISTP521ECDHKWType,
+	}
+)
+
+func createAriesAgent(parameters *agentParameters) (*context.Provider, error) { // nolint: funlen,gocyclo
 	var opts []aries.Option
 
 	storePro, err := createStoreProviders(parameters)
@@ -861,6 +917,14 @@ func createAriesAgent(parameters *agentParameters) (*context.Provider, error) {
 
 	if len(parameters.contextProviderURLs) > 0 {
 		opts = append(opts, aries.WithJSONLDContextProviderURL(parameters.contextProviderURLs...))
+	}
+
+	if kt, ok := keyTypes[parameters.keyType]; ok {
+		opts = append(opts, aries.WithKeyType(kt))
+	}
+
+	if kat, ok := keyAgreementTypes[parameters.keyAgreementType]; ok {
+		opts = append(opts, aries.WithKeyAgreementType(kat))
 	}
 
 	framework, err := aries.New(opts...)
