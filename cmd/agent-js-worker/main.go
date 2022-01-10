@@ -29,7 +29,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go/component/storage/edv"
-	"github.com/hyperledger/aries-framework-go/component/storage/indexeddb"
 	"github.com/hyperledger/aries-framework-go/component/storageutil/batchedstore"
 	"github.com/hyperledger/aries-framework-go/component/storageutil/cachedstore"
 	arieslog "github.com/hyperledger/aries-framework-go/pkg/common/log"
@@ -148,6 +147,7 @@ type agentStartOpts struct {
 	SidetreeToken            string      `json:"sidetreeToken"`
 	ContextProviderURLs      []string    `json:"context-provider-url"`
 	UnanchoredDIDMaxLifeTime int         `json:"unanchoredDIDMaxLifeTime"`
+	MediaTypeProfiles        []string    `json:"mediaTypeProfiles"`
 }
 
 type userConfig struct {
@@ -608,6 +608,10 @@ func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 
 	if startOpts.TransportReturnRoute != "" {
 		options = append(options, aries.WithTransportReturnRoute(startOpts.TransportReturnRoute))
+	}
+
+	if len(startOpts.MediaTypeProfiles) > 0 {
+		options = append(options, aries.WithMediaTypeProfiles(startOpts.MediaTypeProfiles))
 	}
 
 	// indexedDBProvider used by localKMS and JSON-LD contexts
