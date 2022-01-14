@@ -107,7 +107,8 @@ func New(domain, didAnchorOrigin, token string, unanchoredDIDMaxLifeTime int, p 
 		orbOpts = append(orbOpts, orb.WithUnanchoredMaxLifeTime(time.Duration(unanchoredDIDMaxLifeTime)*time.Second))
 	}
 
-	orbOpts = append(orbOpts, orb.WithDomain(domain), orb.WithAuthToken(token), orb.WithHTTPClient(http.DefaultClient))
+	orbOpts = append(orbOpts, orb.WithDomain(domain), orb.WithAuthToken(token), orb.WithHTTPClient(http.DefaultClient),
+		orb.WithVerifyResolutionResultType(orb.None))
 
 	client, err := orb.New(nil, orbOpts...)
 	if err != nil {

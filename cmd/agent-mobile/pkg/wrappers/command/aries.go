@@ -449,6 +449,7 @@ func createVDRs(resolvers []string, trustblocDomain string) ([]ariesvdr.VDR, err
 	blocVDR, err := orb.New(nil,
 		orb.WithDomain(trustblocDomain),
 		orb.WithHTTPClient(http.DefaultClient),
+		orb.WithVerifyResolutionResultType(orb.None),
 	)
 	if err != nil {
 		return nil, err
