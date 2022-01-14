@@ -575,7 +575,7 @@ export class DIDComm {
 
             credentials = jp.query(
               Message["credentials~attach"],
-              `$[*].data.json`
+              `$[*].data.json.verifiableCredential[*]`
             );
           } else if (type === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2) {
             await this.agent.issuecredential.acceptProblemReport({
