@@ -171,7 +171,7 @@ describe('Wallet DIDComm WACI credential share flow', async function () {
 describe('Wallet DIDComm WACI credential issuance flow - success scenarios', async function () {
     const fulfillmentJSON =  getJSONTestData("cred-fulfillment-DL.json")
     const sampleComment = "Offer to issue Drivers License for Mr.Smith"
-    let udcVC = getJSONTestData('udc-vc.json')
+    let fulfillmentVP = getJSONTestData('cred-fulfillment-udc-vp.json')
 
     let credentialInteraction
     it('user accepts out-of-band invitation from issuer and initiates WACI credential interaction - presentation exchange flow', async function () {
@@ -207,9 +207,8 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
         let {threadID, presentations} = credentialInteraction
 
         // setup issuer.
-        udcVC.id = `http://example.edu/credentials/${uuid()}`
-        let [credential] = await issuer.issue(udcVC)
-        let acceptCredential = issuer.acceptRequestCredential({credential})
+        fulfillmentVP.verifiableCredential[0].id = `http://example.edu/credentials/${uuid()}`
+        let acceptCredential = issuer.acceptRequestCredential({credential:fulfillmentVP})
 
         // complete credential interaction.
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
@@ -260,9 +259,8 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
 
         // setup issuer.
         const redirect = "https://example.com/success"
-        udcVC.id = `http://example.edu/credentials/${uuid()}`
-        let [credential] = await issuer.issue(udcVC)
-        let acceptCredential = issuer.acceptRequestCredential({credential, redirect})
+        fulfillmentVP.verifiableCredential[0].id  = `http://example.edu/credentials/${uuid()}`
+        let acceptCredential = issuer.acceptRequestCredential({credential:fulfillmentVP, redirect})
 
         // complete credential interaction.
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
@@ -314,9 +312,8 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
         let {threadID, presentations} = credentialInteraction
 
         // setup issuer.
-        udcVC.id = `http://example.edu/credentials/${uuid()}`
-        let [credential] = await issuer.issue(udcVC)
-        let acceptCredential = issuer.acceptRequestCredential({credential})
+        fulfillmentVP.verifiableCredential[0].id  = `http://example.edu/credentials/${uuid()}`
+        let acceptCredential = issuer.acceptRequestCredential({credential:fulfillmentVP})
 
         // complete credential interaction.
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
@@ -338,7 +335,6 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
 describe('Wallet DIDComm WACI credential issuance flow - failure scenarios', async function () {
     const fulfillmentJSON =  getJSONTestData("cred-fulfillment-DL.json")
     const sampleComment = "Offer to issue Drivers License for Mr.Smith"
-    let udcVC = getJSONTestData('udc-vc.json')
 
     it('user accepts out-of-band invitation from issuer, initiates WACI credential interaction and issuer declines proposal', async function () {
         const manifestJSON =  getJSONTestData("cred-manifest-withdef.json")
@@ -405,8 +401,6 @@ describe('Wallet DIDComm WACI credential issuance flow - failure scenarios', asy
 
         // setup issuer.
         const redirectURL = "https://example.com/error"
-        udcVC.id = `http://example.edu/credentials/${uuid()}`
-        let [credential] = await issuer.issue(udcVC)
         let acceptCredential = issuer.declineRequestCredential({redirectURL})
 
         // complete credential interaction.

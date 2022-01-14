@@ -310,12 +310,12 @@ export class IssuerAdapter extends Adapter {
                 if (credential) {
                     icFormats.push({
                         "attach_id": attachID,
-                        "format": ATTACH_FORMAT_ISSUE_CREDENTIAL
+                        "format": ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
                     })
 
                     icAttachments.push({
                         "@id": attachID,
-                        "mime-type": "application/ld+json",
+                        "mime-type": "application/json",
                         data: {
                             json: credential
                         }
