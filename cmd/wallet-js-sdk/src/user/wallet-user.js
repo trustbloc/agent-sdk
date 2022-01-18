@@ -177,7 +177,8 @@ export class WalletUser {
    *  @param {String} preferences.controller - (optional) default controller to be used for digital proof for this wallet user.
    *  @param {Object} preferences.verificationMethod - (optional) default verificationMethod to be used for digital proof for this wallet user.
    *  @param {String} preferences.proofType - (optional) default proofType to be used for digital proof for this wallet user.
-   *
+   *  @param {Boolean} preferences.skipWelcomeMsg - (optional) represents whether this wallet user has dismissed a welcome message in the UI. 
+   * 
    *  @returns {Promise<Object>} - empty promise or error if operation fails.
    */
   async savePreferences(
@@ -189,6 +190,7 @@ export class WalletUser {
       controller = "",
       verificationMethod = "",
       proofType = "",
+      skipWelcomeMsg = false,
     } = {}
   ) {
     await this.saveMetadata(auth, {
@@ -201,6 +203,7 @@ export class WalletUser {
       controller,
       verificationMethod,
       proofType,
+      skipWelcomeMsg
     });
   }
 
@@ -215,12 +218,13 @@ export class WalletUser {
    *  @param {String} preferences.controller - (optional) default controller to be used for digital proof for this wallet user.
    *  @param {Object} preferences.verificationMethod - (optional) default verificationMethod to be used for digital proof for this wallet user.
    *  @param {String} preferences.proofType - (optional) default proofType to be used for digital proof for this wallet user.
+   *  @param {Boolean} preferences.skipWelcomeMsg - (optional) represents whether this wallet user has dismissed a welcome message in the UI.
    *
    *  @returns {Promise<Object>} - empty promise or error if operation fails.
    */
   async updatePreferences(
     auth,
-    { name, description, image, controller, verificationMethod, proofType }
+    { name, description, image, controller, verificationMethod, proofType, skipWelcomeMsg }
   ) {
     let { content } = await this.getPreferences(auth);
     if (!content) {
@@ -240,6 +244,7 @@ export class WalletUser {
       controller,
       verificationMethod,
       proofType,
+      skipWelcomeMsg
     });
 
     Object.keys(updates).forEach((key) => (content[key] = updates[key]));
