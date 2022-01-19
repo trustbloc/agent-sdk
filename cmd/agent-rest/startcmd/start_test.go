@@ -21,6 +21,7 @@ import (
 
 	"github.com/hyperledger/aries-framework-go/component/storage/leveldb"
 	"github.com/hyperledger/aries-framework-go/pkg/common/log"
+	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport"
 	ldstore "github.com/hyperledger/aries-framework-go/pkg/store/ld"
 	spilog "github.com/hyperledger/aries-framework-go/spi/log"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
@@ -763,6 +764,7 @@ func TestCreateAriesAgent(t *testing.T) {
 			dbParam:              &dbParam{dbType: databaseTypeMemOption},
 			defaultLabel:         "x",
 			contextProviderURLs:  []string{"foo", "bar", "baz"},
+			mediaTypeProfiles:    []string{transport.MediaTypeDIDCommV2Profile},
 		}
 
 		err := startAgent(parameters)
