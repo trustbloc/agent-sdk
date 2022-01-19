@@ -218,6 +218,14 @@ const (
 		" Alternatively, this can be set with the following environment variable: " +
 		agentKeyAgreementTypeEnvKey
 
+	// media type profiles flag.
+	agentMediaTypeProfilesFlagName = "media-type-profiles"
+	agentMediaTypeProfilesEnvKey   = "ARIESD_MEDIA_TYPE_PROFILES"
+	agentMediaTypeProfilesUsage    = "Media Type Profiles supported by this agent." +
+		" This flag can be repeated, allowing setting up multiple profiles." +
+		" Alternatively, this can be set with the following environment variable (in CSV format): " +
+		agentMediaTypeProfilesEnvKey
+
 	httpProtocol      = "http"
 	websocketProtocol = "ws"
 
@@ -249,6 +257,7 @@ type agentParameters struct {
 	dbParam                                        *dbParam
 	keyType                                        string
 	keyAgreementType                               string
+	mediaTypeProfiles                              []string
 }
 
 type dbParam struct {
@@ -418,6 +427,11 @@ func createStartCMD(server server) *cobra.Command { // nolint: funlen, gocyclo, 
 				return err
 			}
 
+			mediaTypeProfiles, err := getUserSetVars(cmd, agentMediaTypeProfilesFlagName, agentMediaTypeProfilesEnvKey, true)
+			if err != nil {
+				return err
+			}
+
 			parameters := &agentParameters{
 				server:               server,
 				host:                 host,
@@ -439,6 +453,7 @@ func createStartCMD(server server) *cobra.Command { // nolint: funlen, gocyclo, 
 				tlsKeyFile:           tlsKeyFile,
 				keyType:              keyType,
 				keyAgreementType:     keyAgreementType,
+				mediaTypeProfiles:    mediaTypeProfiles,
 			}
 
 			return startAgent(parameters)
@@ -574,6 +589,8 @@ func createFlags(startCmd *cobra.Command) { // nolint: funlen
 	// key types
 	startCmd.Flags().StringP(agentKeyTypeFlagName, "", "", agentKeyTypeUsage)
 	startCmd.Flags().StringP(agentKeyAgreementTypeFlagName, "", "", agentKeyAgreementTypeUsage)
+
+	startCmd.Flags().StringSliceP(agentMediaTypeProfilesFlagName, "", []string{}, agentMediaTypeProfilesUsage)
 }
 
 func getUserSetVar(cmd *cobra.Command, flagName, envKey string, isOptional bool) (string, error) {
@@ -917,6 +934,10 @@ func createAriesAgent(parameters *agentParameters) (*context.Provider, error) { 
 
 	if len(parameters.contextProviderURLs) > 0 {
 		opts = append(opts, aries.WithJSONLDContextProviderURL(parameters.contextProviderURLs...))
+	}
+
+	if len(parameters.mediaTypeProfiles) > 0 {
+		opts = append(opts, aries.WithMediaTypeProfiles(parameters.mediaTypeProfiles))
 	}
 
 	if kt, ok := keyTypes[parameters.keyType]; ok {
