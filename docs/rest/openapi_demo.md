@@ -1,7 +1,7 @@
 # Run OpenAPI demo
 
 ## Prerequisites (General)
-- Go 1.15
+- Go 1.17
 - Docker
 - Docker-Compose
 - Make
