@@ -17,8 +17,8 @@ DOCKER_OUTPUT_NS   ?= ghcr.io
 REPO_IMAGE_NAME   ?= trustbloc
 DOCKER_AGENT_NAME ?= agent-sdk-server
 
-ALPINE_VER ?= 3.12
-GO_VER ?= 1.16
+ALPINE_VER ?= 3.15
+GO_VER ?= 1.17
 
 .PHONY: all
 all: clean checks unit-test unit-test-wasm agent-rest agent-server-docker bdd-test
