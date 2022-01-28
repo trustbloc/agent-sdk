@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"testing"
 
+	cryptoapi "github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 
@@ -51,7 +52,15 @@ const sampleDoc = `{
       "type": "RsaVerificationKey2018",
       "controller": "did:peer:123456789abcdefghw",
       "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAryQICCl6NZ5gDKrnSztO\n3Hy8PEUcuyvg/ikC+VcIo2SFFSf18a3IMYldIugqqqZCs4/4uVW3sbdLs/6PfgdX\n7O9D22ZiFWHPYA2k2N744MNiCD1UE+tJyllUhSblK48bn+v1oZHCM0nYQ2NqUkvS\nj+hwUU3RiWl7x3D2s9wSdNt7XUtW05a/FXehsPSiJfKvHJJnGOX0BgTvkLnkAOTd\nOrUZ/wK69Dzu4IvrN4vs9Nes8vbwPa/ddZEzGR0cQMt0JBkhk9kU/qwqUseP1QRJ\n5I1jR4g8aYPL/ke9K35PxZWuDp3U0UPAZ3PjFAh+5T+fc7gzCs9dPzSHloruU+gl\nFQIDAQAB\n-----END PUBLIC KEY-----"
-    }
+    },
+	{
+      "id":"did:peer:123456789abcdefghi#keys-3",
+      "type":"X25519KeyAgreementKey2019",
+      "controller": "did:peer:123456789abcdefghi",
+      "publicKeyJwk": {"crv":"X25519","kty":"OKP","x":"yXh_D2YElByhNFDu-WkaE9NHcv0xcytantsJgAP07yA"}
+	}
+  ],
+  "keyAgreement": [
   ]
 }`
 
@@ -303,10 +312,45 @@ func TestCommand_CreateOrbDID(t *testing.T) {
 
 	ecPubKeyBytes := elliptic.Marshal(ecPrivKey.PublicKey.Curve, ecPrivKey.PublicKey.X, ecPrivKey.PublicKey.Y)
 
+	nistP256ECDHKWKeyBytes, err := json.Marshal(&cryptoapi.PublicKey{
+		X:     ecPrivKey.PublicKey.X.Bytes(),
+		Y:     ecPrivKey.PublicKey.Y.Bytes(),
+		Curve: ecPrivKey.PublicKey.Curve.Params().Name,
+		Type:  "ec",
+	})
+	require.NoError(t, err)
+
 	ec384PrivKey, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	require.NoError(t, err)
 
 	ec384PubKeyBytes := elliptic.Marshal(ec384PrivKey.PublicKey.Curve, ec384PrivKey.PublicKey.X, ec384PrivKey.PublicKey.Y)
+
+	nistP384ECDHKWKeyBytes, err := json.Marshal(&cryptoapi.PublicKey{
+		X:     ec384PrivKey.PublicKey.X.Bytes(),
+		Y:     ec384PrivKey.PublicKey.Y.Bytes(),
+		Curve: ec384PrivKey.PublicKey.Curve.Params().Name,
+		Type:  "ec",
+	})
+	require.NoError(t, err)
+
+	ec521PrivKey, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+	require.NoError(t, err)
+
+	nistP521ECDHKWKeyBytes, err := json.Marshal(&cryptoapi.PublicKey{
+		X:     ec521PrivKey.PublicKey.X.Bytes(),
+		Y:     ec521PrivKey.PublicKey.Y.Bytes(),
+		Curve: ec521PrivKey.PublicKey.Curve.Params().Name,
+		Type:  "ec",
+	})
+	require.NoError(t, err)
+
+	badNISTP384ECDHKWKeyBytes, err := json.Marshal(&cryptoapi.PublicKey{
+		X:     []byte{'`'},
+		Y:     []byte{'`'},
+		Curve: ec384PrivKey.PublicKey.Curve.Params().Name,
+		Type:  "badType",
+	})
+	require.NoError(t, err)
 
 	bbsPubKey, _, err := bbs12381g2pub.GenerateKeyPair(sha256.New, nil)
 	require.NoError(t, err)
@@ -314,28 +358,49 @@ func TestCommand_CreateOrbDID(t *testing.T) {
 	bbsPubKeyBytes, err := bbsPubKey.Marshal()
 	require.NoError(t, err)
 
-	t.Run("test success create did with Ed25519 key", func(t *testing.T) {
+	x25519PublicKey, err := json.Marshal(&cryptoapi.PublicKey{
+		X:     pubKey,
+		Curve: "X25519",
+		Type:  "okp",
+	})
+	require.NoError(t, err)
+
+	badX25519PublicKey, err := json.Marshal(&cryptoapi.PublicKey{
+		X:     []byte{'`'},
+		Curve: "X25519",
+		Type:  "badType",
+	})
+	require.NoError(t, err)
+
+	t.Run("test success create did with Ed25519 key as main and X25519 key as KeyAgreement", func(t *testing.T) {
 		didDoc, err := did.ParseDocument([]byte(sampleDoc))
 		require.NoError(t, err)
 
 		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
 		// ED key
-		r, err := json.Marshal(CreateOrbDIDRequest{PublicKeys: []PublicKey{
-			{
-				KeyType:  ed25519KeyType,
-				Value:    base64.RawURLEncoding.EncodeToString(pubKey),
-				Recovery: true,
+		r, err := json.Marshal(CreateOrbDIDRequest{
+			PublicKeys: []PublicKey{
+				{
+					KeyType:  ed25519KeyType,
+					Value:    base64.RawURLEncoding.EncodeToString(pubKey),
+					Recovery: true,
+				},
+				{
+					KeyType: p256KeyType,
+					Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
+					Update:  true,
+				},
+				{
+					ID: "key1", Type: "key1", KeyType: "Ed25519",
+					Value: base64.RawURLEncoding.EncodeToString([]byte("value")),
+				},
+				{
+					KeyType:  x25519ECDHKW,
+					Value:    base64.RawURLEncoding.EncodeToString(x25519PublicKey),
+					Purposes: []string{"keyAgreement"},
+				},
 			},
-			{
-				KeyType: p256KeyType,
-				Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
-				Update:  true,
-			},
-			{
-				ID: "key1", Type: "key1", KeyType: "Ed25519",
-				Value: base64.RawURLEncoding.EncodeToString([]byte("value")),
-			},
-		}})
+		})
 		require.NoError(t, err)
 
 		var b bytes.Buffer
@@ -415,6 +480,339 @@ func TestCommand_CreateOrbDID(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, docRes)
 		require.Equal(t, "did:peer:21tDAKCERh95uGgKbJNHYp", docRes.DIDDocument.ID)
+	})
+
+	t.Run("test success create did with custom properties, P384ECDHKW keyAgreement + router service", func(t *testing.T) {
+		didDoc, err := did.ParseDocument([]byte(sampleDoc))
+		require.NoError(t, err)
+		didDoc.KeyAgreement = []did.Verification{{
+			VerificationMethod: didDoc.VerificationMethod[2],
+			Relationship:       did.KeyAgreement,
+		}}
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
+
+		r, err := json.Marshal(
+			CreateOrbDIDRequest{
+				PublicKeys: []PublicKey{
+					{
+						KeyType:  ed25519KeyType,
+						Value:    base64.RawURLEncoding.EncodeToString(pubKey),
+						Recovery: true,
+					},
+					{
+						KeyType: p256KeyType,
+						Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
+						Update:  true,
+					},
+					{
+						KeyType:  p384ecdhkw,
+						Value:    base64.RawURLEncoding.EncodeToString(nistP384ECDHKWKeyBytes),
+						Purposes: []string{"keyAgreement"},
+					},
+				},
+				DIDcommServiceType: "did-communication",
+				ServiceID:          "testService",
+				ServiceEndpoint:    "http//test.serviceEndpoint",
+				RouterConnections:  []string{"12345"},
+				RoutersKeyAgrIDS:   []string{"12345"},
+			},
+		)
+		require.NoError(t, err)
+
+		var b bytes.Buffer
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBuffer(r))
+		require.NoError(t, cmdErr)
+
+		docRes, err := did.ParseDocumentResolution(b.Bytes())
+		require.NoError(t, err)
+		require.NotEmpty(t, docRes)
+		require.Equal(t, "did:peer:21tDAKCERh95uGgKbJNHYp", docRes.DIDDocument.ID)
+	})
+
+	t.Run("test fail create did with custom properties, using bad router service", func(t *testing.T) {
+		didDoc, err := did.ParseDocument([]byte(sampleDoc))
+		require.NoError(t, err)
+		didDoc.KeyAgreement = []did.Verification{{
+			VerificationMethod: didDoc.VerificationMethod[2],
+			Relationship:       did.KeyAgreement,
+		}}
+
+		addRouterKeyErr := fmt.Errorf("add router key failed")
+
+		badC, err := New("domain", "origin", "", 0,
+			getMockProviderWithMediator(&mockroute.MockMediatorSvc{
+				AddKeyErr: addRouterKeyErr,
+			}))
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		badC.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
+
+		r, err := json.Marshal(
+			CreateOrbDIDRequest{
+				PublicKeys: []PublicKey{
+					{
+						KeyType:  ed25519KeyType,
+						Value:    base64.RawURLEncoding.EncodeToString(pubKey),
+						Recovery: true,
+					},
+					{
+						KeyType: p256KeyType,
+						Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
+						Update:  true,
+					},
+					{
+						KeyType:  p384ecdhkw,
+						Value:    base64.RawURLEncoding.EncodeToString(nistP384ECDHKWKeyBytes),
+						Purposes: []string{"keyAgreement"},
+					},
+				},
+				DIDcommServiceType: "did-communication",
+				ServiceID:          "testService",
+				ServiceEndpoint:    "http//test.serviceEndpoint",
+				RouterConnections:  []string{"12345"},
+				RoutersKeyAgrIDS:   []string{"12345"},
+			},
+		)
+		require.NoError(t, err)
+
+		var b bytes.Buffer
+		cmdErr := badC.CreateOrbDID(&b, bytes.NewBuffer(r))
+		require.Contains(t, cmdErr.Error(), "failed to register did doc recipient key")
+		require.True(t, errors.As(cmdErr, &addRouterKeyErr))
+	})
+
+	t.Run("test success create did with custom properties and NISTP256ECDHKW keyAgreement", func(t *testing.T) {
+		didDoc, err := did.ParseDocument([]byte(sampleDoc))
+		require.NoError(t, err)
+
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
+
+		r, err := json.Marshal(
+			CreateOrbDIDRequest{
+				PublicKeys: []PublicKey{
+					{
+						KeyType:  ed25519KeyType,
+						Value:    base64.RawURLEncoding.EncodeToString(pubKey),
+						Recovery: true,
+					},
+					{
+						KeyType: p256KeyType,
+						Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
+						Update:  true,
+					},
+					{
+						KeyType:  p256ecdhkw,
+						Value:    base64.RawURLEncoding.EncodeToString(nistP256ECDHKWKeyBytes),
+						Purposes: []string{"keyAgreement"},
+					},
+				},
+				DIDcommServiceType: "did-communication",
+				ServiceID:          "testService",
+				ServiceEndpoint:    "http//test.serviceEndpoint",
+				RouterConnections:  []string{"12345"},
+				RoutersKeyAgrIDS:   []string{"12345"},
+			},
+		)
+		require.NoError(t, err)
+
+		var b bytes.Buffer
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBuffer(r))
+		require.NoError(t, cmdErr)
+
+		docRes, err := did.ParseDocumentResolution(b.Bytes())
+		require.NoError(t, err)
+		require.NotEmpty(t, docRes)
+		require.Equal(t, "did:peer:21tDAKCERh95uGgKbJNHYp", docRes.DIDDocument.ID)
+	})
+
+	t.Run("test success create did with custom properties and NISTP521ECDHKW keyAgreement", func(t *testing.T) {
+		didDoc, err := did.ParseDocument([]byte(sampleDoc))
+		require.NoError(t, err)
+
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
+
+		r, err := json.Marshal(
+			CreateOrbDIDRequest{
+				PublicKeys: []PublicKey{
+					{
+						KeyType:  ed25519KeyType,
+						Value:    base64.RawURLEncoding.EncodeToString(pubKey),
+						Recovery: true,
+					},
+					{
+						KeyType: p256KeyType,
+						Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
+						Update:  true,
+					},
+					{
+						KeyType:  p521ecdhkw,
+						Value:    base64.RawURLEncoding.EncodeToString(nistP521ECDHKWKeyBytes),
+						Purposes: []string{"keyAgreement"},
+					},
+				},
+				DIDcommServiceType: "did-communication",
+				ServiceID:          "testService",
+				ServiceEndpoint:    "http//test.serviceEndpoint",
+				RouterConnections:  []string{"12345"},
+				RoutersKeyAgrIDS:   []string{"12345"},
+			},
+		)
+		require.NoError(t, err)
+
+		var b bytes.Buffer
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBuffer(r))
+		require.NoError(t, cmdErr)
+
+		docRes, err := did.ParseDocumentResolution(b.Bytes())
+		require.NoError(t, err)
+		require.NotEmpty(t, docRes)
+		require.Equal(t, "did:peer:21tDAKCERh95uGgKbJNHYp", docRes.DIDDocument.ID)
+	})
+
+	t.Run("test fail create did with custom properties and bad x25519 key", func(t *testing.T) {
+		didDoc, err := did.ParseDocument([]byte(sampleDoc))
+		require.NoError(t, err)
+
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
+
+		r, err := json.Marshal(
+			CreateOrbDIDRequest{
+				PublicKeys: []PublicKey{
+					{
+						KeyType:  ed25519KeyType,
+						Value:    base64.RawURLEncoding.EncodeToString(pubKey),
+						Recovery: true,
+					},
+					{
+						KeyType: p256KeyType,
+						Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
+						Update:  true,
+					},
+					{
+						KeyType:  x25519ECDHKW,
+						Value:    base64.RawURLEncoding.EncodeToString(badX25519PublicKey),
+						Purposes: []string{"keyAgreement"},
+					},
+				},
+			},
+		)
+		require.NoError(t, err)
+
+		var b bytes.Buffer
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBuffer(r))
+		require.EqualError(t, cmdErr, "create JWK: marshalX25519: invalid key")
+	})
+
+	t.Run("test fail to create did with custom properties with invalid P-384 ecdsa key type", func(t *testing.T) {
+		didDoc, err := did.ParseDocument([]byte(sampleDoc))
+		require.NoError(t, err)
+
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
+
+		r, err := json.Marshal(
+			CreateOrbDIDRequest{
+				PublicKeys: []PublicKey{
+					{
+						KeyType:  ed25519KeyType,
+						Value:    base64.RawURLEncoding.EncodeToString(pubKey),
+						Recovery: true,
+					},
+					{
+						KeyType: p384KeyType,
+						Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes), // ecPubKeyBytes is p-256
+					},
+					{
+						KeyType:  x25519ECDHKW,
+						Value:    base64.RawURLEncoding.EncodeToString(x25519PublicKey),
+						Purposes: []string{"keyAgreement"},
+					},
+				},
+				DIDcommServiceType: "did-communication",
+				ServiceID:          "testService",
+				ServiceEndpoint:    "http//test.serviceEndpoint",
+			},
+		)
+		require.NoError(t, err)
+
+		var b bytes.Buffer
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBuffer(r))
+		require.EqualError(t, cmdErr, "create JWK: square/go-jose: invalid EC key (nil, or X/Y missing)")
+	})
+
+	t.Run("test fail create did with custom properties and bad NISTP384ECDHKW public key", func(t *testing.T) {
+		didDoc, err := did.ParseDocument([]byte(sampleDoc))
+		require.NoError(t, err)
+
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
+
+		r, err := json.Marshal(
+			CreateOrbDIDRequest{
+				PublicKeys: []PublicKey{
+					{
+						KeyType:  ed25519KeyType,
+						Value:    base64.RawURLEncoding.EncodeToString(pubKey),
+						Recovery: true,
+					},
+					{
+						KeyType: p256KeyType,
+						Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
+						Update:  true,
+					},
+					{
+						KeyType:  p384ecdhkw,
+						Value:    base64.RawURLEncoding.EncodeToString(badNISTP384ECDHKWKeyBytes),
+						Purposes: []string{"keyAgreement"},
+					},
+				},
+				DIDcommServiceType: "did-communication",
+				ServiceID:          "testService",
+				ServiceEndpoint:    "http//test.serviceEndpoint",
+			},
+		)
+		require.NoError(t, err)
+
+		var b bytes.Buffer
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBuffer(r))
+		require.Contains(t, cmdErr.Error(), "JWKFromKey() jwk: <nil>, ecdsa key:")
+	})
+
+	t.Run("test fail create did with custom properties and NISTP384ECDHKW as not public key", func(t *testing.T) {
+		didDoc, err := did.ParseDocument([]byte(sampleDoc))
+		require.NoError(t, err)
+
+		c.didBlocClient = &mockDIDClient{createDIDValue: &did.DocResolution{DIDDocument: didDoc}}
+
+		r, err := json.Marshal(
+			CreateOrbDIDRequest{
+				PublicKeys: []PublicKey{
+					{
+						KeyType:  ed25519KeyType,
+						Value:    base64.RawURLEncoding.EncodeToString(pubKey),
+						Recovery: true,
+					},
+					{
+						KeyType: p256KeyType,
+						Value:   base64.RawURLEncoding.EncodeToString(ecPubKeyBytes),
+						Update:  true,
+					},
+					{
+						KeyType:  p384ecdhkw,
+						Value:    base64.RawURLEncoding.EncodeToString([]byte("bad key, not *cryptoapi.PublicKey{}")),
+						Purposes: []string{"keyAgreement"},
+					},
+				},
+				DIDcommServiceType: "did-communication",
+				ServiceID:          "testService",
+				ServiceEndpoint:    "http//test.serviceEndpoint",
+			},
+		)
+		require.NoError(t, err)
+
+		var b bytes.Buffer
+		cmdErr := c.CreateOrbDID(&b, bytes.NewBuffer(r))
+		require.Contains(t, cmdErr.Error(), "unmarshal key type: nistp384ecdhkw, value: bad key, not "+
+			"*cryptoapi.PublicKey{} failed: invalid character")
 	})
 }
 
@@ -654,9 +1052,13 @@ func (c *mockMediatorClient) GetConfig(connID string) (*mediatorsvc.Config, erro
 }
 
 func getMockProvider() Provider {
+	return getMockProviderWithMediator(&mockroute.MockMediatorSvc{})
+}
+
+func getMockProviderWithMediator(mediator interface{}) Provider {
 	return &mockprotocol.MockProvider{
 		ServiceMap: map[string]interface{}{
-			mediatorsvc.Coordination: &mockroute.MockMediatorSvc{},
+			mediatorsvc.Coordination: mediator,
 		},
 	}
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/controller/rest/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/controller/rest/messaging"
 	"github.com/hyperledger/aries-framework-go/pkg/controller/rest/outofband"
+	"github.com/hyperledger/aries-framework-go/pkg/controller/rest/outofbandv2"
 	"github.com/hyperledger/aries-framework-go/pkg/controller/rest/presentproof"
 	"github.com/hyperledger/aries-framework-go/pkg/controller/rest/vcwallet"
 	"github.com/hyperledger/aries-framework-go/pkg/controller/rest/vdr"
@@ -271,6 +272,16 @@ func (ar *Aries) GetOutOfBandController() (api.OutOfBandController, error) {
 	}
 
 	return &OutOfBand{endpoints: endpoints, URL: ar.URL, Token: ar.Token, httpClient: &http.Client{}}, nil
+}
+
+// GetOutOfBandV2Controller returns a OutOfBandV2 instance.
+func (ar *Aries) GetOutOfBandV2Controller() (api.OutOfBandV2Controller, error) {
+	endpoints, ok := ar.endpoints[outofbandv2.OperationID]
+	if !ok {
+		return nil, fmt.Errorf("no endpoints found for controller [%s]", outofbandv2.OperationID)
+	}
+
+	return &OutOfBandV2{endpoints: endpoints, URL: ar.URL, Token: ar.Token, httpClient: &http.Client{}}, nil
 }
 
 // GetKMSController returns a KMS instance.

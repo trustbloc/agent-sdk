@@ -37,21 +37,43 @@ export class Adapter {
         this.label = label
     }
 
-    async init() {
-        this.agent = await loadFrameworks({name: this.label})
+    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc19"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
+        this.agent = await loadFrameworks({name: this.label, mediaTypeProfiles:mediaTypeProfiles, keyType:keyType, keyAgreementType:keyAgreementType})
 
-        await connectToMediator(this.agent, testConfig.mediatorEndPoint)
+        let mediatorURL = testConfig.mediatorEndPoint
+        let isDIDComm = false
+        // TODO remove logic when testconfig.mediatorV2Endpoint is removed.
+        for (let mtp of mediaTypeProfiles) {
+            if (mtp === "didcomm/v2") {
+                console.log("didcomm/v2 mediatypeprofile set, using following mediator URL: "+testConfig.mediatorV2EndPoint)
+                mediatorURL = testConfig.mediatorV2EndPoint
+                isDIDComm = true
+            }
+        }
+
+        await connectToMediator(this.agent, mediatorURL, {}, {isDIDCommV2:isDIDComm})
 
         let conns = await getMediatorConnections(this.agent)
         expect(conns).to.not.empty
+
+        return conns
     }
 
-    async createInvitation({goal_code}={}) {
+    async createInvitation({goal_code, from}={}) {
+        console.debug("~ about to call mediatorclient.createInvitation() - mediatorclient: "+ JSON.stringify(this.agent.mediatorclient))
+        console.debug("  label: "+ this.label + ", goal_code:" + goal_code + ", from: "+from)
         let response = await this.agent.mediatorclient.createInvitation({
             label: this.label,
             router_connection_id: await getMediatorConnections(this.agent, {single: true}),
             goal_code,
+            from
         })
+
+        console.debug("createInvitation() called - invitation created: "+ JSON.stringify(response))
+
+        if (response["invitation-v2"] !== null) {
+            return response["invitation-v2"]
+        }
 
         return response.invitation
     }
@@ -87,17 +109,19 @@ export class VerifierAdapter extends Adapter {
         super(label)
     }
 
-    async init() {
-        return await super.init()
+    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc19"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
+        return await super.init({mediaTypeProfiles:mediaTypeProfiles, keyType:keyType, keyAgreementType:keyAgreementType})
     }
 
     async acceptPresentationProposal(query = {}, timeout) {
+        console.debug("acceptPresentationProposal query:" + JSON.stringify(query, undefined, 2), "    timeout:" + timeout)
         return await waitForEvent(this.agent, {
             topic: PRESENT_PROOF_ACTION_TOPIC,
             timeout,
             callback: async (payload) => {
                 let id = uuid()
                 let {myDID, theirDID, piid} = payload.Properties
+                // TODO create request_presentation based on DIDComm version. Right now, only DIDComm V1 is used.
                 await this.agent.presentproof.sendRequestPresentation({
                     my_did: myDID,
                     their_did: theirDID,
@@ -134,7 +158,9 @@ export class VerifierAdapter extends Adapter {
             callback: async (payload) => {
                 let {Message, Properties} = payload
 
-                presentation = Message["presentations~attach"][0].data.json
+                console.debug("acceptPresentProof() Message:" + JSON.stringify(Message, undefined, 2), "    Properties:" + JSON.stringify(Properties, undefined, 2))
+                presentation = extractPresentation(Message)
+
                 const { piid } = Properties
 
                 return this.agent.presentproof.acceptPresentation({
@@ -153,8 +179,9 @@ export class VerifierAdapter extends Adapter {
             timeout,
             callback: async (payload) => {
                 let {Message, Properties} = payload
+                console.debug("declinePresentProof() Message:" + JSON.stringify(Message, undefined, 2), "    Properties:" + JSON.stringify(Properties, undefined, 2))
+                presentation = extractPresentation(Message)
 
-                presentation = Message["presentations~attach"][0].data.json
                 const { piid } = Properties
 
                 return this.agent.presentproof.declinePresentation({
@@ -168,6 +195,26 @@ export class VerifierAdapter extends Adapter {
 }
 
 /**
+ * Extracts Presentation JSON object from Message map based on DIDComm V1 or V2 formats.
+ *
+ * @param Message map instance
+ */
+function extractPresentation(Message) {
+    let presentation
+    if (Message["presentations~attach"]) { // didcomm v1
+        presentation = Message["presentations~attach"][0].data.json
+        console.log("didcomm v1 found")
+    } else if (Message["attachments"]) { // didcomm v2
+        presentation = Message["attachments"][0].data.json
+        console.log("didcomm v2 found")
+    } else {
+        console.error("unrecognized presentation object: '"+ JSON.stringify(Message, undefined, 2) + "'")
+    }
+
+    return presentation
+}
+
+/**
  * IssuerAdapter mocks issuer adapter features.
  *
  * @param agent instance
@@ -178,8 +225,8 @@ export class IssuerAdapter extends Adapter {
         super(label)
     }
 
-    async init() {
-        return await super.init()
+    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc19"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
+        return await super.init({mediaTypeProfiles:mediaTypeProfiles, keyType:keyType, keyAgreementType:keyAgreementType})
     }
 
     async issue(...credential) {

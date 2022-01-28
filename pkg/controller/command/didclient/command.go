@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
@@ -22,9 +23,11 @@ import (
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
 	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
+	"github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 	mediatorservice "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	jwk2 "github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk/jwksupport"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
@@ -63,6 +66,14 @@ const (
 
 	// BLS12381G2KeyType BLS12381G2 key type.
 	BLS12381G2KeyType = "bls12381g2"
+
+	// x25519ECDHKW key agreement type.
+	x25519ECDHKW = "x25519ecdhkw"
+
+	// NIST P curved key agreement types.
+	p256ecdhkw = "nistp256ecdhkw"
+	p384ecdhkw = "nistp384ecdhkw"
+	p521ecdhkw = "nistp521ecdhkw"
 )
 
 const (
@@ -197,7 +208,7 @@ func (c *Command) ResolveOrbDID(rw io.Writer, req io.Reader) command.Error {
 }
 
 // CreateOrbDID creates a new orb DID.
-func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { //nolint: funlen,gocyclo
+func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { //nolint: funlen,gocyclo,gocognit
 	var request CreateOrbDIDRequest
 
 	err := json.NewDecoder(req).Decode(&request)
@@ -207,7 +218,39 @@ func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { //no
 		return command.NewValidationError(InvalidRequestErrorCode, err)
 	}
 
+	logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, fmt.Sprintf("request: %+v", request))
+
 	didDoc := did.Doc{}
+
+	didcommv2Servicetype := "DIDCommMessaging"
+	if request.DIDcommServiceType != "" {
+		didcommv2Servicetype = request.DIDcommServiceType
+	}
+
+	serviceID := "sidetree"
+	if request.ServiceID != "" {
+		serviceID = request.ServiceID
+	}
+
+	serviceEndpoint := "https://testnet.orb.local"
+	if request.ServiceEndpoint != "" {
+		serviceEndpoint = request.ServiceEndpoint
+	}
+
+	logutil.LogDebug(logger, CommandName, CreateOrbDIDCommandMethod, fmt.Sprintf("request.RoutersKeyAgrIDS: %+v",
+		request.RoutersKeyAgrIDS))
+
+	var routerKeys []string
+	routerKeys = append(routerKeys, request.RoutersKeyAgrIDS...)
+
+	logutil.LogDebug(logger, CommandName, CreateOrbDIDCommandMethod, fmt.Sprintf("routerKeys: %+v", routerKeys))
+
+	didDoc.Service = []did.Service{{
+		ID:              serviceID,
+		Type:            didcommv2Servicetype,
+		ServiceEndpoint: serviceEndpoint,
+		RoutingKeys:     routerKeys,
+	}}
 
 	var didMethodOpt []vdr.DIDMethodOption
 
@@ -238,11 +281,49 @@ func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { //no
 			continue
 		}
 
-		jwk, errJWK := jwksupport.JWKFromKey(k)
-		if errJWK != nil {
-			logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, errJWK.Error())
+		var (
+			jwk    *jwk2.JWK
+			errJWK error
+		)
 
-			return command.NewExecuteError(CreateDIDErrorCode, errJWK)
+		//nolint:gocritic,nestif
+		if strings.EqualFold(v.KeyType, x25519ECDHKW) {
+			jwk, errJWK = jwksupport.JWKFromX25519Key(k.(*crypto.PublicKey).X)
+			if errJWK != nil {
+				logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, errJWK.Error())
+
+				return command.NewExecuteError(CreateDIDErrorCode, errJWK)
+			}
+		} else if strings.EqualFold(v.KeyType, p256ecdhkw) || strings.EqualFold(v.KeyType, p384ecdhkw) ||
+			strings.EqualFold(v.KeyType, p521ecdhkw) {
+			pubKey, ok := k.(*crypto.PublicKey)
+			if !ok {
+				logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod,
+					fmt.Sprintf("key '%+v' is not NIST P ECDH KW type", k))
+
+				return command.NewExecuteError(CreateDIDErrorCode, fmt.Errorf("key '%+v' is not NIST P ECDH KW type", k))
+			}
+
+			ecdsaKey := &ecdsa.PublicKey{
+				X:     new(big.Int).SetBytes(pubKey.X),
+				Y:     new(big.Int).SetBytes(pubKey.Y),
+				Curve: getCurve(pubKey.Curve),
+			}
+
+			jwk, errJWK = jwksupport.JWKFromKey(ecdsaKey)
+			if errJWK != nil {
+				logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, errJWK.Error())
+
+				return command.NewExecuteError(CreateDIDErrorCode, fmt.Errorf("JWKFromKey() jwk: %+v, ecdsa key: "+
+					"%+v, error: %w", jwk, ecdsaKey, errJWK))
+			}
+		} else {
+			jwk, errJWK = jwksupport.JWKFromKey(k)
+			if errJWK != nil {
+				logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, errJWK.Error())
+
+				return command.NewExecuteError(CreateDIDErrorCode, errJWK)
+			}
 		}
 
 		vm, errVM := did.NewVerificationMethodFromJWK(v.ID, v.Type, "", jwk)
@@ -281,11 +362,33 @@ func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { //no
 
 	didMethodOpt = append(didMethodOpt, vdr.WithOption(orb.AnchorOriginOpt, c.didAnchorOrigin))
 
+	logutil.LogDebug(logger, CommandName, CreateOrbDIDCommandMethod, fmt.Sprintf("about to create DID Doc, "+
+		"keyAgreements: %+v", didDoc.KeyAgreement))
+
 	docResolution, err := c.didBlocClient.Create(&didDoc, didMethodOpt...)
 	if err != nil {
 		logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, err.Error())
 
 		return command.NewExecuteError(CreateDIDErrorCode, err)
+	}
+
+	logutil.LogDebug(logger, CommandName, CreateOrbDIDCommandMethod, fmt.Sprintf("ORB DID Doc crated: %+v",
+		docResolution.DIDDocument))
+
+	// add all keyAgreements to router connections
+	for _, val := range docResolution.DIDDocument.KeyAgreement {
+		for _, rConn := range request.RouterConnections {
+			err = mediatorservice.AddKeyToRouter(c.mediatorSvc, rConn, val.VerificationMethod.ID)
+			if err != nil {
+				logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, err.Error())
+
+				return command.NewExecuteError(CreateDIDErrorCode, fmt.Errorf(errFailedToRegisterDIDRecKey+
+					" for KeyAgreement ID %v, connection: %v", err, val.VerificationMethod.ID, rConn))
+			}
+
+			logutil.LogDebug(logger, CommandName, CreateOrbDIDCommandMethod, fmt.Sprintf("added keyAgreements ID %v"+
+				" to router connection: %+v", val.VerificationMethod.ID, rConn))
+		}
 	}
 
 	bytes, err := docResolution.JSONBytes()
@@ -304,6 +407,20 @@ func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { //no
 	return nil
 }
 
+func getCurve(crv string) elliptic.Curve {
+	c := elliptic.P256()
+
+	switch crv {
+	case "NIST_P256", "P-256":
+	case "NIST_P384", "P-384":
+		c = elliptic.P384()
+	case "NIST_P521", "P-521":
+		c = elliptic.P521()
+	}
+
+	return c
+}
+
 func getKey(keyType string, value []byte) (interface{}, error) {
 	switch strings.ToLower(keyType) {
 	case ed25519KeyType:
@@ -318,6 +435,15 @@ func getKey(keyType string, value []byte) (interface{}, error) {
 		return &ecdsa.PublicKey{X: x, Y: y, Curve: elliptic.P384()}, nil
 	case BLS12381G2KeyType:
 		return bbs12381g2pub.UnmarshalPublicKey(value)
+	case x25519ECDHKW, p256ecdhkw, p384ecdhkw, p521ecdhkw:
+		pubKey := &crypto.PublicKey{}
+
+		err := json.Unmarshal(value, pubKey)
+		if err != nil {
+			return nil, fmt.Errorf("unmarshal key type: %s, value: %s failed: %w", keyType, value, err)
+		}
+
+		return pubKey, nil
 	default:
 		return nil, fmt.Errorf("invalid key type: %s", keyType)
 	}
