@@ -51,12 +51,12 @@ export class Adapter {
             }
         }
 
-        await connectToMediator(this.agent, mediatorURL, {}, {isDIDCommV2:isDIDComm})
+        let {invitation_did} = await connectToMediator(this.agent, mediatorURL,  {isDIDCommV2:isDIDComm})
 
-        let conns = await getMediatorConnections(this.agent)
+        let conns = await getMediatorConnections(this.agent, {single: true})
         expect(conns).to.not.empty
 
-        return conns
+        return {connection_id: conns, router_did: invitation_did}
     }
 
     async createInvitation({goal_code, from}={}) {
@@ -348,7 +348,15 @@ export class IssuerAdapter extends Adapter {
                 const {Message, Properties, formats} = payload
                 const { piid } = Properties
 
-                attachment = findAttachmentByFormat(Message.formats, Message["requests~attach"],"application/ld+json")
+                if (Message["@type"] || Message["@id"]) {
+                    attachment = findAttachmentByFormat(Message.formats, Message["requests~attach"],"application/ld+json")
+                } else {
+                    if (!Message.attachments && Message.attachments.length === 0) {
+                        throw "no didcomm v2 attachments"
+                    }
+
+                    attachment = Message.attachments[0].data.json
+                }
 
                 let attachID = uuid()
                 let icFormats = []

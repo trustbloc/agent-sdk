@@ -36,6 +36,8 @@ const MSG_TYPE_ISSUE_CREDENTIAL_V3 =
     "https://didcomm.org/issue-credential/3.0/issue-credential";
 const MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2 =
   "https://didcomm.org/issue-credential/2.0/problem-report";
+const MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V3 =
+  "https://didcomm.org/issue-credential/3.0/problem-report";
 const WEB_REDIRECT_STATUS_OK = "OK";
 
 /**
@@ -392,10 +394,10 @@ export class DIDComm {
         routerConnections:
           routerConnections.length == 0 && userAnyRouterConnection
             ? [
-                await getMediatorConnections(this.agent, {
-                  single: true,
-                }),
-              ]
+              await getMediatorConnections(this.agent, {
+                single: true,
+              }),
+            ]
             : routerConnections,
         reuseConnection,
         reuseAnyConnection,
@@ -413,21 +415,44 @@ export class DIDComm {
     );
 
     if (
-      offerCredential["@type"] === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2
+      offerCredential["@type"] === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2 ||
+      offerCredential["type"] === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V3
     ) {
-      const { status, url } = offerCredential["~web-redirect"];
+      let web_redirect = offerCredential["web-redirect"];
+      if (!web_redirect) {
+        web_redirect = offerCredential["~web-redirect"];
+      }
+
+      const { status, url } = web_redirect;
       const { code } = offerCredential["description"];
 
       return { error: { status, url, code } };
     }
 
-    // find manifest
-    // TODO : for now, assuming there will only be one manifest per offer credential msg
-    const manifest = findAttachmentByFormat(
-      offerCredential.formats,
-      offerCredential["offers~attach"],
-      ATTACH_FORMAT_CREDENTIAL_MANIFEST
-    );
+    let manifest
+
+    if (offerCredential["@type"] || offerCredential["@id"]) {
+      // find manifest
+      // TODO : for now, assuming there will only be one manifest per offer credential msg
+      manifest = findAttachmentByFormat(
+        offerCredential.formats,
+        offerCredential["offers~attach"],
+        ATTACH_FORMAT_CREDENTIAL_MANIFEST
+      );
+    } else {
+      if (! offerCredential.attachments || offerCredential.attachments.length === 0) {
+        throw "no didcomm v2 attachments"
+      }
+
+      for (const attachment of offerCredential.attachments) {
+        let attachmentData = attachment.data.json
+
+        if (attachmentData.presentation_definition) {
+          manifest = attachmentData
+        }
+
+      }
+    }
 
     const { presentation_definition, options } = manifest;
     const { domain, challenge } = options ? options : {};
@@ -460,18 +485,46 @@ export class DIDComm {
       presentations = results;
     }
 
-    // find fulfillment
-    // TODO : for now, assuming there will only be one fulfillment per offer credential msg
-    const fulfillment = findAttachmentByFormat(
-      offerCredential.formats,
-      offerCredential["offers~attach"],
-      ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
-    );
+    let fulfillment
+
+    if (offerCredential["@type"] || offerCredential["@id"]) {
+      // find fulfillment
+      // TODO : for now, assuming there will only be one fulfillment per offer credential msg
+      fulfillment = findAttachmentByFormat(
+        offerCredential.formats,
+        offerCredential["offers~attach"],
+        ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
+      );
+    } else {
+      if (! offerCredential.attachments || offerCredential.attachments.length === 0) {
+        throw "no didcomm v2 attachments"
+      }
+
+      for (const attachment of offerCredential.attachments) {
+        let attachmentData = attachment.data.json
+
+        if (attachmentData.credential_fulfillment) {
+          fulfillment = attachmentData
+        }
+      }
+    }
 
     // TODO read descriptors from manifests & fulfillments for credential preview in UI. (Pending support in vcwallet).
 
-    const { comment } = offerCredential;
-    const { thid } = offerCredential["~thread"];
+    // TODO: centralize didcomm v1 vs v2 handling
+    let comment, thid;
+    if (offerCredential.body) {
+      comment = offerCredential.body.comment;
+    } else {
+      comment = offerCredential.comment;
+    }
+
+    if (offerCredential.pthid) {
+      // afgo is using the pthid instead of thid for piID, if pthid is present
+      thid = offerCredential.pthid
+    } else {
+      thid = offerCredential["~thread"].thid;
+    }
 
     return {
       threadID: thid,
@@ -567,7 +620,11 @@ export class DIDComm {
         callback: async (payload) => {
           const { Message, Properties } = payload;
           const { piid } = Properties;
-          const type = Message["@type"];
+          let type = Message["@type"];
+
+          if (!type) {
+            type = Message.type;
+          }
 
           if (type === MSG_TYPE_ISSUE_CREDENTIAL_V2 || type === MSG_TYPE_ISSUE_CREDENTIAL_V3) {
             await this.agent.issuecredential.acceptCredential({
@@ -575,11 +632,27 @@ export class DIDComm {
               skipStore: true,
             });
 
+            let attachments
+
+            if (Message["credentials~attach"]) {
+              attachments = Message["credentials~attach"]
+            } else if (Message["attachments"]) {
+              attachments = Message["attachments"]
+            } else {
+              throw "no attachments found in issue-credential message"
+            }
+
             credentials = jp.query(
-              Message["credentials~attach"],
+              attachments,
               `$[*].data.json.verifiableCredential[*]`
             );
-          } else if (type === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2) {
+
+            if (credentials.length === 0) {
+              throw "no credentials found in attachments"
+            }
+
+          } else if (type === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2 ||
+              type === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V3) {
             await this.agent.issuecredential.acceptProblemReport({
               piid,
             });
@@ -595,12 +668,12 @@ export class DIDComm {
       { waitForDone, WaitForDoneTimeout }
     );
 
-    if (response.status != WEB_REDIRECT_STATUS_OK) {
+    if (response.status !== WEB_REDIRECT_STATUS_OK) {
       return response;
     }
 
     // expecting only one credential for now,  TODO it has to be in credential fulfillment
-    if (credentials.length == 0) {
+    if (credentials.length === 0) {
       throw "no incoming credentials found";
     }
 
@@ -710,8 +783,7 @@ export const createInvitationFromRouter = async (endpoint, { isDIDCommV2 = false
 export async function connectToMediator(
   agent,
   mediatorEndpoint,
-  { waitForStateComplete = true } = {},
-  { isDIDCommV2 = false } = {},
+  { waitForStateComplete = true, isDIDCommV2 = false } = {},
 ) {
   let inv = await createInvitationFromRouter(mediatorEndpoint, {isDIDCommV2: isDIDCommV2})
   let resp = await agent.mediatorclient.connect({
@@ -730,10 +802,5 @@ export async function connectToMediator(
 
   console.debug("in connectToMediator() - invitation: "+ JSON.stringify(inv))
 
-  let invID = inv["@id"]
-  if (!invID) {
-      invID = inv["from"]
-  }
-
-  return resp.connectionID, invID
+  return {invitiation_id: inv["@id"], invitation_did: inv["from"], router_connection_id: resp.connectionID}
 }
