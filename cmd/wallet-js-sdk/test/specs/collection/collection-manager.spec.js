@@ -7,12 +7,15 @@ SPDX-License-Identifier: Apache-2.0
 import chai, {expect} from "chai";
 import chaiAsPromised from 'chai-as-promised';
 
-import {getJSONTestData, loadFrameworks, testConfig} from "../common";
-import {CollectionManager, CredentialManager, WalletUser} from "../../../src";
+import {getJSONTestData, loadFrameworks, prepareTestManifest, testConfig} from "../common";
+import {CollectionManager, contentTypes, CredentialManager, UniversalWallet, WalletUser} from "../../../src";
 
 var uuid = require('uuid/v4')
 
 const WALLET_USER = 'smith-collection-agent'
+const UDC_DESCRIPTOR_ID = "udc_output"
+const PRC_DESCRIPTOR_ID = "prc_output"
+const VC_FORMAT = "ldp_vc"
 
 let walletUserAgent, sampleUDC, samplePRC, sampleUDCBBS
 
@@ -73,17 +76,36 @@ describe('Collection Manager Tests', async function () {
 
     it('user adds credentials to the collection', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
+        const manifest = getJSONTestData('allvcs-cred-manifest.json')
+        const descriptorMap = [
+            {
+                "id": "udc_output",
+                "format": "ldp_vc",
+                "path": "$[0]"
+            },
+            {
+                "id": "prc_output",
+                "format": "ldp_vc",
+                "path": "$[1]"
+            },
+            {
+                "id": "udc_output",
+                "format": "ldp_vc",
+                "path": "$[2]"
+            }
+        ]
 
-        await Promise.all([
-            credentialManager.save(auth, {credential: sampleUDC}, {collection: previous}),
-            credentialManager.save(auth, {credential: samplePRC}, {collection: previous}),
-            credentialManager.save(auth, {credential: sampleUDCBBS}, {collection: previous})
-        ])
+        await credentialManager.save(auth, {credentials: [sampleUDC, samplePRC, sampleUDCBBS]},
+            { manifest, descriptorMap, collection:previous})
     })
 
     it('user lists credentials under a collection', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
+        let metadataList = await credentialManager.getAllCredentialMetadata(auth, {collectionID: previous})
+        expect(metadataList).to.have.lengthOf(3)
+
+        // get raw credential from store
         let {contents} = await credentialManager.getAll(auth, {collectionID: previous})
         expect(Object.keys(contents)).to.have.lengthOf(3)
     })
@@ -129,6 +151,10 @@ describe('Collection Manager Tests', async function () {
 
     it('user finds credentials belonging to collection removed from wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
+
+        // credential metadata gone from collection
+        let metadataList = await credentialManager.getAllCredentialMetadata(auth, {collectionID: previous})
+        expect(metadataList).to.have.lengthOf(2)
 
         let {contents} = await credentialManager.getAll(auth)
         expect(Object.keys(contents)).to.be.empty

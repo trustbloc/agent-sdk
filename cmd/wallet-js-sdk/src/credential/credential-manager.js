@@ -5,12 +5,22 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import { contentTypes, UniversalWallet } from "..";
+import jp from "jsonpath";
 
-const JSONLD_CTX_MANIFEST_MAPPING = [
+const JSONLD_CTX_BLINDED_ROUTING_MANIFEST_MAPPING = [
   "https://w3id.org/wallet/v1",
   "https://trustbloc.github.io/context/wallet/manifest-mapping-v1.jsonld",
 ];
+
+const JSONLD_CREDENTIAL_METADATA_MODEL = [
+  "https://w3id.org/wallet/v1",
+  "https://www.w3.org/2018/credentials/v1",
+  "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld",
+];
+
 const MANIFEST_MAPPING_METADATA_TYPE = "ManifestMapping";
+const CREDENTIAL_METADATA_MODEL_TYPE = "CredentialMetadata";
+const SUPPORTED_VC_FORMAT = "ldp_vc";
 
 /**
  *  credential module provides wallet credential handling features,
@@ -39,34 +49,36 @@ export class CredentialManager {
   }
 
   /**
-   * Saves given credential into wallet content store.
+   * Saves given credential into wallet content store along with credential metadata & manifest details along with saved credential.
    *
    *  @param {string} auth - authorization token for wallet operations.
    *  @param {Object} contents - credential(s) to be saved in wallet content store.
-   *  @param {Object} contents.credential - credential to be saved in wallet content store.
    *  @param {Array<Object>} contents.credentials - array of credentials to be saved in wallet content store.
    *  @param {Object} contents.presentation - presentation from which all the credentials to be saved in wallet content store.
+   *  If credential fulfillment presentation is provided then no need to supply descriptor map along with manifest.
+   *  Refer @see {@link https://identity.foundation/credential-manifest/#credential-fulfillment|Credential Fulfillment} for more details.
    *  @param {Object} options - options for saving credential.
    *  @param {boolean} options.verify - (optional) to verify credential before save.
    *  @param {String} options.collection - (optional) ID of the wallet collection to which the credential should belong.
+   *  @param {String} options.manifest - (required) credential manifest of the credential being saved.
+   *  Refer @see {@link https://identity.foundation/credential-manifest/#credential-manifest-2|Credential Manifest} for more details.
    *
    *  @returns {Promise<Object>} - empty promise or error if operation fails.
    */
   async save(
     auth,
-    {
-      credential = null,
-      credentials = [],
-      presentation = { verifiableCredential: [] },
-    } = {},
-    { verify = false, collection = "" } = {}
+    { credentials = [], presentation = { verifiableCredential: [] } } = {},
+    { verify = false, collection = "", manifest, descriptorMap } = {}
   ) {
-    let contents = (credential ? [credential] : []).concat(
-      credentials,
-      presentation.verifiableCredential
-    );
+    if (!manifest) {
+      throw "credential manifest information is required";
+    }
 
-    // verify all credentials
+    // credential array takes precedence over presentation.
+    let contents =
+      credentials.length > 0 ? credentials : presentation.verifiableCredential;
+
+    // verify all credentials if required.
     if (verify) {
       const _doVerify = async (rawCredential) => {
         let { verified, error } = await this.wallet.verify(auth, {
@@ -82,7 +94,8 @@ export class CredentialManager {
       await Promise.all(contents.map(_doVerify));
     }
 
-    const _save = async (credential) => {
+    // prepare save credential
+    const _saveCredential = async (credential) => {
       await this.wallet.add({
         auth,
         contentType: contentTypes.CREDENTIAL,
@@ -91,7 +104,316 @@ export class CredentialManager {
       });
     };
 
-    await Promise.all(contents.map(_save));
+    // prepare save metadata
+    const _saveMetadata = async (descriptor) => {
+      const { id, format, path } = descriptor;
+      if (format != SUPPORTED_VC_FORMAT) {
+        console.warn(
+          `unsupported credential format '${format}', supporting only '${SUPPORTED_VC_FORMAT}' for now`
+        );
+
+        return;
+      }
+
+      const credentialMatch = jp.query(
+        credentials.length > 0 ? credentials : presentation,
+        path
+      );
+
+      if (credentialMatch.length != 1) {
+        throw "credential match from descriptor should resolve to a single credential";
+      }
+
+      await this.saveCredentialMetadata(auth, {
+        credential: credentialMatch[0],
+        descriptorID: id,
+        manifestID: manifest.id,
+        collection,
+      });
+    };
+
+    // validate fulfillment and collection descriptor map.
+    let descriptors;
+    if (descriptorMap) {
+      descriptors = descriptorMap;
+    } else if (presentation["credential_fulfillment"]) {
+      // validate fulfillment against manifest provided
+      if (presentation["credential_fulfillment"].manifest_id != manifest.id) {
+        throw "credential fulfillment not matching with manifest provided";
+      }
+
+      descriptors = presentation["credential_fulfillment"].descriptor_map;
+    } else {
+      throw "descriptor map is required to save mapping between credential being saved and manifest";
+    }
+
+    // save all credentials & metadata first, to catch any duplicate entry issues before saving manifests.
+    await Promise.all(
+      contents.map(_saveCredential).concat(descriptors.map(_saveMetadata))
+    );
+
+    if (manifest) {
+      // save manifest & replace if already there, it might happen
+      await this.saveCredentialManifest(auth, manifest);
+    }
+  }
+
+  /**
+   * Saves credential manifest into wallet content store.
+   *
+   *  @param {string} auth - authorization token for wallet operations.
+   *  @param {Object} contents - credential manifest data model.
+   *  Refer @see {@link https://identity.foundation/credential-manifest/#credential-manifest-2|Credential Manifest} for more details.
+   *
+   *  @returns {Promise<Object>} - empty promise or error if operation fails.
+   */
+  async saveCredentialManifest(auth, content) {
+    await this.wallet.add({
+      auth,
+      contentType: contentTypes.METADATA,
+      content,
+    });
+  }
+
+  /**
+   * Reads credential metadata and saves credential metadata data model into wallet content store.
+   *
+   *  @param {string} auth - authorization token for wallet operations.
+   *  @param {Object} options - subjects from which credential metadata will be extracted.
+   *  @param {Object} options.credential - credential data model from which basic credential attributes like type, issuer, expiration etc will be read.
+   *  @param {String} options.manifestID - ID of the credential manifest of the given credential
+   *  @param {String} options.descriptorID - ID of the credential manifest output descriptor of the given credential.
+   *  @param {String} options.collection - (optional) ID of the collection to which this credential belongs.
+   *
+   *  @returns {Promise<Object>} - empty promise or error if operation fails.
+   */
+  async saveCredentialMetadata(
+    auth,
+    { credential, manifestID, descriptorID, collection }
+  ) {
+    const {
+      id,
+      type,
+      issuer,
+      name,
+      description,
+      issuanceDate,
+      expirationDate,
+    } = credential;
+
+    await this.wallet.add({
+      auth,
+      contentType: contentTypes.METADATA,
+      collectionID: collection,
+      content: {
+        "@context": JSONLD_CREDENTIAL_METADATA_MODEL,
+        context: credential["@context"],
+        type: CREDENTIAL_METADATA_MODEL_TYPE,
+        credentialType: type,
+        id,
+        issuer,
+        name,
+        description,
+        issuanceDate,
+        expirationDate,
+        manifestID,
+        descriptorID,
+      },
+    });
+  }
+
+  /**
+   * Gets credential metadata from wallet content store and also optionally resolves credential data using credential manifest.
+   *
+   *  @param {String} auth - authorization token for wallet operations.
+   *  @param {String} id - credential ID.
+   *  @param {Object} options - options to get credential metadata
+   *  @param {Bool} options.resolve - (optional) if true then resolves credential manifest of the given credential using descriptor info found in credential metadata.
+   *
+   *  @returns {Promise<Object>} - promise containing credential metadata or error if operation fails.
+   */
+  async getCredentialMetadata(auth, id, { resolve = false } = {}) {
+    let { content } = await this.wallet.get({
+      auth,
+      contentType: contentTypes.METADATA,
+      contentID: id,
+    });
+
+    if (resolve) {
+      if (!content.manifestID || !content.descriptorID) {
+        throw `could not find matching manifest and descriptor to resolve the credential ${id}`;
+      }
+
+      const manifest = await this.wallet.get({
+        auth,
+        contentType: contentTypes.METADATA,
+        contentID: content.manifestID,
+      });
+
+      let result = await this.wallet.resolveCredential(auth, manifest.content, {
+        credentialID: id,
+        descriptorID: content.descriptorID,
+      });
+
+      content.resolved = result.resolved;
+    }
+
+    return content;
+  }
+
+  /**
+   * Gets all credential metadata from wallet content store and also optionally resolves credential using respective credential metadata info.
+   *
+   *  @param {String} auth - authorization token for wallet operations.
+   *  @param {Object} options - options to get all credential metadata.
+   *  @param {Bool} options.credentialIDs - (optional) filters credential metadata by given credential IDs.
+   *  @param {String} options.collection - (optional) filters credential metadata by given collection ID.
+   *  @param {Bool} options.resolve - (optional) if true then resolves credential manifest of the given credential using descriptor info found in credential metadata.
+   *
+   *  @returns {Promise<Object>} - promise containing list of credential metadata or error if operation fails.
+   */
+  async getAllCredentialMetadata(
+    auth,
+    { credentialIDs = [], collection = "", resolve = false } = {}
+  ) {
+    const { contents } = await this.wallet.getAll({
+      auth,
+      contentType: contentTypes.METADATA,
+      collectionID: collection,
+    });
+
+    const _filterCred = (id) => {
+      if (credentialIDs.length == 0) {
+        return true;
+      }
+
+      return credentialIDs.includes(id);
+    };
+
+    const metadataList = Object.values(contents).filter(
+      (metadata) =>
+        metadata.type == CREDENTIAL_METADATA_MODEL_TYPE &&
+        _filterCred(metadata.id)
+    );
+
+    if (resolve && metadataList.length > 0) {
+      const _resolve = async (metadata) => {
+        // do not resolve, if there aren't any manifest/descriptor entry
+        if (!metadata.manifestID || !metadata.descriptorID) {
+          return metadata;
+        }
+
+        let result = await this.wallet.resolveCredential(
+          auth,
+          contents[metadata.manifestID],
+          {
+            credentialID: metadata.id,
+            descriptorID: metadata.descriptorID,
+          }
+        );
+
+        metadata.resolved = result.resolved;
+
+        return metadata;
+      };
+
+      return await Promise.all(metadataList.map(_resolve));
+    }
+
+    return metadataList;
+  }
+
+  /**
+   * Updates credential metadata. Currently supporting updating only credential name and description fields.
+   *
+   *  @param {String} auth - authorization token for wallet operations.
+   *  @param {String} id - ID of the credential metadata to be updated.
+   *  @param {Object} options - options to update credential metadata.
+   *  @param {String} options.name - (optional) name attribute of the credential metadata to be updated.
+   *  @param {String} options.description - (optional) description attribute of the credential metadata to be updated.
+   *  @param {String} options.collection - (optional) ID  of the collection to which this credential metadata to be updated.
+   *
+   *  @returns {Promise<Object>} - empty promise or error if operation fails.
+   */
+  async updateCredentialMetadata(auth, id, { name, description, collection }) {
+    let { content } = await this.wallet.get({
+      auth,
+      contentType: contentTypes.METADATA,
+      contentID: id,
+    });
+
+    if (name) {
+      content.name = name;
+    }
+
+    if (description) {
+      content.description = description;
+    }
+
+    // remove
+    await this.wallet.remove({
+      auth,
+      contentType: contentTypes.METADATA,
+      contentID: id,
+    });
+
+    // add again
+    await this.wallet.add({
+      auth,
+      contentType: contentTypes.METADATA,
+      collectionID: collection,
+      content,
+    });
+  }
+
+  /**
+   * Resolves credential by credential manifest, descriptor or fulfillment.
+   *
+   * Given credential can be resolved by raw credential, ID of the credential saved in wallet, credential fulfillment,
+   * ID of the manifest saved in wallet, raw credential manifest, output descriptor of the manifest etc
+   *
+   *  @param {String} auth - authorization token for wallet operations.
+   *  @param {Object} options - options to resolve credential from wallet.
+   *  @param {String} options.credentialID - (optional) ID of the credential to be resolved from wallet content store.
+   *  @param {String} options.credential - (optional) raw credential data model to be resolved.
+   *  @param {String} options.fulfillment - (optional) credential fulfillment using which given raw credential or credential ID to be resolved.
+   *  @param {String} options.manifestID - (optional) ID of the manifest from wallet content store.
+   *  @param {String} options.manifest - (optional) raw manifest to be used for resolving credential.
+   *  @param {String} options.descriptorID - (optional) if fulfillment not provided then this descriptor ID can be used to resolve credential.
+   *
+   * Refer @see {@link https://identity.foundation/credential-manifest/|Credential Manifest Specifications} for more details.
+   *
+   *  @returns {Promise<Object>} - promise containing resolved results or error if operation fails.
+   */
+  async resolveManifest(
+    auth,
+    {
+      credentialID,
+      credential,
+      fulfillment,
+      manifestID,
+      manifest,
+      descriptorID,
+    }
+  ) {
+    if (!manifest) {
+      const { content } = await this.wallet.get({
+        auth,
+        contentType: contentTypes.METADATA,
+        contentID: manifestID,
+      });
+
+      manifest = content;
+    }
+
+    let result = await this.wallet.resolveCredential(auth, manifest, {
+      credentialID,
+      descriptorID,
+      fulfillment,
+      credential,
+    });
+
+    return result.resolved;
   }
 
   /**
@@ -126,7 +448,9 @@ export class CredentialManager {
   }
 
   /**
-   * Removes credential from wallet
+   * Removes credential and its metadata from wallet.
+   *
+   *  Doesn't delete respective credential manifest since one credential manifest can be referred by many other credentials too.
    *
    *  @param {string} auth - authorization token for wallet operations.
    *  @param {string} contentID - ID of the credential to be removed from wallet content store.
@@ -134,11 +458,18 @@ export class CredentialManager {
    *  @returns {Promise<Object>} - empty promise or an error if operation fails.
    */
   async remove(auth, contentID) {
-    return await this.wallet.remove({
-      auth,
-      contentType: contentTypes.CREDENTIAL,
-      contentID,
-    });
+    return await Promise.all([
+      this.wallet.remove({
+        auth,
+        contentType: contentTypes.CREDENTIAL,
+        contentID,
+      }),
+      this.wallet.remove({
+        auth,
+        contentType: contentTypes.METADATA,
+        contentID,
+      }),
+    ]);
   }
 
   /**
@@ -315,17 +646,23 @@ export class CredentialManager {
    *  @param {Object} manifest - manifest credential (can be of any type).
    *  @param {String} connectionID - connection ID to which manifest credential to be mapped.
    *
+   *  @deprecated, to be used for DIDComm blinded routing flow only
+   *
    * @returns {Promise<Object>} - empty promise or an error if operation fails.
    */
-  async saveManifestCredential(auth = "", manifest = {}, connectionID = "") {
+  async saveManifestVC(auth = "", manifest = {}, connectionID = "") {
     if (!manifest.id) {
       throw "invalid manifest credential, credential id is required.";
     }
 
-    await this.save(auth, { credential: manifest });
+    await this.wallet.add({
+      auth,
+      contentType: contentTypes.CREDENTIAL,
+      content: manifest,
+    });
 
     let content = {
-      "@context": JSONLD_CTX_MANIFEST_MAPPING,
+      "@context": JSONLD_CTX_BLINDED_ROUTING_MANIFEST_MAPPING,
       id: manifest.id,
       type: MANIFEST_MAPPING_METADATA_TYPE,
       connectionID,
@@ -363,7 +700,7 @@ export class CredentialManager {
    *
    * @returns {Promise<Object>} - promise containing manifest credential search results or an error if operation fails.
    */
-  async getAllManifests(auth = "") {
+  async getAllManifestVCs(auth = "") {
     return await this.query(auth, [
       {
         type: "QueryByExample",

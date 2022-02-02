@@ -66,12 +66,13 @@ export class DIDManager {
       collection,
     } = {}
   ) {
-    const [keySet, recoveryKeySet, updateKeySet, keyAgreementKeySet] = await Promise.all([
-      this.wallet.createKeyPair(auth, { keyType }),
-      this.wallet.createKeyPair(auth, { keyType: DEFAULT_KEY_TYPE }),
-      this.wallet.createKeyPair(auth, { keyType: DEFAULT_KEY_TYPE }),
-      this.wallet.createKeyPair(auth, { keyType: keyAgreementKeyType }),
-    ]);
+    const [keySet, recoveryKeySet, updateKeySet, keyAgreementKeySet] =
+      await Promise.all([
+        this.wallet.createKeyPair(auth, { keyType }),
+        this.wallet.createKeyPair(auth, { keyType: DEFAULT_KEY_TYPE }),
+        this.wallet.createKeyPair(auth, { keyType: DEFAULT_KEY_TYPE }),
+        this.wallet.createKeyPair(auth, { keyType: keyAgreementKeyType }),
+      ]);
 
     const createDIDRequest = {
       // TODO make below as function args

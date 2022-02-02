@@ -14,6 +14,9 @@ import {
     PRESENT_PROOF_ACTION_TOPIC,
     ISSUE_CREDENTIAL_ACTION_TOPIC,
     MSG_TYPE_OFFER_CREDENTIAL_V2,
+    MSG_TYPE_OFFER_CREDENTIAL_V3,
+    MSG_TYPE_PROPOSE_CREDENTIAL_V2,
+    MSG_TYPE_PROPOSE_CREDENTIAL_V3,
     ATTACH_FORMAT_CREDENTIAL_MANIFEST,
     ATTACH_FORMAT_CREDENTIAL_FULFILLMENT,
     ATTACH_FORMAT_ISSUE_CREDENTIAL,
@@ -284,57 +287,19 @@ export class IssuerAdapter extends Adapter {
         return signVCs
     }
 
-    async acceptCredentialProposal({comment, manifest, fulfillment} = {}, timeout) {
+    async acceptCredentialProposal({comment, manifest, fulfillment, noChallenge=false} = {}, timeout) {
         return await waitForEvent(this.agent, {
             topic: ISSUE_CREDENTIAL_ACTION_TOPIC,
             timeout,
             callback: async (payload) => {
-                let {piid} = payload.Properties
-                let attachID1 = uuid()
-                let attachID2 = uuid()
-
-                let formats = []
-                let attachments = []
-
-                if (manifest) {
-                    let attachId = uuid()
-                    formats.push({
-                        "attach_id": attachId,
-                        "format": ATTACH_FORMAT_CREDENTIAL_MANIFEST
-                    })
-                    attachments.push({
-                        "@id": attachId,
-                        "mime-type": "application/json",
-                        data: {
-                            json: manifest
-                        }
-                    },)
+                if (payload.Message.type && payload.Message.type == MSG_TYPE_PROPOSE_CREDENTIAL_V3) {
+                    await acceptProposalV3(this.agent, payload, {manifest, fulfillment, comment, noChallenge})
+                } else if (payload.Message['@type'] && payload.Message['@type']  == MSG_TYPE_PROPOSE_CREDENTIAL_V2) {
+                    await acceptProposalV2(this.agent, payload, {manifest, fulfillment, comment, noChallenge})
+                } else {
+                    console.error('unexpected message type received')
+                    return
                 }
-
-                if (fulfillment) {
-                    let attachId = uuid()
-                    formats.push({
-                        "attach_id": attachId,
-                        "format": ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
-                    })
-                    attachments.push({
-                        "@id": attachId,
-                        "mime-type": "application/json",
-                        data: {
-                            json: fulfillment
-                        }
-                    },)
-                }
-
-                await this.agent.issuecredential.acceptProposal({
-                    piid,
-                    offer_credential: {
-                        "@type": MSG_TYPE_OFFER_CREDENTIAL_V2,
-                        comment,
-                        formats,
-                        "offers~attach": attachments,
-                    }
-                });
             }
         })
     }
@@ -350,45 +315,15 @@ export class IssuerAdapter extends Adapter {
 
                 if (Message["@type"] || Message["@id"]) {
                     attachment = findAttachmentByFormat(Message.formats, Message["requests~attach"],"application/ld+json")
+                    return await acceptRequestCredentialV2(this.agent, piid, {credential, redirect})
                 } else {
                     if (!Message.attachments && Message.attachments.length === 0) {
                         throw "no didcomm v2 attachments"
                     }
 
                     attachment = Message.attachments[0].data.json
+                    return await acceptRequestCredentialV3(this.agent, piid, {credential, redirect})
                 }
-
-                let attachID = uuid()
-                let icFormats = []
-                let icAttachments = []
-
-                if (credential) {
-                    icFormats.push({
-                        "attach_id": attachID,
-                        "format": ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
-                    })
-
-                    icAttachments.push({
-                        "@id": attachID,
-                        "mime-type": "application/json",
-                        data: {
-                            json: credential
-                        }
-                    },)
-                }
-
-                return this.agent.issuecredential.acceptRequest({
-                    piid,
-                    issue_credential: {
-                        "@type": "https://didcomm.org/issue-credential/2.0/issue-credential",
-                        formats: icFormats,
-                        "credentials~attach": icAttachments,
-                        "~web-redirect": {
-                            status: "OK",
-                            url: redirect
-                        },
-                    }
-                });
             }
         })
 
@@ -425,4 +360,163 @@ export class IssuerAdapter extends Adapter {
         })
     }
 
+}
+
+async function acceptProposalV2(agent, payload, {manifest, fulfillment, comment, noChallenge}){
+    let {piid} = payload.Properties
+    let attachID1 = uuid()
+    let attachID2 = uuid()
+
+    let formats = []
+    let attachments = []
+
+    if (manifest) {
+        let attachId = uuid()
+        formats.push({
+            "attach_id": attachId,
+            "format": ATTACH_FORMAT_CREDENTIAL_MANIFEST
+        })
+        attachments.push({
+            "@id": attachId,
+            "mime-type": "application/json",
+            data: {
+                json: {
+                    credential_manifest: manifest,
+                    options:{
+                        challenge: noChallenge ? undefined :uuid(),
+                        domain: noChallenge ? undefined :uuid(),
+                    }
+                }
+            }
+        },)
+    }
+
+    if (fulfillment) {
+        let attachId = uuid()
+        formats.push({
+            "attach_id": attachId,
+            "format": ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
+        })
+        attachments.push({
+            "@id": attachId,
+            "mime-type": "application/json",
+            data: {
+                json: fulfillment
+            }
+        },)
+    }
+
+    await agent.issuecredential.acceptProposal({
+        piid,
+        offer_credential: {
+            "@type": MSG_TYPE_OFFER_CREDENTIAL_V2,
+            comment,
+            formats,
+            "offers~attach": attachments,
+        }
+    });
+}
+
+
+async function acceptProposalV3(agent, payload, {manifest, fulfillment, noChallenge}){
+    let {piid} = payload.Properties
+
+    let attachments = []
+
+    if (manifest) {
+        attachments.push({
+            id: uuid(),
+            "media_type":"application/json",
+            format:ATTACH_FORMAT_CREDENTIAL_MANIFEST,
+            data: {
+                json: {
+                    credential_manifest: manifest,
+                    options:{
+                        challenge: noChallenge ? undefined :uuid(),
+                        domain: noChallenge ? undefined :uuid(),
+                    }
+                }
+            }
+        })
+    }
+
+    if (fulfillment) {
+        attachments.push({
+            id: uuid(),
+            "media_type":"application/json",
+            format:ATTACH_FORMAT_CREDENTIAL_FULFILLMENT,
+            data: {
+                json: fulfillment
+            }
+        })
+    }
+
+    await agent.issuecredential.acceptProposal({
+        piid,
+        offer_credential: {
+            type: MSG_TYPE_OFFER_CREDENTIAL_V3,
+            attachments: attachments,
+        }
+    });
+}
+
+async function acceptRequestCredentialV2(agent, piid, {credential, redirect}){
+    let attachID = uuid()
+    let icFormats = []
+    let icAttachments = []
+
+    if (credential) {
+        icFormats.push({
+            "attach_id": attachID,
+            "format": ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
+        })
+
+        icAttachments.push({
+            "@id": attachID,
+            "mime-type": "application/json",
+            data: {
+                json: credential
+            }
+        },)
+    }
+
+    await agent.issuecredential.acceptRequest({
+        piid,
+        issue_credential: {
+            "@type": "https://didcomm.org/issue-credential/2.0/issue-credential",
+            formats: icFormats,
+            "credentials~attach": icAttachments,
+            "~web-redirect": {
+                status: "OK",
+                url: redirect
+            },
+        }
+    });
+}
+
+async function acceptRequestCredentialV3(agent, piid, {credential, redirect}){
+    let attachments = []
+
+    if (credential) {
+        attachments.push({
+            id: uuid(),
+            "media_type":"application/json",
+            format:ATTACH_FORMAT_CREDENTIAL_FULFILLMENT,
+            data: {
+                json: credential
+            }
+        })
+    }
+
+    await agent.issuecredential.acceptRequest({
+        piid,
+        issue_credential: {
+            type: "https://didcomm.org/issue-credential/3.0/issue-credential",
+            attachments: attachments,
+            "web-redirect": {
+                status: "OK",
+                url: redirect
+            },
+        }
+    });
 }

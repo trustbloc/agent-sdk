@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import {expect} from "chai";
 
-import {getJSONTestData, loadFrameworks, retryWithDelay, testConfig, wait} from "../common";
+import {getJSONTestData, loadFrameworks, retryWithDelay, testConfig, wait, prepareTestManifest} from "../common";
 import {
     connectToMediator,
     CredentialManager,
@@ -165,8 +165,22 @@ before(async function () {
     issuerPubDID = await adapterPubDID(issuerV2, issuerRouterDoc, issuerRouterConn, "issuerServiceID")
 
     // pre-load wallet with university degree and permanent resident card credentials.
+    const manifest = getJSONTestData('allvcs-cred-manifest.json')
+    const descriptorMap = [
+        {
+            "id": "udc_output",
+            "format": "ldp_vc",
+            "path": "$[0]"
+        },
+        {
+            "id": "prc_output",
+            "format": "ldp_vc",
+            "path": "$[1]"
+        }
+    ]
     let credentialManager = new CredentialManager({agent: walletUserAgentV2, user: WALLET_WACI_V2_USER})
-    await credentialManager.save(auth, {credentials: [sampleUDC, samplePRC]})
+    await credentialManager.save(auth, {credentials: [sampleUDC, samplePRC]}, {manifest, descriptorMap})
+
     let {contents} = await credentialManager.getAll(auth)
     expect(contents).to.not.empty
     expect(Object.keys(contents)).to.have.lengthOf(2)
@@ -186,11 +200,10 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
     let fulfillmentVP = getJSONTestData('cred-fulfillment-udc-vp.json')
 
     let credentialInteraction
-    it('user accepts out-of-band invitation from issuer and initiates WACI credential interaction - presentation exchange flow', async function () {
-        const manifestJSON = getJSONTestData("cred-manifest-withdef.json")
+    it('user accepts out-of-band V2 invitation from issuer and initiates WACI credential interaction - presentation exchange flow', async function () {
+        const manifestJSON = prepareTestManifest("cred-manifest-withdef.json")
 
         let invitation = await issuerV2.createInvitation({goal_code: 'streamlined-vc', from:issuerPubDID})
-        issuerV2.acceptExchangeRequest()
         issuerV2.acceptCredentialProposal({
             comment: sampleComment,
             manifest: manifestJSON,
@@ -213,6 +226,7 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
             error
         } = credentialInteraction
 
+
         expect(threadID).to.not.empty
         expect(manifest).to.not.empty
         expect(manifest.id).to.be.equal(manifestJSON.id)
@@ -220,22 +234,23 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
         expect(presentations).to.not.empty
         expect(normalized).to.not.empty
         expect(threadID).to.not.empty
-        expect(domain).to.be.equal(manifestJSON.options.domain)
-        expect(challenge).to.be.equal(manifestJSON.options.challenge)
-        expect(comment).to.be.equal(sampleComment)
+        expect(domain).to.not.empty
+        expect(challenge).to.not.empty
         expect(error).to.be.undefined
     })
 
     it('user gives consent and concludes credential interaction by providing credential application in request credential message - presentation exchange flow', async function () {
-        let {threadID, presentations} = credentialInteraction
+        let {threadID, presentations, manifest} = credentialInteraction
 
         // setup issuer.
         fulfillmentVP.verifiableCredential[0].id = `http://example.edu/credentials/${uuid()}`
+        fulfillmentVP.credential_fulfillment.manifest_id = manifest.id
+
         let acceptCredential = issuerV2.acceptRequestCredential({credential: fulfillmentVP})
 
         // complete credential interaction.
         let didcomm = new DIDComm({agent: walletUserAgentV2, user: WALLET_WACI_V2_USER})
-        const response = await didcomm.completeCredentialIssuance(auth, threadID, presentations[0], {controller}, {
+        const response = await didcomm.completeCredentialIssuance(auth, threadID, presentations[0], manifest, {controller}, {
             waitForDone: true,
             autoAccept: true
         })
@@ -260,9 +275,7 @@ describe('Wallet DIDComm V2 WACI credential share flow', async function () {
         await wait(3000) // wait to make sure orb DID of invID was created in ORB sidetree
 
         let invitation = await rpV2.createInvitation({goal_code: 'streamlined-vp', from:rpPubDID})
-        console.debug("rpV2.createInvitation() called, invitation:"+JSON.stringify(invitation))
         rpV2.acceptExchangeRequest()
-        console.debug("debug acceptExchangeRequest() called")
         rpV2.acceptPresentationProposal({
             "id": "22c77155-edf2-4ec5-8d44-b393b4e4fa38",
             "input_descriptors": [{
@@ -286,10 +299,8 @@ describe('Wallet DIDComm V2 WACI credential share flow', async function () {
 
         const redirectURL = "http://example.com/success"
         let acceptPresentation = rpV2.acceptPresentProof({redirectURL})
-        console.debug("acceptPresentProof() called, acceptPresentation:"+JSON.stringify(acceptPresentation, undefined, 2))
         let didcomm = new DIDComm({agent: walletUserAgentV2, user: WALLET_WACI_V2_USER})
         const response = await didcomm.completeCredentialShare(auth, threadID, presentations, {controller}, {waitForDone: true})
-        console.debug("completeCredentialShare() called, response:"+JSON.stringify(response, undefined, 2))
 
         expect(response.status).to.be.equal("OK")
 
@@ -311,9 +322,7 @@ describe('Wallet DIDComm V2 WACI credential share flow', async function () {
         })
 
         let didcomm = new DIDComm({agent: walletUserAgentV2, user: WALLET_WACI_V2_USER})
-        console.debug("before test - about to call initiateCredentialShare(), invID: "+ rpPubDID +", invitation: " + JSON.stringify(invitation))
         credentialInteraction = await didcomm.initiateCredentialShare(auth, invitation, {userAnyRouterConnection: true})
-        console.debug("debug initiateCredentialShare() called, credentialInteraction:"+JSON.stringify(credentialInteraction, undefined, 2))
 
         let {threadID, presentations} = credentialInteraction
         expect(threadID).to.not.empty
@@ -327,9 +336,7 @@ describe('Wallet DIDComm V2 WACI credential share flow', async function () {
         let declinePresentProof = rpV2.declinePresentProof({redirectURL})
         let didcomm = new DIDComm({agent: walletUserAgentV2, user: WALLET_WACI_V2_USER})
 
-        console.debug("completeCredentialShare() called, presentations:"+JSON.stringify(presentations, undefined, 2))
         const response = await didcomm.completeCredentialShare(auth, threadID, presentations, {controller}, {waitForDone: true, autoAccept: true})
-        console.debug("completeCredentialShare() called, response:"+JSON.stringify(response, undefined, 2))
 
         expect(response.status).to.be.equal("FAIL")
 

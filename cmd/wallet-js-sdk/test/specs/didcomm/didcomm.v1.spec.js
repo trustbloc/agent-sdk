@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import {expect} from "chai";
 
-import {getJSONTestData, loadFrameworks, retryWithDelay, testConfig} from "../common";
+import {getJSONTestData, loadFrameworks, retryWithDelay, testConfig, prepareTestManifest} from "../common";
 import {
     connectToMediator,
     CredentialManager,
@@ -76,8 +76,21 @@ before(async function () {
     controller = docres.didDocument.id
 
     // pre-load wallet with university degree and permanent resident card credentials.
+    const manifest = getJSONTestData('allvcs-cred-manifest.json')
+    const descriptorMap = [
+        {
+            "id": "udc_output",
+            "format": "ldp_vc",
+            "path": "$[0]"
+        },
+        {
+            "id": "prc_output",
+            "format": "ldp_vc",
+            "path": "$[1]"
+        }
+    ]
     let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_WACI_USER})
-    await credentialManager.save(auth, {credentials: [sampleUDC, samplePRC]})
+    await credentialManager.save(auth, {credentials: [sampleUDC, samplePRC]}, {manifest, descriptorMap})
     let {contents} = await credentialManager.getAll(auth)
     expect(contents).to.not.empty
     expect(Object.keys(contents)).to.have.lengthOf(2)
@@ -175,7 +188,7 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
 
     let credentialInteraction
     it('user accepts out-of-band invitation from issuer and initiates WACI credential interaction - presentation exchange flow', async function () {
-        const manifestJSON =  getJSONTestData("cred-manifest-withdef.json")
+        const manifestJSON =  prepareTestManifest("cred-manifest-withdef.json")
 
         let invitation = await issuer.createInvitation({goal_code: 'streamlined-vc'})
         issuer.acceptExchangeRequest()
@@ -197,22 +210,23 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
         expect(presentations).to.not.empty
         expect(normalized).to.not.empty
         expect(threadID).to.not.empty
-        expect(domain).to.be.equal(manifestJSON.options.domain)
-        expect(challenge).to.be.equal(manifestJSON.options.challenge)
+        expect(domain).to.not.empty
+        expect(challenge).to.not.empty
         expect(comment).to.be.equal(sampleComment)
         expect(error).to.be.undefined
     })
 
     it('user gives consent and concludes credential interaction by providing credential application in request credential message - presentation exchange flow', async function () {
-        let {threadID, presentations} = credentialInteraction
+        let {threadID, presentations, manifest} = credentialInteraction
 
         // setup issuer.
         fulfillmentVP.verifiableCredential[0].id = `http://example.edu/credentials/${uuid()}`
+        fulfillmentVP.credential_fulfillment.manifest_id = manifest.id
         let acceptCredential = issuer.acceptRequestCredential({credential:fulfillmentVP})
 
         // complete credential interaction.
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
-        const response = await didcomm.completeCredentialIssuance(auth, threadID, presentations[0], {controller}, {waitForDone: true, autoAccept: true})
+        const response = await didcomm.completeCredentialIssuance(auth, threadID, presentations[0], manifest, {controller}, {waitForDone: true, autoAccept: true})
         expect(response.status).to.be.equal("OK")
 
         // verify if issuer got expected message.
@@ -227,7 +241,7 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
     })
 
     it('user accepts out-of-band invitation from issuer and initiates WACI credential interaction - DID Auth flow', async function () {
-        const manifestJSON =  getJSONTestData("cred-manifest-withoptions.json")
+        const manifestJSON =  prepareTestManifest("cred-manifest-withoptions.json")
 
         let invitation = await issuer.createInvitation({goal_code: 'streamlined-vc'})
         issuer.acceptExchangeRequest()
@@ -248,23 +262,24 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
         expect(fulfillment).to.not.empty
         expect(presentations).to.not.empty
         expect(normalized).to.be.undefined
-        expect(domain).to.be.equal(manifestJSON.options.domain)
-        expect(challenge).to.be.equal(manifestJSON.options.challenge)
+        expect(domain).to.not.empty
+        expect(challenge).to.not.empty
         expect(comment).to.be.equal(sampleComment)
         expect(error).to.be.undefined
     })
 
     it('user gives consent and concludes credential interaction by providing credential application in request credential message (redirect flow) - DID Auth flow', async function () {
-        let {threadID, presentations} = credentialInteraction
+        let {threadID, presentations, manifest} = credentialInteraction
 
         // setup issuer.
         const redirect = "https://example.com/success"
         fulfillmentVP.verifiableCredential[0].id  = `http://example.edu/credentials/${uuid()}`
+        fulfillmentVP.credential_fulfillment.manifest_id = manifest.id
         let acceptCredential = issuer.acceptRequestCredential({credential:fulfillmentVP, redirect})
 
         // complete credential interaction.
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
-        const response = await didcomm.completeCredentialIssuance(auth, threadID, presentations[0], {controller}, {waitForDone: true, autoAccept: true})
+        const response = await didcomm.completeCredentialIssuance(auth, threadID, presentations[0], manifest, {controller}, {waitForDone: true, autoAccept: true})
         expect(response.status).to.be.equal("OK")
         expect(response.url).to.be.equal(redirect)
 
@@ -281,7 +296,7 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
     })
 
     it('user accepts out-of-band invitation from issuer and initiates WACI credential interaction - Basic flow', async function () {
-        const manifestJSON =  getJSONTestData("cred-manifest.json")
+        const manifestJSON =  prepareTestManifest("cred-manifest.json")
 
         let invitation = await issuer.createInvitation({goal_code: 'streamlined-vc'})
         issuer.acceptExchangeRequest()
@@ -289,6 +304,7 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
             comment: sampleComment,
             manifest: manifestJSON,
             fulfillment:fulfillmentJSON,
+            noChallenge: true,
         })
 
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
@@ -309,15 +325,16 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
     })
 
     it('user gives consent and concludes credential interaction by providing credential application in request credential message - Basic flow', async function () {
-        let {threadID, presentations} = credentialInteraction
+        let {threadID, presentations, manifest} = credentialInteraction
 
         // setup issuer.
         fulfillmentVP.verifiableCredential[0].id  = `http://example.edu/credentials/${uuid()}`
+        fulfillmentVP.credential_fulfillment.manifest_id = manifest.id
         let acceptCredential = issuer.acceptRequestCredential({credential:fulfillmentVP})
 
         // complete credential interaction.
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
-        const response = await didcomm.completeCredentialIssuance(auth, threadID, null, {controller}, {waitForDone: true, autoAccept: true})
+        const response = await didcomm.completeCredentialIssuance(auth, threadID, null, manifest, {controller}, {waitForDone: true, autoAccept: true})
         expect(response.status).to.be.equal("OK")
 
         // verify if issuer got expected message.
@@ -337,7 +354,7 @@ describe('Wallet DIDComm WACI credential issuance flow - failure scenarios', asy
     const sampleComment = "Offer to issue Drivers License for Mr.Smith"
 
     it('user accepts out-of-band invitation from issuer, initiates WACI credential interaction and issuer declines proposal', async function () {
-        const manifestJSON =  getJSONTestData("cred-manifest-withdef.json")
+        const manifestJSON =  prepareTestManifest("cred-manifest-withdef.json")
         const redirectURL = "https://example.com/error"
 
         let invitation = await issuer.createInvitation({goal_code: 'streamlined-vc'})
@@ -368,7 +385,7 @@ describe('Wallet DIDComm WACI credential issuance flow - failure scenarios', asy
 
     let credentialInteraction
     it('user accepts out-of-band invitation from issuer and initiates WACI credential interaction', async function () {
-        const manifestJSON =  getJSONTestData("cred-manifest-withdef.json")
+        const manifestJSON =  prepareTestManifest("cred-manifest-withdef.json")
 
         let invitation = await issuer.createInvitation({goal_code: 'streamlined-vc'})
         issuer.acceptExchangeRequest()
@@ -390,14 +407,14 @@ describe('Wallet DIDComm WACI credential issuance flow - failure scenarios', asy
         expect(presentations).to.not.empty
         expect(normalized).to.not.empty
         expect(threadID).to.not.empty
-        expect(domain).to.be.equal(manifestJSON.options.domain)
-        expect(challenge).to.be.equal(manifestJSON.options.challenge)
+        expect(domain).to.not.empty
+        expect(challenge).to.not.empty
         expect(comment).to.be.equal(sampleComment)
         expect(error).to.be.undefined
     })
 
     it('user gives consent by submitting credential application but issuer declines it', async function () {
-        let {threadID, presentations} = credentialInteraction
+        let {threadID, presentations, manifest} = credentialInteraction
 
         // setup issuer.
         const redirectURL = "https://example.com/error"
@@ -405,7 +422,7 @@ describe('Wallet DIDComm WACI credential issuance flow - failure scenarios', asy
 
         // complete credential interaction.
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
-        const response = await didcomm.completeCredentialIssuance(auth, threadID, presentations[0], {controller}, {waitForDone: true, autoAccept: true})
+        const response = await didcomm.completeCredentialIssuance(auth, threadID, presentations[0], manifest, {controller}, {waitForDone: true, autoAccept: true})
 
         expect(response).to.not.empty
         const {status, url} = response

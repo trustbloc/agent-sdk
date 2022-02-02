@@ -16,6 +16,9 @@ export const PRESENT_PROOF_ACTION_TOPIC = "present-proof_actions"
 export const ISSUE_CREDENTIAL_STATE_TOPIC = "issue-credential_states"
 export const ISSUE_CREDENTIAL_ACTION_TOPIC = "issue-credential_actions"
 export const MSG_TYPE_OFFER_CREDENTIAL_V2 = "https://didcomm.org/issue-credential/2.0/offer-credential"
+export const MSG_TYPE_OFFER_CREDENTIAL_V3 = "https://didcomm.org/issue-credential/3.0/offer-credential"
+export const MSG_TYPE_PROPOSE_CREDENTIAL_V2 = "https://didcomm.org/issue-credential/2.0/propose-credential"
+export const MSG_TYPE_PROPOSE_CREDENTIAL_V3 = "https://didcomm.org/issue-credential/3.0/propose-credential"
 export const ATTACH_FORMAT_CREDENTIAL_MANIFEST = "dif/credential-manifest/manifest@v1.0"
 export const ATTACH_FORMAT_CREDENTIAL_FULFILLMENT = "dif/credential-manifest/fulfillment@v1.0"
 export const ATTACH_FORMAT_ISSUE_CREDENTIAL = "aries/ld-proof-vc@v1.0"
@@ -73,5 +76,13 @@ export const retryWithDelay = async (
         await wait(interval)
         return retryWithDelay(fn, (retries - 1), interval, finalErr);
     }
+}
+
+// read manifest and replace manifest ID so that same file can be reused for many tests.
+export const prepareTestManifest = (file) => {
+    const manifest = getJSONTestData(file)
+    manifest.id = uuid()
+
+    return manifest
 }
 

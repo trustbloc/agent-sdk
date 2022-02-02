@@ -5,7 +5,7 @@
       "format": "ldp_vc",
       "id": "udc_output",
       "path": "$.verifiableCredential[0]"
-    }], "id": "a30e3b91-fb77-4d22-95fa-871689c322e2", "manifest_id": "dcc75a16-19f5-4273-84ce-4da69ee2b7fe"
+    }], "id": "a30e3b91-fb77-4d22-95fa-871689c322e2", "manifest_id": "mdd75a16-19f5-4273-84ce-5da69ee2b9gf"
   },
   "proof": {
     "created": "2022-01-14T13:53:49.219598-05:00",

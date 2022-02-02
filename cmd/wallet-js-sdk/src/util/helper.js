@@ -198,6 +198,22 @@ export const findAttachmentByFormat = (formats, attachments, format) => {
 };
 
 /**
+ *  Finds attachment by given format.
+ *  Supporting Attachment Format from DIDComm V2.
+ *
+ *  Note: Currently finding only one attachment per format.
+ */
+export const findAttachmentByFormatV2 = (attachments, format) => {
+  const attachmentsFound = jp.query(attachments, `$[?(@.format=="${format}")]`);
+
+  if (attachmentsFound.length == 1) {
+    return attachmentsFound[0].data.json;
+  }
+
+  return;
+};
+
+/**
  *  Reads out-of-band invitation goal code.
  *  Supports DIDComm V1 & V2
  */
