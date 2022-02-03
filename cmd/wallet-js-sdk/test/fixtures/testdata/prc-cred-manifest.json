@@ -1,0 +1,78 @@
+{
+  "id": "prc75a16-19f5-4273-84ce-0da69ee2b3rt",
+  "version": "0.1.0",
+  "issuer": {
+    "id": "did:example:123?linked-domains=3",
+    "name": "Example Authority",
+    "styles": {}
+  },
+  "output_descriptors": [
+    {
+      "id": "prc_output",
+      "schema": "https://w3id.org/citizenship/v1",
+      "display": {
+        "title": {
+          "path": [
+            "$.name",
+            "$.vc.name"
+          ],
+          "schema": {
+            "type": "string"
+          },
+          "fallback": "Permanent Resident Card"
+        },
+        "subtitle": {
+          "path": [
+            "$.description",
+            "$.vc.description"
+          ],
+          "schema": {
+            "type": "string"
+          },
+          "fallback": ""
+        },
+        "description": {
+          "text": "PR card of John Smith."
+        },
+        "properties": [
+          {
+            "path": [
+              "$.credentialSubject.givenName"
+            ],
+            "schema": {
+              "type": "string"
+            },
+            "fallback": "Not Applicable",
+            "label": "Card Holder's first name"
+          },
+          {
+            "path": [
+              "$.credentialSubject.familyName"
+            ],
+            "schema": {
+              "type": "string"
+            },
+            "fallback": "Unknown",
+            "label": "Card Holder's family name"
+          }
+        ]
+      },
+      "styles": {
+        "thumbnail": {
+          "uri": "http://example-university.org/logo.png",
+          "alt": "Example University logo"
+        },
+        "hero": {
+          "uri": "http://example-university.org/hero.png",
+          "alt": "Example University students in graduation ceremony"
+        },
+        "background": {
+          "color": "#ff0000"
+        },
+        "text": {
+          "color": "#d4d400"
+        }
+      }
+    }
+  ]
+}

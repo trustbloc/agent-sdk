@@ -9,7 +9,9 @@ import {
   findAttachmentByFormat,
   normalizePresentationSubmission,
   UniversalWallet,
+  CredentialManager,
   waitForEvent,
+  findAttachmentByFormatV2,
 } from "..";
 
 import axios from "axios";
@@ -31,9 +33,9 @@ const ATTACH_FORMAT_CREDENTIAL_MANIFEST =
 const ATTACH_FORMAT_CREDENTIAL_FULFILLMENT =
   "dif/credential-manifest/fulfillment@v1.0";
 const MSG_TYPE_ISSUE_CREDENTIAL_V2 =
-    "https://didcomm.org/issue-credential/2.0/issue-credential";
+  "https://didcomm.org/issue-credential/2.0/issue-credential";
 const MSG_TYPE_ISSUE_CREDENTIAL_V3 =
-    "https://didcomm.org/issue-credential/3.0/issue-credential";
+  "https://didcomm.org/issue-credential/3.0/issue-credential";
 const MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2 =
   "https://didcomm.org/issue-credential/2.0/problem-report";
 const MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V3 =
@@ -60,6 +62,7 @@ export class DIDComm {
    */
   constructor({ agent, user } = {}) {
     this.agent = agent;
+    this.user = user;
     this.wallet = new UniversalWallet({ agent: this.agent, user });
   }
 
@@ -192,7 +195,6 @@ export class DIDComm {
     },
     { from, timeout } = {}
   ) {
-
     let { presentationRequest } = await this.wallet.proposePresentation(
       auth,
       invitation,
@@ -229,7 +231,8 @@ export class DIDComm {
       };
     };
 
-    let {attachment, threadID} = getPresentationAttachmentAndThreadID(presentationRequest)
+    let { attachment, threadID } =
+      getPresentationAttachmentAndThreadID(presentationRequest);
     const query = attachment.map(_query);
     const { results } = await this.wallet.query(auth, query);
 
@@ -394,10 +397,10 @@ export class DIDComm {
         routerConnections:
           routerConnections.length == 0 && userAnyRouterConnection
             ? [
-              await getMediatorConnections(this.agent, {
-                single: true,
-              }),
-            ]
+                await getMediatorConnections(this.agent, {
+                  single: true,
+                }),
+              ]
             : routerConnections,
         reuseConnection,
         reuseAnyConnection,
@@ -415,7 +418,8 @@ export class DIDComm {
     );
 
     if (
-      offerCredential["@type"] === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2 ||
+      offerCredential["@type"] ===
+        MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2 ||
       offerCredential["type"] === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V3
     ) {
       let web_redirect = offerCredential["web-redirect"];
@@ -429,32 +433,32 @@ export class DIDComm {
       return { error: { status, url, code } };
     }
 
-    let manifest
+    let manifestAttach;
 
     if (offerCredential["@type"] || offerCredential["@id"]) {
       // find manifest
       // TODO : for now, assuming there will only be one manifest per offer credential msg
-      manifest = findAttachmentByFormat(
+      manifestAttach = findAttachmentByFormat(
         offerCredential.formats,
         offerCredential["offers~attach"],
         ATTACH_FORMAT_CREDENTIAL_MANIFEST
       );
     } else {
-      if (! offerCredential.attachments || offerCredential.attachments.length === 0) {
-        throw "no didcomm v2 attachments"
+      if (
+        !offerCredential.attachments ||
+        offerCredential.attachments.length === 0
+      ) {
+        throw "no didcomm v2 attachments";
       }
 
-      for (const attachment of offerCredential.attachments) {
-        let attachmentData = attachment.data.json
-
-        if (attachmentData.presentation_definition) {
-          manifest = attachmentData
-        }
-
-      }
+      manifestAttach = findAttachmentByFormatV2(
+        offerCredential.attachments,
+        ATTACH_FORMAT_CREDENTIAL_MANIFEST
+      );
     }
 
-    const { presentation_definition, options } = manifest;
+    const { credential_manifest, options } = manifestAttach;
+    const { presentation_definition } = credential_manifest;
     const { domain, challenge } = options ? options : {};
 
     // perform presentation-exchange or DID Auth.
@@ -485,7 +489,7 @@ export class DIDComm {
       presentations = results;
     }
 
-    let fulfillment
+    let fulfillment;
 
     if (offerCredential["@type"] || offerCredential["@id"]) {
       // find fulfillment
@@ -496,17 +500,17 @@ export class DIDComm {
         ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
       );
     } else {
-      if (! offerCredential.attachments || offerCredential.attachments.length === 0) {
-        throw "no didcomm v2 attachments"
+      if (
+        !offerCredential.attachments ||
+        offerCredential.attachments.length === 0
+      ) {
+        throw "no didcomm v2 attachments";
       }
 
-      for (const attachment of offerCredential.attachments) {
-        let attachmentData = attachment.data.json
-
-        if (attachmentData.credential_fulfillment) {
-          fulfillment = attachmentData
-        }
-      }
+      fulfillment = findAttachmentByFormatV2(
+        offerCredential.attachments,
+        ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
+      );
     }
 
     // TODO read descriptors from manifests & fulfillments for credential preview in UI. (Pending support in vcwallet).
@@ -521,14 +525,14 @@ export class DIDComm {
 
     if (offerCredential.pthid) {
       // afgo is using the pthid instead of thid for piID, if pthid is present
-      thid = offerCredential.pthid
+      thid = offerCredential.pthid;
     } else {
       thid = offerCredential["~thread"].thid;
     }
 
     return {
       threadID: thid,
-      manifest,
+      manifest: credential_manifest,
       fulfillment,
       presentations,
       normalized,
@@ -581,6 +585,7 @@ export class DIDComm {
     auth,
     threadID,
     presentation,
+    manifest,
     {
       controller,
       verificationMethod,
@@ -612,7 +617,7 @@ export class DIDComm {
       signedPresentation = signed.presentation;
     }
 
-    let credentials;
+    let fulfillment;
     if (autoAccept) {
       waitForEvent(this.agent, {
         topic: ISSUE_CREDENTIAL_ACTION_TOPIC,
@@ -626,33 +631,35 @@ export class DIDComm {
             type = Message.type;
           }
 
-          if (type === MSG_TYPE_ISSUE_CREDENTIAL_V2 || type === MSG_TYPE_ISSUE_CREDENTIAL_V3) {
+          if (
+            type === MSG_TYPE_ISSUE_CREDENTIAL_V2 ||
+            type === MSG_TYPE_ISSUE_CREDENTIAL_V3
+          ) {
             await this.agent.issuecredential.acceptCredential({
               piid,
               skipStore: true,
             });
 
-            let attachments
+            let attachments;
 
             if (Message["credentials~attach"]) {
-              attachments = Message["credentials~attach"]
+              fulfillment = findAttachmentByFormat(
+                Message.formats,
+                Message["credentials~attach"],
+                ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
+              );
             } else if (Message["attachments"]) {
-              attachments = Message["attachments"]
+              fulfillment = findAttachmentByFormatV2(
+                Message["attachments"],
+                ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
+              );
             } else {
-              throw "no attachments found in issue-credential message"
+              throw "no attachments found in issue-credential message";
             }
-
-            credentials = jp.query(
-              attachments,
-              `$[*].data.json.verifiableCredential[*]`
-            );
-
-            if (credentials.length === 0) {
-              throw "no credentials found in attachments"
-            }
-
-          } else if (type === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2 ||
-              type === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V3) {
+          } else if (
+            type === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V2 ||
+            type === MSG_TYPE_ISSUE_CREDENTIAL_PROBLEM_REPORT_V3
+          ) {
             await this.agent.issuecredential.acceptProblemReport({
               piid,
             });
@@ -672,22 +679,19 @@ export class DIDComm {
       return response;
     }
 
-    // expecting only one credential for now,  TODO it has to be in credential fulfillment
-    if (credentials.length === 0) {
+    // TODO verify credential fulfillment signature
+    if (!fulfillment) {
       throw "no incoming credentials found";
     }
 
-    const contentType = contentTypes.CREDENTIAL;
-    await Promise.all(
-      credentials.map(
-        async (content) =>
-          await this.wallet.add({
-            auth,
-            contentType,
-            content,
-            collectionID,
-          })
-      )
+    let credentialManager = new CredentialManager({
+      agent: this.agent,
+      user: this.user,
+    });
+    await credentialManager.save(
+      auth,
+      { presentation: fulfillment },
+      { manifest, collection: collectionID }
     );
 
     return response;
@@ -700,32 +704,50 @@ export class DIDComm {
  * @param presentationRequest instance
  */
 function getPresentationAttachmentAndThreadID(presentationRequest) {
-    let attachment, threadID
-    if (presentationRequest["request_presentations~attach"]) { // didcomm v1
-        attachment = presentationRequest["request_presentations~attach"]
-        console.log("GetPresentationAttachmentAndThreadID - didcomm v1 attachment key set: "+attachment)
-    } else if (presentationRequest["attachments"]) { // didcomm v2
-        attachment = presentationRequest["attachments"]
-        console.log("GetPresentationAttachmentAndThreadID - didcomm v2 attachment key set: "+attachment)
-    } else {
-        console.error("GetPresentationAttachmentAndThreadID - unrecognized presentationRequest object: '"+ JSON.stringify(presentationRequest, undefined, 2) + "'\n   attachments key not found")
-        return
-    }
+  let attachment, threadID;
+  if (presentationRequest["request_presentations~attach"]) {
+    // didcomm v1
+    attachment = presentationRequest["request_presentations~attach"];
+    console.log(
+      "GetPresentationAttachmentAndThreadID - didcomm v1 attachment key set: " +
+        attachment
+    );
+  } else if (presentationRequest["attachments"]) {
+    // didcomm v2
+    attachment = presentationRequest["attachments"];
+    console.log(
+      "GetPresentationAttachmentAndThreadID - didcomm v2 attachment key set: " +
+        attachment
+    );
+  } else {
+    console.error(
+      "GetPresentationAttachmentAndThreadID - unrecognized presentationRequest object: '" +
+        JSON.stringify(presentationRequest, undefined, 2) +
+        "'\n   attachments key not found"
+    );
+    return;
+  }
 
-    if (presentationRequest["~thread"]) { // didcomm v1
-        const { thid } = presentationRequest["~thread"];
-        threadID = thid
-    } else if (presentationRequest["thid"]) { // didcomm v2
-        threadID = presentationRequest["thid"]
-    } else {
-        console.error("GetPresentationAttachmentAndThreadID - unrecognized presentationRequest object: '"+ JSON.stringify(presentationRequest, undefined, 2) + "'\n   thread ID key not found")
-        return
-    }
+  if (presentationRequest["~thread"]) {
+    // didcomm v1
+    const { thid } = presentationRequest["~thread"];
+    threadID = thid;
+  } else if (presentationRequest["thid"]) {
+    // didcomm v2
+    threadID = presentationRequest["thid"];
+  } else {
+    console.error(
+      "GetPresentationAttachmentAndThreadID - unrecognized presentationRequest object: '" +
+        JSON.stringify(presentationRequest, undefined, 2) +
+        "'\n   thread ID key not found"
+    );
+    return;
+  }
 
-    return {
-        attachment: attachment,
-        threadID: threadID
-    }
+  return {
+    attachment: attachment,
+    threadID: threadID,
+  };
 }
 
 /**
@@ -754,20 +776,20 @@ export async function getMediatorConnections(agent, { single } = {}) {
  * @param endpoint edge router endpoint
  * @param isDIDCommV2 flag using DIDComm V2
  */
-export const createInvitationFromRouter = async (endpoint, { isDIDCommV2 = false } = {}) => {
-  let routerInvitationURL = `${endpoint}`
+export const createInvitationFromRouter = async (
+  endpoint,
+  { isDIDCommV2 = false } = {}
+) => {
+  let routerInvitationURL = `${endpoint}`;
   console.log("createInvitationFromRouter isDIDCommV2 ? " + isDIDCommV2);
 
   if (isDIDCommV2 == true) {
-      routerInvitationURL += `${ROUTER_CREATE_INVITATION_V2_PATH}`
+    routerInvitationURL += `${ROUTER_CREATE_INVITATION_V2_PATH}`;
   } else {
-      routerInvitationURL += `${ROUTER_CREATE_INVITATION_PATH}`
+    routerInvitationURL += `${ROUTER_CREATE_INVITATION_PATH}`;
   }
 
-  console.log(
-    "getting invitation from ",
-    `${routerInvitationURL}`
-  );
+  console.log("getting invitation from ", `${routerInvitationURL}`);
   let response = await axios.get(`${routerInvitationURL}`);
   return response.data.invitation;
 };
@@ -783,9 +805,11 @@ export const createInvitationFromRouter = async (endpoint, { isDIDCommV2 = false
 export async function connectToMediator(
   agent,
   mediatorEndpoint,
-  { waitForStateComplete = true, isDIDCommV2 = false } = {},
+  { waitForStateComplete = true, isDIDCommV2 = false } = {}
 ) {
-  let inv = await createInvitationFromRouter(mediatorEndpoint, {isDIDCommV2: isDIDCommV2})
+  let inv = await createInvitationFromRouter(mediatorEndpoint, {
+    isDIDCommV2: isDIDCommV2,
+  });
   let resp = await agent.mediatorclient.connect({
     myLabel: "agent-default-label",
     invitation: inv,
@@ -800,7 +824,11 @@ export async function connectToMediator(
     console.log("router was not registered!");
   }
 
-  console.debug("in connectToMediator() - invitation: "+ JSON.stringify(inv))
+  console.debug("in connectToMediator() - invitation: " + JSON.stringify(inv));
 
-  return {invitiation_id: inv["@id"], invitation_did: inv["from"], router_connection_id: resp.connectionID}
+  return {
+    invitiation_id: inv["@id"],
+    invitation_did: inv["from"],
+    router_connection_id: resp.connectionID,
+  };
 }

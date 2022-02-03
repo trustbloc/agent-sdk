@@ -547,6 +547,10 @@ const pkgs = {
             path: "/vcwallet/request-credential",
             method: "POST",
         },
+        ResolveCredentialManifest: {
+            path: "/vcwallet/resolve-credential-manifest",
+            method: "POST",
+        },
     },
     didclient: {
         CreateOrbDID: {

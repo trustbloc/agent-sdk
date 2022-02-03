@@ -517,6 +517,45 @@ export class UniversalWallet {
       WaitForDoneTimeout,
     });
   }
+
+  /**
+   *  resolves given credential manifest by credential fulfillment or credential.
+   * Supports: https://identity.foundation/credential-manifest/
+   *
+   *  @see {@link https://identity.foundation/credential-manifest|Credential Manifest }
+   *
+   *  @param {String} auth -  authorization token for performing this wallet operation.
+   *  @param {Object} manifest - credential manifest to be used for resolving credential.
+   *
+   *  @param {Object} options - credential or fulfillment to resolve.
+   *
+   *  @param {String} options.fulfillment - (optional) credential fulfillment to be resolved.
+   *  if provided, then this option takes precedence over credential resolve option.
+   *
+   *  @param {Object} options.credential - (optional) raw credential to be resolved (accepting 'ldp_vc' format only).
+   *  This option has to be provided with descriptor ID.
+   *  @param {String} options.credentialID - (optional) ID of the credential to be resolved which is persisted in wallet content store.
+   *  This option has to be provided with descriptor ID.
+   *  @param {String} options.descriptorID - (optional) output descriptor ID of the descriptor from manifest to be used for resolving given
+   *  credential or credentialID. This option is required only when a raw credential or credential ID is to be resolved.
+   *
+   * @returns {Promise<Object>} - promise of object containing request credential status & redirect info or error if operation fails.
+   */
+  async resolveCredential(
+    auth,
+    manifest,
+    { fulfillment, credential, credentialID = "", descriptorID = "" } = {}
+  ) {
+    return await this.agent.vcwallet.resolveCredentialManifest({
+      userID: this.user,
+      auth,
+      manifest,
+      fulfillment,
+      credential,
+      credentialID,
+      descriptorID,
+    });
+  }
 }
 
 /**

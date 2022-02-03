@@ -13,6 +13,9 @@
     "name": "Jayden Doe",
     "spouse": "did:example:c276e12ec21ebfeb1f712ebc6f1"
   },
+
+  "name": "University Degree",
+  "description": "University Degree of Mr.John Smith",
   "expirationDate": "2020-01-01T19:23:24Z",
   "id": "http://example.edu/credentials/11873",
   "issuanceDate": "2010-01-01T19:23:24Z",

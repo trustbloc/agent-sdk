@@ -6,8 +6,8 @@ SPDX-License-Identifier: Apache-2.0
 
 import {expect} from "chai";
 
-import {getJSONTestData, loadFrameworks, retryWithDelay, testConfig, wait} from "../common";
-import {CredentialManager, DIDManager, WalletUser} from "../../../src";
+import {getJSONTestData, loadFrameworks, testConfig, prepareTestManifest, wait} from "../common";
+import {contentTypes, CredentialManager, DIDManager, UniversalWallet, WalletUser} from "../../../src";
 import {IssuerAdapter} from "../mocks/adapters";
 
 var uuid = require('uuid/v4')
@@ -17,8 +17,11 @@ const WALLET_QUERY_USER = 'smith-query-agent'
 const WALLET_DIDCOMM_USER = 'smith-didcomm-agent'
 const VC_ISSUER = 'vc-issuer-agent'
 
+const UDC_DESCRIPTOR_ID = "udc_output"
+const PRC_DESCRIPTOR_ID = "prc_output"
+const VC_FORMAT = "ldp_vc"
 
-let walletUserAgent, issuer, sampleUDC, samplePRC, sampleUDCBBS, sampleFrameDoc, manifest
+let walletUserAgent, issuer, sampleUDC, samplePRC, sampleUDCBBS, sampleFrameDoc, manifestVC
 
 before(async function () {
     this.timeout(0)
@@ -32,7 +35,8 @@ before(async function () {
     let prcVC = getJSONTestData('prc-vc.json')
     sampleUDCBBS = getJSONTestData('udc-bbs-vc.json')
     sampleFrameDoc = getJSONTestData('udc-frame.json')
-    manifest = getJSONTestData('manifest-vc.json')
+    manifestVC = getJSONTestData('manifest-vc.json')
+
 
     // issue sample credentials
     let [vc1, vc2] = await issuer.issue(udcVC, prcVC)
@@ -50,7 +54,7 @@ after(function () {
     issuer ? issuer.destroy() : ''
 });
 
-describe('Credential Manager Tests', async function () {
+describe('Credential Manager data model tests', async function () {
     it('user creates his wallet profile', async function () {
         let walletUser = new WalletUser({agent: walletUserAgent, user: WALLET_USER})
 
@@ -71,20 +75,161 @@ describe('Credential Manager Tests', async function () {
 
     it('user saves a credential into wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
+        const sampleUDCManifest = prepareTestManifest('udc-cred-manifest.json')
 
-        await credentialManager.save(auth, {credential: sampleUDC})
+        await credentialManager.save(auth, {credentials: [sampleUDC]},
+            {
+                manifest: prepareTestManifest('udc-cred-manifest.json'),
+                descriptorMap: [
+                    {
+                        id: UDC_DESCRIPTOR_ID,
+                        format: VC_FORMAT,
+                        path: "$[0]"
+                    }
+                ]
+            })
     })
 
     it('user saves a BBS credential into wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
+        const sampleUDCManifest = getJSONTestData('udc-cred-manifest.json')
 
-        await credentialManager.save(auth, {credential:sampleUDCBBS})
+        await credentialManager.save(auth, {credentials: [sampleUDCBBS]},
+            {
+                manifest: prepareTestManifest('udc-cred-manifest.json'),
+                descriptorMap: [
+                    {
+                        id: UDC_DESCRIPTOR_ID,
+                        format: VC_FORMAT,
+                        path: "$[0]"
+                    }
+                ]
+            })
     })
 
     it('user saves a credential into wallet by verifying', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
+        const samplePRCManifest = getJSONTestData('prc-cred-manifest.json')
 
-        await credentialManager.save(auth, {credential:samplePRC}, {verify: true})
+        await credentialManager.save(auth, {credentials: [samplePRC]}, {
+            verify: true,
+            manifest: prepareTestManifest('prc-cred-manifest.json'),
+            descriptorMap: [
+                {
+                    id: PRC_DESCRIPTOR_ID,
+                    format: VC_FORMAT,
+                    path: "$[0]"
+                }
+            ]
+        })
+    })
+
+    it('user saves fulfillment presentation into wallet', async function () {
+        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
+        const manifest = getJSONTestData('udc-cred-manifest.json')
+        const presentation = getJSONTestData('cred-fulfillment-udc-vp.json')
+
+        await credentialManager.save(auth, {presentation}, {manifest})
+    })
+
+    // confirm number of credential manifests saved in DB
+    it('user verified all credential metadata exists', async function () {
+        const vcwallet = new UniversalWallet({agent: walletUserAgent, user: WALLET_USER});
+
+        let {contents} = await vcwallet.getAll({auth, contentType: contentTypes.METADATA})
+        expect(Object.keys(contents)).to.have.lengthOf(8) // 4 credential metadata + 4 credential manifests
+    })
+
+    it('user gets credential metadata by credential ID', async function () {
+        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
+
+        let metadata = await credentialManager.getCredentialMetadata(auth, sampleUDC.id)
+        expect(metadata).to.not.empty
+
+        expect(metadata.credentialType).to.have.lengthOf(2)
+        expect(metadata.name).to.be.equal(sampleUDC.name)
+        expect(metadata.description).to.be.equal(sampleUDC.description)
+        expect(metadata.expirationDate).to.be.equal(sampleUDC.expirationDate)
+        expect(metadata.type).to.be.equal("CredentialMetadata")
+
+        // include resolved results
+        metadata = await credentialManager.getCredentialMetadata(auth, sampleUDC.id, {resolve: true})
+        expect(metadata).to.not.empty
+
+        expect(metadata.credentialType).to.have.lengthOf(2)
+        expect(metadata.name).to.be.equal(sampleUDC.name)
+        expect(metadata.description).to.be.equal(sampleUDC.description)
+        expect(metadata.expirationDate).to.be.equal(sampleUDC.expirationDate)
+        expect(metadata.type).to.be.equal("CredentialMetadata")
+        expect(metadata.resolved).to.have.lengthOf(1)
+        expect(metadata.resolved[0].properties).to.have.lengthOf(2)
+
+        // resolve manually
+        let resolved  = await credentialManager.resolveManifest(auth, {
+            credentialID: sampleUDC.id,
+            manifestID: metadata.manifestID,
+            descriptorID: metadata.descriptorID,
+        })
+        expect(resolved).to.have.lengthOf(1)
+        expect(resolved[0].properties).to.have.lengthOf(2)
+
+        // resolve manually, using fulfillment & manifest objects
+        resolved  = await credentialManager.resolveManifest(auth, {
+            manifest: getJSONTestData('udc-cred-manifest.json'),
+            fulfillment: getJSONTestData('cred-fulfillment-udc-vp.json'),
+        })
+        expect(resolved).to.have.lengthOf(1)
+        expect(resolved[0].properties).to.have.lengthOf(2)
+    })
+
+    it('user updates credential metadata', async function () {
+        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
+        const sampleName = "SAMPLE NAME"
+        const sampleDescription = "SAMPLE DESCRIPTION"
+
+        await credentialManager.updateCredentialMetadata(auth, sampleUDC.id, {
+            name: sampleName,
+            description: sampleDescription
+        })
+
+        let metadata = await credentialManager.getCredentialMetadata(auth, sampleUDC.id)
+        expect(metadata).to.not.empty
+        expect(metadata.name).to.be.equal(sampleName)
+        expect(metadata.description).to.be.equal(sampleDescription)
+    })
+
+    it('user gets all credential metadata', async function () {
+        let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
+
+        // get all credential metadata
+        let metadataList = await credentialManager.getAllCredentialMetadata(auth)
+        expect(metadataList).to.have.lengthOf(4)
+        metadataList.forEach(metadata => {
+            expect(metadata.credentialType).to.have.lengthOf(2)
+            expect(metadata.type).to.be.equal("CredentialMetadata")
+            expect(metadata.resolved).to.be.undefined
+        })
+
+        // filter credential metadata by credential IDs
+        metadataList = await credentialManager.getAllCredentialMetadata(auth, {credentialIDs:[sampleUDC.id, samplePRC.id]})
+        expect(metadataList).to.have.lengthOf(2)
+        metadataList.forEach(metadata => {
+            expect(metadata.credentialType).to.have.lengthOf(2)
+            expect(metadata.type).to.be.equal("CredentialMetadata")
+            expect(metadata.resolved).to.be.undefined
+        })
+
+        metadataList = await credentialManager.getAllCredentialMetadata(auth, {credentialIDs:["invalid"]})
+        expect(metadataList).to.have.lengthOf(0)
+
+        // get all credential metadata
+        metadataList = await credentialManager.getAllCredentialMetadata(auth, {resolve: true})
+        expect(metadataList).to.have.lengthOf(4)
+        metadataList.forEach(metadata => {
+            expect(metadata.credentialType).to.have.lengthOf(2)
+            expect(metadata.type).to.be.equal("CredentialMetadata")
+            expect(metadata.resolved).to.not.empty
+        })
     })
 
     it('user gets all credentials from wallet', async function () {
@@ -92,7 +237,7 @@ describe('Credential Manager Tests', async function () {
 
         let {contents} = await credentialManager.getAll(auth)
         expect(contents).to.not.empty
-        expect(Object.keys(contents)).to.have.lengthOf(3)
+        expect(Object.keys(contents)).to.have.lengthOf(4)
     })
 
     it('user gets a credential from wallet by id', async function () {
@@ -106,9 +251,15 @@ describe('Credential Manager Tests', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
         await credentialManager.remove(auth, samplePRC.id)
+
+        // get all credentials and verify
         let {contents} = await credentialManager.getAll(auth)
         expect(contents).to.not.empty
-        expect(Object.keys(contents)).to.have.lengthOf(2)
+        expect(Object.keys(contents)).to.have.lengthOf(3)
+
+        // get all credential metadata. and verify.
+        let metadataList = await credentialManager.getAllCredentialMetadata(auth)
+        expect(metadataList).to.have.lengthOf(3)
     })
 
     let did
@@ -217,8 +368,27 @@ describe('Credential Query Tests', async function () {
 
     it('user saves multiple credentials into wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_QUERY_USER})
+        const manifest = getJSONTestData('allvcs-cred-manifest.json')
+        const descriptorMap = [
+            {
+                "id": "udc_output",
+                "format": "ldp_vc",
+                "path": "$[0]"
+            },
+            {
+                "id": "prc_output",
+                "format": "ldp_vc",
+                "path": "$[1]"
+            },
+            {
+                "id": "udc_output",
+                "format": "ldp_vc",
+                "path": "$[2]"
+            }
+        ]
 
-        await credentialManager.save(auth, {credentials:[sampleUDC, samplePRC, sampleUDCBBS]})
+        await credentialManager.save(auth, {credentials: [sampleUDC, samplePRC, sampleUDCBBS]},
+            { manifest, descriptorMap})
 
         let {contents} = await credentialManager.getAll(auth)
 
@@ -360,7 +530,7 @@ describe('Credential Query Tests', async function () {
     })
 })
 
-describe('Credential Manager Credential Manifest Tests', async function () {
+describe('Credential Manager blinded routing Manifest Credential Tests', async function () {
     it('user creates his wallet profile', async function () {
         let walletUser = new WalletUser({agent: walletUserAgent, user: WALLET_DIDCOMM_USER})
 
@@ -382,13 +552,13 @@ describe('Credential Manager Credential Manifest Tests', async function () {
     it('user saves manifest credential with connection info', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_DIDCOMM_USER})
 
-        await credentialManager.saveManifestCredential(auth, manifest, connectionID)
+        await credentialManager.saveManifestVC(auth, manifestVC, connectionID)
     })
 
     it('user gets connection info from manifest', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_DIDCOMM_USER})
 
-        let mconnectionID = await credentialManager.getManifestConnection(auth, manifest.id)
+        let mconnectionID = await credentialManager.getManifestConnection(auth, manifestVC.id)
         expect(mconnectionID).to.be.equal(connectionID)
     })
 
@@ -397,11 +567,11 @@ describe('Credential Manager Credential Manifest Tests', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_DIDCOMM_USER})
 
         // save one more
-        let manifest2 = JSON.parse(JSON.stringify(manifest))
+        let manifest2 = JSON.parse(JSON.stringify(manifestVC))
         manifest2.id = `http://example.gov/credentials/${uuid()}`
-        await credentialManager.saveManifestCredential(auth, manifest2, uuid())
+        await credentialManager.saveManifestVC(auth, manifest2, uuid())
 
-        let {contents} = await credentialManager.getAllManifests(auth)
+        let {contents} = await credentialManager.getAllManifestVCs(auth)
         expect(Object.keys(contents)).to.have.lengthOf(2)
     })
 })

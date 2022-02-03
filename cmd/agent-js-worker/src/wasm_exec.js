@@ -296,8 +296,8 @@
 						setInt64(sp + 8, (timeOrigin + performance.now()) * 1000000);
 					},
 
-					// func walltime() (sec int64, nsec int32)
-					"runtime.walltime": (sp) => {
+					// func walltime1() (sec int64, nsec int32)
+					"runtime.walltime1": (sp) => {
 						sp >>>= 0;
 						const msec = (new Date).getTime();
 						setInt64(sp + 8, msec / 1000);
@@ -401,7 +401,6 @@
 							storeValue(sp + 56, result);
 							this.mem.setUint8(sp + 64, 1);
 						} catch (err) {
-							sp = this._inst.exports.getsp() >>> 0; // see comment above
 							storeValue(sp + 56, err);
 							this.mem.setUint8(sp + 64, 0);
 						}
@@ -418,7 +417,6 @@
 							storeValue(sp + 40, result);
 							this.mem.setUint8(sp + 48, 1);
 						} catch (err) {
-							sp = this._inst.exports.getsp() >>> 0; // see comment above
 							storeValue(sp + 40, err);
 							this.mem.setUint8(sp + 48, 0);
 						}
@@ -435,7 +433,6 @@
 							storeValue(sp + 40, result);
 							this.mem.setUint8(sp + 48, 1);
 						} catch (err) {
-							sp = this._inst.exports.getsp() >>> 0; // see comment above
 							storeValue(sp + 40, err);
 							this.mem.setUint8(sp + 48, 0);
 						}
@@ -566,13 +563,6 @@
 				this.mem.setUint32(offset + 4, 0, true);
 				offset += 8;
 			});
-
-			// The linker guarantees global data starts from at least wasmMinDataAddr.
-			// Keep in sync with cmd/link/internal/ld/data.go:wasmMinDataAddr.
-			const wasmMinDataAddr = 4096 + 8192;
-			if (offset >= wasmMinDataAddr) {
-				throw new Error("total length of command line and environment variables exceeds limit");
-			}
 
 			this._inst.exports.run(argc, argv);
 			if (this.exited) {

@@ -73,6 +73,11 @@ Refer  Wallet SDK Data Model [documentation](data_models.md) to know about data 
  Supporting Attachment Format from DIDComm V1.</p>
 <p> Note: Currently finding only one attachment per format.</p>
 </dd>
+<dt><a href="#findAttachmentByFormatV2">findAttachmentByFormatV2</a></dt>
+<dd><p>Finds attachment by given format.
+ Supporting Attachment Format from DIDComm V2.</p>
+<p> Note: Currently finding only one attachment per format.</p>
+</dd>
 <dt><a href="#extractOOBGoalCode">extractOOBGoalCode</a></dt>
 <dd><p>Reads out-of-band invitation goal code.
  Supports DIDComm V1 &amp; V2</p>
@@ -190,6 +195,12 @@ credential module provides wallet credential handling features,
     * [.exports.CredentialManager](#exp_module_credential--exports.CredentialManager) ⏏
         * [new exports.CredentialManager(agent, user)](#new_module_credential--exports.CredentialManager_new)
         * [.save(auth, contents, options)](#module_credential--exports.CredentialManager.CredentialManager+save) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.saveCredentialManifest(auth, contents)](#module_credential--exports.CredentialManager.CredentialManager+saveCredentialManifest) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.saveCredentialMetadata(auth, options)](#module_credential--exports.CredentialManager.CredentialManager+saveCredentialMetadata) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.getCredentialMetadata(auth, id, options)](#module_credential--exports.CredentialManager.CredentialManager+getCredentialMetadata) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.getAllCredentialMetadata(auth, options)](#module_credential--exports.CredentialManager.CredentialManager+getAllCredentialMetadata) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.updateCredentialMetadata(auth, id, options)](#module_credential--exports.CredentialManager.CredentialManager+updateCredentialMetadata) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.resolveManifest(auth, options)](#module_credential--exports.CredentialManager.CredentialManager+resolveManifest) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.get(auth, contentID)](#module_credential--exports.CredentialManager.CredentialManager+get) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.getAll(auth)](#module_credential--exports.CredentialManager.CredentialManager+getAll) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.remove(auth, contentID)](#module_credential--exports.CredentialManager.CredentialManager+remove) ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -198,9 +209,9 @@ credential module provides wallet credential handling features,
         * [.verify(auth, verificationOption)](#module_credential--exports.CredentialManager.CredentialManager+verify) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.derive(auth, credentialOption, deriveOption)](#module_credential--exports.CredentialManager.CredentialManager+derive) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.query(auth, query)](#module_credential--exports.CredentialManager.CredentialManager+query) ⇒ <code>Promise.&lt;Object&gt;</code>
-        * [.saveManifestCredential(auth, manifest, connectionID)](#module_credential--exports.CredentialManager.CredentialManager+saveManifestCredential) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.saveManifestVC(auth, manifest, connectionID)](#module_credential--exports.CredentialManager.CredentialManager+saveManifestVC) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.getManifestConnection(auth, manifestCredID)](#module_credential--exports.CredentialManager.CredentialManager+getManifestConnection) ⇒ <code>Promise.&lt;String&gt;</code>
-        * [.getAllManifests(auth)](#module_credential--exports.CredentialManager.CredentialManager+getAllManifests) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.getAllManifestVCs(auth)](#module_credential--exports.CredentialManager.CredentialManager+getAllManifestVCs) ⇒ <code>Promise.&lt;Object&gt;</code>
 
 <a name="exp_module_credential--exports.CredentialManager"></a>
 
@@ -222,7 +233,7 @@ credential module provides wallet credential handling features,
 <a name="module_credential--exports.CredentialManager.CredentialManager+save"></a>
 
 #### exports.CredentialManager.save(auth, contents, options) ⇒ <code>Promise.&lt;Object&gt;</code>
-Saves given credential into wallet content store.
+Saves given credential into wallet content store along with credential metadata & manifest details along with saved credential.
 
 **Kind**: instance method of [<code>exports.CredentialManager</code>](#exp_module_credential--exports.CredentialManager)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - - empty promise or error if operation fails.  
@@ -231,12 +242,112 @@ Saves given credential into wallet content store.
 | --- | --- | --- |
 | auth | <code>string</code> | authorization token for wallet operations. |
 | contents | <code>Object</code> | credential(s) to be saved in wallet content store. |
-| contents.credential | <code>Object</code> | credential to be saved in wallet content store. |
 | contents.credentials | <code>Array.&lt;Object&gt;</code> | array of credentials to be saved in wallet content store. |
-| contents.presentation | <code>Object</code> | presentation from which all the credentials to be saved in wallet content store. |
+| contents.presentation | <code>Object</code> | presentation from which all the credentials to be saved in wallet content store.  If credential fulfillment presentation is provided then no need to supply descriptor map along with manifest.  Refer @see [Credential Fulfillment](https://identity.foundation/credential-manifest/#credential-fulfillment) for more details. |
 | options | <code>Object</code> | options for saving credential. |
 | options.verify | <code>boolean</code> | (optional) to verify credential before save. |
 | options.collection | <code>String</code> | (optional) ID of the wallet collection to which the credential should belong. |
+| options.manifest | <code>String</code> | (required) credential manifest of the credential being saved.  Refer @see [Credential Manifest](https://identity.foundation/credential-manifest/#credential-manifest-2) for more details. |
+
+<a name="module_credential--exports.CredentialManager.CredentialManager+saveCredentialManifest"></a>
+
+#### exports.CredentialManager.saveCredentialManifest(auth, contents) ⇒ <code>Promise.&lt;Object&gt;</code>
+Saves credential manifest into wallet content store.
+
+**Kind**: instance method of [<code>exports.CredentialManager</code>](#exp_module_credential--exports.CredentialManager)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - empty promise or error if operation fails.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| auth | <code>string</code> | authorization token for wallet operations. |
+| contents | <code>Object</code> | credential manifest data model.  Refer @see [Credential Manifest](https://identity.foundation/credential-manifest/#credential-manifest-2) for more details. |
+
+<a name="module_credential--exports.CredentialManager.CredentialManager+saveCredentialMetadata"></a>
+
+#### exports.CredentialManager.saveCredentialMetadata(auth, options) ⇒ <code>Promise.&lt;Object&gt;</code>
+Reads credential metadata and saves credential metadata data model into wallet content store.
+
+**Kind**: instance method of [<code>exports.CredentialManager</code>](#exp_module_credential--exports.CredentialManager)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - empty promise or error if operation fails.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| auth | <code>string</code> | authorization token for wallet operations. |
+| options | <code>Object</code> | subjects from which credential metadata will be extracted. |
+| options.credential | <code>Object</code> | credential data model from which basic credential attributes like type, issuer, expiration etc will be read. |
+| options.manifestID | <code>String</code> | ID of the credential manifest of the given credential |
+| options.descriptorID | <code>String</code> | ID of the credential manifest output descriptor of the given credential. |
+| options.collection | <code>String</code> | (optional) ID of the collection to which this credential belongs. |
+
+<a name="module_credential--exports.CredentialManager.CredentialManager+getCredentialMetadata"></a>
+
+#### exports.CredentialManager.getCredentialMetadata(auth, id, options) ⇒ <code>Promise.&lt;Object&gt;</code>
+Gets credential metadata from wallet content store and also optionally resolves credential data using credential manifest.
+
+**Kind**: instance method of [<code>exports.CredentialManager</code>](#exp_module_credential--exports.CredentialManager)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise containing credential metadata or error if operation fails.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| auth | <code>String</code> | authorization token for wallet operations. |
+| id | <code>String</code> | credential ID. |
+| options | <code>Object</code> | options to get credential metadata |
+| options.resolve | <code>Bool</code> | (optional) if true then resolves credential manifest of the given credential using descriptor info found in credential metadata. |
+
+<a name="module_credential--exports.CredentialManager.CredentialManager+getAllCredentialMetadata"></a>
+
+#### exports.CredentialManager.getAllCredentialMetadata(auth, options) ⇒ <code>Promise.&lt;Object&gt;</code>
+Gets all credential metadata from wallet content store and also optionally resolves credential using respective credential metadata info.
+
+**Kind**: instance method of [<code>exports.CredentialManager</code>](#exp_module_credential--exports.CredentialManager)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise containing list of credential metadata or error if operation fails.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| auth | <code>String</code> | authorization token for wallet operations. |
+| options | <code>Object</code> | options to get all credential metadata. |
+| options.credentialIDs | <code>Bool</code> | (optional) filters credential metadata by given credential IDs. |
+| options.collection | <code>String</code> | (optional) filters credential metadata by given collection ID. |
+| options.resolve | <code>Bool</code> | (optional) if true then resolves credential manifest of the given credential using descriptor info found in credential metadata. |
+
+<a name="module_credential--exports.CredentialManager.CredentialManager+updateCredentialMetadata"></a>
+
+#### exports.CredentialManager.updateCredentialMetadata(auth, id, options) ⇒ <code>Promise.&lt;Object&gt;</code>
+Updates credential metadata. Currently supporting updating only credential name and description fields.
+
+**Kind**: instance method of [<code>exports.CredentialManager</code>](#exp_module_credential--exports.CredentialManager)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - empty promise or error if operation fails.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| auth | <code>String</code> | authorization token for wallet operations. |
+| id | <code>String</code> | ID of the credential metadata to be updated. |
+| options | <code>Object</code> | options to update credential metadata. |
+| options.name | <code>String</code> | (optional) name attribute of the credential metadata to be updated. |
+| options.description | <code>String</code> | (optional) description attribute of the credential metadata to be updated. |
+| options.collection | <code>String</code> | (optional) ID  of the collection to which this credential metadata to be updated. |
+
+<a name="module_credential--exports.CredentialManager.CredentialManager+resolveManifest"></a>
+
+#### exports.CredentialManager.resolveManifest(auth, options) ⇒ <code>Promise.&lt;Object&gt;</code>
+Resolves credential by credential manifest, descriptor or fulfillment.
+
+Given credential can be resolved by raw credential, ID of the credential saved in wallet, credential fulfillment,
+ID of the manifest saved in wallet, raw credential manifest, output descriptor of the manifest etc
+
+**Kind**: instance method of [<code>exports.CredentialManager</code>](#exp_module_credential--exports.CredentialManager)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise containing resolved results or error if operation fails.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| auth | <code>String</code> | authorization token for wallet operations. |
+| options | <code>Object</code> | options to resolve credential from wallet. |
+| options.credentialID | <code>String</code> | (optional) ID of the credential to be resolved from wallet content store. |
+| options.credential | <code>String</code> | (optional) raw credential data model to be resolved. |
+| options.fulfillment | <code>String</code> | (optional) credential fulfillment using which given raw credential or credential ID to be resolved. |
+| options.manifestID | <code>String</code> | (optional) ID of the manifest from wallet content store. |
+| options.manifest | <code>String</code> | (optional) raw manifest to be used for resolving credential. |
+| options.descriptorID | <code>String</code> | (optional) if fulfillment not provided then this descriptor ID can be used to resolve credential. Refer @see [Credential Manifest Specifications](https://identity.foundation/credential-manifest/) for more details. |
 
 <a name="module_credential--exports.CredentialManager.CredentialManager+get"></a>
 
@@ -266,7 +377,9 @@ Gets All credentials from wallet.
 <a name="module_credential--exports.CredentialManager.CredentialManager+remove"></a>
 
 #### exports.CredentialManager.remove(auth, contentID) ⇒ <code>Promise.&lt;Object&gt;</code>
-Removes credential from wallet
+Removes credential and its metadata from wallet.
+
+ Doesn't delete respective credential manifest since one credential manifest can be referred by many other credentials too.
 
 **Kind**: instance method of [<code>exports.CredentialManager</code>](#exp_module_credential--exports.CredentialManager)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - - empty promise or an error if operation fails.  
@@ -368,13 +481,14 @@ runs credential queries in wallet.
 | auth | <code>String</code> | authorization token for performing this wallet operation. |
 | query | <code>Object</code> | list of credential queries, any types of supported query types can be mixed. |
 
-<a name="module_credential--exports.CredentialManager.CredentialManager+saveManifestCredential"></a>
+<a name="module_credential--exports.CredentialManager.CredentialManager+saveManifestVC"></a>
 
-#### exports.CredentialManager.saveManifestCredential(auth, manifest, connectionID) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### exports.CredentialManager.saveManifestVC(auth, manifest, connectionID) ⇒ <code>Promise.&lt;Object&gt;</code>
 saves manifest credential along with its mapping to given connection ID.
 
 **Kind**: instance method of [<code>exports.CredentialManager</code>](#exp_module_credential--exports.CredentialManager)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - - empty promise or an error if operation fails.  
+**Deprecated,**: to be used for DIDComm blinded routing flow only  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -395,9 +509,9 @@ Returns connection ID mapped to given manifest credential ID.
 | auth | <code>String</code> | authorization token for performing this wallet operation. |
 | manifestCredID | <code>String</code> | ID of manifest credential. |
 
-<a name="module_credential--exports.CredentialManager.CredentialManager+getAllManifests"></a>
+<a name="module_credential--exports.CredentialManager.CredentialManager+getAllManifestVCs"></a>
 
-#### exports.CredentialManager.getAllManifests(auth) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### exports.CredentialManager.getAllManifestVCs(auth) ⇒ <code>Promise.&lt;Object&gt;</code>
 Gets all manifest credentials saved in wallet.
 
 **Kind**: instance method of [<code>exports.CredentialManager</code>](#exp_module_credential--exports.CredentialManager)  
@@ -520,7 +634,9 @@ Creates Orb DID and saves it in wallet content store.
 | auth | <code>string</code> |  | authorization token for wallet operations. |
 | options | <code>Object</code> |  | options for creating Orb DID. |
 | options.keyType | <code>Object</code> | <code>ED25519</code> | (optional, default ED25519) type of the key to be used for creating keys for the DID, Refer agent documentation for supported key types. |
+| options.keyAgreementKeyType | <code>Object</code> | <code>X25519ECDHKW</code> | (optional, default X25519ECDHKW) type of the key to be used for creating keyAgreements for the DID, Refer agent documentation for supported key types. |
 | options.signatureType | <code>String</code> | <code>Ed25519VerificationKey2018</code> | (optional, default Ed25519VerificationKey2018) signature type to be used for DID verification methods. |
+| options.keyAgreementType | <code>String</code> | <code>X25519KeyAgreementKey2019</code> | (optional, default X25519KeyAgreementKey2019) keyAgreement VM type to be used for DID key agreement (payload encryption). For JWK type, use `JsonWebKey2020`. |
 | options.purposes | <code>Array.&lt;String&gt;</code> | <code>authentication</code> | (optional, default "authentication") purpose of the key. |
 | options.collection | <code>String</code> |  | (optional, default no collection) collection to which this DID should belong in wallet content store. |
 
@@ -665,7 +781,9 @@ didcomm module provides wallet based DIDComm features.
         * _static_
             * [.createInvitationFromRouter](#module_didcomm--exports.DIDComm.createInvitationFromRouter)
             * [.getMediatorConnections(agent)](#module_didcomm--exports.DIDComm.getMediatorConnections)
-            * [.connectToMediator(agent, endpoint, wait)](#module_didcomm--exports.DIDComm.connectToMediator)
+            * [.connectToMediator(agent, endpoint, waitForStateComplete, isDIDCommV2)](#module_didcomm--exports.DIDComm.connectToMediator)
+        * _inner_
+            * [~getPresentationAttachmentAndThreadID(presentationRequest)](#module_didcomm--exports.DIDComm..getPresentationAttachmentAndThreadID)
 
 <a name="exp_module_didcomm--exports.DIDComm"></a>
 
@@ -831,6 +949,7 @@ Get DID Invitation from edge router.
 | Param | Description |
 | --- | --- |
 | endpoint | edge router endpoint |
+| isDIDCommV2 | flag using DIDComm V2 |
 
 <a name="module_didcomm--exports.DIDComm.getMediatorConnections"></a>
 
@@ -845,7 +964,7 @@ Get router/mediator connections from agent.
 
 <a name="module_didcomm--exports.DIDComm.connectToMediator"></a>
 
-#### exports.DIDComm.connectToMediator(agent, endpoint, wait)
+#### exports.DIDComm.connectToMediator(agent, endpoint, waitForStateComplete, isDIDCommV2)
 Connect given agent to edge mediator/router.
 
 **Kind**: static method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
@@ -854,7 +973,19 @@ Connect given agent to edge mediator/router.
 | --- | --- |
 | agent | trustbloc agent |
 | endpoint | edge router endpoint |
-| wait | for did exchange state complete message |
+| waitForStateComplete | wait for did exchange state complete message |
+| isDIDCommV2 | flag using DIDComm V2 |
+
+<a name="module_didcomm--exports.DIDComm..getPresentationAttachmentAndThreadID"></a>
+
+#### exports.DIDComm~getPresentationAttachmentAndThreadID(presentationRequest)
+Get attachment and threadID from presentationRequest instance based on DIDComm V1 or V2 formats.
+
+**Kind**: inner method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
+
+| Param | Description |
+| --- | --- |
+| presentationRequest | instance |
 
 <a name="module_vcwallet"></a>
 
@@ -883,6 +1014,7 @@ vcwallet module provides verifiable credential wallet SDK for aries universal wa
             * [.presentProof(auth, threadID, presentation, options)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+presentProof) ⇒ <code>Promise.&lt;Object&gt;</code>
             * [.proposeCredential(auth, invitation, connectOptions, proposeOptions)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+proposeCredential) ⇒ <code>Promise.&lt;Object&gt;</code>
             * [.requestCredential(auth, threadID, presentation, options)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+requestCredential) ⇒ <code>Promise.&lt;Object&gt;</code>
+            * [.resolveCredential(auth, manifest, options)](#module_vcwallet--exports.UniversalWallet.UniversalWallet+resolveCredential) ⇒ <code>Promise.&lt;Object&gt;</code>
         * _static_
             * [.contentTypes](#module_vcwallet--exports.UniversalWallet.contentTypes) : <code>enum</code>
             * [.createWalletProfile(agent, userID, profileOptions)](#module_vcwallet--exports.UniversalWallet.createWalletProfile) ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -1212,6 +1344,26 @@ sends request credential message from wallet to issuer as part of ongoing creden
 | options.waitForDone | <code>Bool</code> | (optional) If true then wallet will wait for credential fulfillment message or problem report . |
 | options.WaitForDoneTimeout | <code>Time</code> | (optional) timeout to wait for credential fulfillment or problem report. |
 
+<a name="module_vcwallet--exports.UniversalWallet.UniversalWallet+resolveCredential"></a>
+
+#### exports.UniversalWallet.resolveCredential(auth, manifest, options) ⇒ <code>Promise.&lt;Object&gt;</code>
+resolves given credential manifest by credential fulfillment or credential.
+Supports: https://identity.foundation/credential-manifest/
+
+**Kind**: instance method of [<code>exports.UniversalWallet</code>](#exp_module_vcwallet--exports.UniversalWallet)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing request credential status & redirect info or error if operation fails.  
+**See**: [Credential Manifest ](https://identity.foundation/credential-manifest)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| auth | <code>String</code> | authorization token for performing this wallet operation. |
+| manifest | <code>Object</code> | credential manifest to be used for resolving credential. |
+| options | <code>Object</code> | credential or fulfillment to resolve. |
+| options.fulfillment | <code>String</code> | (optional) credential fulfillment to be resolved.  if provided, then this option takes precedence over credential resolve option. |
+| options.credential | <code>Object</code> | (optional) raw credential to be resolved (accepting 'ldp_vc' format only).  This option has to be provided with descriptor ID. |
+| options.credentialID | <code>String</code> | (optional) ID of the credential to be resolved which is persisted in wallet content store.  This option has to be provided with descriptor ID. |
+| options.descriptorID | <code>String</code> | (optional) output descriptor ID of the descriptor from manifest to be used for resolving given  credential or credentialID. This option is required only when a raw credential or credential ID is to be resolved. |
+
 <a name="module_vcwallet--exports.UniversalWallet.contentTypes"></a>
 
 #### exports.UniversalWallet.contentTypes : <code>enum</code>
@@ -1414,6 +1566,7 @@ Saves TrustBloc wallet user preferences.
 | preferences.controller | <code>String</code> | (optional) default controller to be used for digital proof for this wallet user. |
 | preferences.verificationMethod | <code>Object</code> | (optional) default verificationMethod to be used for digital proof for this wallet user. |
 | preferences.proofType | <code>String</code> | (optional) default proofType to be used for digital proof for this wallet user. |
+| preferences.skipWelcomeMsg | <code>Boolean</code> | (optional) represents whether this wallet user has dismissed a welcome message in the UI. |
 
 <a name="module_wallet-user--exports.WalletUser.WalletUser+updatePreferences"></a>
 
@@ -1433,6 +1586,7 @@ Updates TrustBloc wallet user preferences.
 | preferences.controller | <code>String</code> | (optional) default controller to be used for digital proof for this wallet user. |
 | preferences.verificationMethod | <code>Object</code> | (optional) default verificationMethod to be used for digital proof for this wallet user. |
 | preferences.proofType | <code>String</code> | (optional) default proofType to be used for digital proof for this wallet user. |
+| preferences.skipWelcomeMsg | <code>Boolean</code> | (optional) represents whether this wallet user has dismissed a welcome message in the UI. |
 
 <a name="module_wallet-user--exports.WalletUser.WalletUser+getPreferences"></a>
 
@@ -1515,6 +1669,15 @@ Updates given presentation submission presentation by removing duplicate descrip
 ## findAttachmentByFormat
 Finds attachment by given format.
  Supporting Attachment Format from DIDComm V1.
+
+ Note: Currently finding only one attachment per format.
+
+**Kind**: global constant  
+<a name="findAttachmentByFormatV2"></a>
+
+## findAttachmentByFormatV2
+Finds attachment by given format.
+ Supporting Attachment Format from DIDComm V2.
 
  Note: Currently finding only one attachment per format.
 
