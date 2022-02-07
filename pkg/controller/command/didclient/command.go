@@ -218,8 +218,6 @@ func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { //no
 		return command.NewValidationError(InvalidRequestErrorCode, err)
 	}
 
-	logutil.LogError(logger, CommandName, CreateOrbDIDCommandMethod, fmt.Sprintf("request: %+v", request))
-
 	didDoc := did.Doc{}
 
 	didcommv2Servicetype := "DIDCommMessaging"

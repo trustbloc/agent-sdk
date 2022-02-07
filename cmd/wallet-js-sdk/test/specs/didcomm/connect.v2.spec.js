@@ -36,7 +36,7 @@ before(async function () {
     // await createWalletAndPublicDID(bob, BOB_LABEL_V2, bobDID)
 });
 
-export async function createWalletAndPublicDID(agent, agentLabel, agentDID) {
+async function createWalletAndPublicDID(agent, agentLabel, agentDID) {
     try {
         await createWalletProfile(agent, agentLabel, {localKMSPassphrase: testConfig.walletUserPassphrase})
 

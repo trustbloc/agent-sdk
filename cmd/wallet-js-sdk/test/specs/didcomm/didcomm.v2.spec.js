@@ -43,15 +43,14 @@ async function adapterPubDID(adapter, routerDoc, routerConn, serviceID) {
 
     // add router doc's keyAgreement VM to the public keys request to register router keys in the rp DID doc's
     // service block as a routingKey.
-    let routerKeyAgreementIDs
+    let routerKeyAgreementID
     for (let vm in routerDoc.didDocument.verificationMethod) {
         let routerVM = routerDoc.didDocument.verificationMethod[vm]
         // TODO: make this more robust - iterate through DIDDoc keyAgreements instead?
         if (routerVM.id.includes("#key-2")) {
-            routerKeyAgreementIDs = routerVM.id
-        } else {
             // only add public key of keyAgreement VM for router
-            continue
+            routerKeyAgreementID = routerVM.id
+            break
         }
     }
 
@@ -88,7 +87,7 @@ async function adapterPubDID(adapter, routerDoc, routerConn, serviceID) {
             "keyType": KEY_AGREEMENT_TYPE_KMS,
             "purposes": ["keyAgreement"]
         }],
-        "routerKAIDS": [routerKeyAgreementIDs],
+        "routerKAIDS": [routerKeyAgreementID],
         "routerConnections": [routerConn],
     };
 
