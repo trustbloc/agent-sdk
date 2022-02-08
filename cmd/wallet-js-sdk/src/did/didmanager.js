@@ -51,6 +51,11 @@ export class DIDManager {
    *  @param {String} options.signatureType=Ed25519VerificationKey2018 - (optional, default Ed25519VerificationKey2018) signature type to be used for DID verification methods.
    *  @param {String} options.keyAgreementType=X25519KeyAgreementKey2019 - (optional, default X25519KeyAgreementKey2019) keyAgreement VM type to be used for DID key agreement (payload encryption). For JWK type, use `JsonWebKey2020`.
    *  @param {Array<String>} options.purposes=authentication - (optional, default "authentication") purpose of the key.
+   *  @param {Array<String>} options.routerKeyAgreementIDs=[] - (optional, used for DIDComm V2 only, default empty list) list of router keys IDs.
+   *  @param {Array<String>} options.routerConnections=[] - (optional, used for DIDComm V2 only, default empty list) list of router connections.
+   *  @param {String} options.serviceID - (optional, default no serviceID set) serviceID to which this DID should belong to.
+   *  @param {String} options.serviceEndpoint - (optional, default no serviceEndpoint set) serviceEndpoint to which this DID should have its service accessible.
+   *  @param {String} options.didcommServiceType - (optional, default no didcommServiceType set) didcommServiceType to which this DID belong to (didcomm v1: "did-communication", or didcomm V2: "DIDCommMessaging").
    *  @param {String} options.collection - (optional, default no collection) collection to which this DID should belong in wallet content store.
    *
    * @returns {Promise<Object>} - Promise of DID Resolution response  or an error if operation fails..
@@ -63,6 +68,11 @@ export class DIDManager {
       signatureType = DEFAULT_SIGNATURE_TYPE,
       keyAgreementType = DEFAULT_KEYAGREEMENT_TYPE,
       purposes = ["authentication"],
+      routerKeyAgreementIDs = [],
+      routerConnections = [],
+      serviceID = "",
+      serviceEndpoint = "",
+      didcommServiceType = "",
       collection,
     } = {}
   ) {
@@ -75,10 +85,6 @@ export class DIDManager {
       ]);
 
     const createDIDRequest = {
-      // TODO make below as function args
-      // "serviceID": "rpServiceID",
-      // "serviceEndpoint": testConfig.mediatorV2WSEndPoint,
-      // "didcommServiceType": DIDCOMM_V2_SERVICE_TYPE,
       publicKeys: [
         {
           id: keySet.keyID,
@@ -113,7 +119,21 @@ export class DIDManager {
           purposes: ["keyAgreement"],
         },
       ],
+      "routerKAIDS": routerKeyAgreementIDs,
+      "routerConnections": routerConnections,
     };
+
+    if (serviceID) {
+      createDIDRequest["serviceID"] = serviceID
+    }
+
+    if (serviceEndpoint) {
+      createDIDRequest["serviceEndpoint"] = serviceEndpoint
+    }
+
+    if (didcommServiceType) {
+      createDIDRequest["didcommServiceType"] = didcommServiceType
+    }
 
     let content = await this.agent.didclient.createOrbDID(createDIDRequest);
 
