@@ -9,6 +9,7 @@ import {expect} from "chai";
 import {getJSONTestData, loadFrameworks, testConfig, prepareTestManifest, wait} from "../common";
 import {contentTypes, CredentialManager, DIDManager, UniversalWallet, WalletUser} from "../../../src";
 import {IssuerAdapter} from "../mocks/adapters";
+import jp from "jsonpath";
 
 var uuid = require('uuid/v4')
 
@@ -133,11 +134,11 @@ describe('Credential Manager data model tests', async function () {
     })
 
     // confirm number of credential manifests saved in DB
-    it('user verified all credential metadata exists', async function () {
+    it('user verified all credential related data models exists', async function () {
         const vcwallet = new UniversalWallet({agent: walletUserAgent, user: WALLET_USER});
 
         let {contents} = await vcwallet.getAll({auth, contentType: contentTypes.METADATA})
-        expect(Object.keys(contents)).to.have.lengthOf(8) // 4 credential metadata + 4 credential manifests
+        expect(Object.keys(contents)).to.have.lengthOf(4) // 4 credential metadata
     })
 
     it('user gets credential metadata by credential ID', async function () {
@@ -151,29 +152,20 @@ describe('Credential Manager data model tests', async function () {
         expect(metadata.description).to.be.equal(sampleUDC.description)
         expect(metadata.expirationDate).to.be.equal(sampleUDC.expirationDate)
         expect(metadata.type).to.be.equal("CredentialMetadata")
-
-        // include resolved results
-        metadata = await credentialManager.getCredentialMetadata(auth, sampleUDC.id, {resolve: true})
-        expect(metadata).to.not.empty
-
-        expect(metadata.credentialType).to.have.lengthOf(2)
-        expect(metadata.name).to.be.equal(sampleUDC.name)
-        expect(metadata.description).to.be.equal(sampleUDC.description)
-        expect(metadata.expirationDate).to.be.equal(sampleUDC.expirationDate)
-        expect(metadata.type).to.be.equal("CredentialMetadata")
         expect(metadata.resolved).to.have.lengthOf(1)
         expect(metadata.resolved[0].properties).to.have.lengthOf(2)
 
-        // resolve manually
+        // resolve credential
+        const manifest = getJSONTestData('udc-cred-manifest.json')
         let resolved  = await credentialManager.resolveManifest(auth, {
             credentialID: sampleUDC.id,
-            manifestID: metadata.manifestID,
-            descriptorID: metadata.descriptorID,
+            manifest,
+            descriptorID: "udc_output",
         })
         expect(resolved).to.have.lengthOf(1)
         expect(resolved[0].properties).to.have.lengthOf(2)
 
-        // resolve manually, using fulfillment & manifest objects
+        // resolve credential, using fulfillment & manifest objects
         resolved  = await credentialManager.resolveManifest(auth, {
             manifest: getJSONTestData('udc-cred-manifest.json'),
             fulfillment: getJSONTestData('cred-fulfillment-udc-vp.json'),
@@ -207,7 +199,7 @@ describe('Credential Manager data model tests', async function () {
         metadataList.forEach(metadata => {
             expect(metadata.credentialType).to.have.lengthOf(2)
             expect(metadata.type).to.be.equal("CredentialMetadata")
-            expect(metadata.resolved).to.be.undefined
+            expect(metadata.resolved).to.not.empty
         })
 
         // filter credential metadata by credential IDs
@@ -216,7 +208,7 @@ describe('Credential Manager data model tests', async function () {
         metadataList.forEach(metadata => {
             expect(metadata.credentialType).to.have.lengthOf(2)
             expect(metadata.type).to.be.equal("CredentialMetadata")
-            expect(metadata.resolved).to.be.undefined
+            expect(metadata.resolved).to.not.empty
         })
 
         metadataList = await credentialManager.getAllCredentialMetadata(auth, {credentialIDs:["invalid"]})
@@ -527,6 +519,17 @@ describe('Credential Query Tests', async function () {
         ])
 
         expect(results).to.have.lengthOf(2)
+
+        // getting metadata of query results
+        const credentialIDs = jp.query(results, '$[*].verifiableCredential[*].id');
+        const metadataList = await Promise.all(credentialIDs.map(async id => await credentialManager.getCredentialMetadata(auth, id)))
+
+        expect(metadataList).to.not.empty
+        for (const metadata of metadataList) {
+            expect(metadata).to.not.empty
+            expect(metadata.resolved).to.not.empty
+        }
+
     })
 })
 
