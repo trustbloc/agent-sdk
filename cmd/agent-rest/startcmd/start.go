@@ -743,7 +743,7 @@ func getInboundTransportOpts(inboundHostInternals, inboundHostExternals []string
 		case httpProtocol:
 			opts = append(opts, defaults.WithInboundHTTPAddr(host, externalHost[scheme], certFile, keyFile))
 		case websocketProtocol:
-			opts = append(opts, defaults.WithInboundWSAddr(host, externalHost[scheme], certFile, keyFile))
+			opts = append(opts, defaults.WithInboundWSAddr(host, externalHost[scheme], certFile, keyFile, 0))
 		default:
 			return nil, fmt.Errorf("inbound transport [%s] not supported", scheme)
 		}

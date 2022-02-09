@@ -9,7 +9,7 @@ go 1.17
 require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
-	github.com/hyperledger/aries-framework-go v0.1.8-0.20220202170435-bb5bedb39f36
+	github.com/hyperledger/aries-framework-go v0.1.8-0.20220209203615-cbec86033851
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.1.4-0.20220114172935-0e96d787f80f
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v0.0.0-20211217171603-637696af6620
 	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20220202170435-bb5bedb39f36
