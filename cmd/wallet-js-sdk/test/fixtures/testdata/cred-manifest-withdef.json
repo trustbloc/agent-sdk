@@ -32,8 +32,8 @@
         },
         "subtitle": {
           "path": [
-            "$.class",
-            "$.vc.class"
+            "$.description",
+            "$.vc.description"
           ],
           "schema": {
             "type": "string"

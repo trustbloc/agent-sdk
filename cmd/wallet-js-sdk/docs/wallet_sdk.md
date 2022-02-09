@@ -195,9 +195,8 @@ credential module provides wallet credential handling features,
     * [.exports.CredentialManager](#exp_module_credential--exports.CredentialManager) ⏏
         * [new exports.CredentialManager(agent, user)](#new_module_credential--exports.CredentialManager_new)
         * [.save(auth, contents, options)](#module_credential--exports.CredentialManager.CredentialManager+save) ⇒ <code>Promise.&lt;Object&gt;</code>
-        * [.saveCredentialManifest(auth, contents)](#module_credential--exports.CredentialManager.CredentialManager+saveCredentialManifest) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.saveCredentialMetadata(auth, options)](#module_credential--exports.CredentialManager.CredentialManager+saveCredentialMetadata) ⇒ <code>Promise.&lt;Object&gt;</code>
-        * [.getCredentialMetadata(auth, id, options)](#module_credential--exports.CredentialManager.CredentialManager+getCredentialMetadata) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.getCredentialMetadata(auth, id)](#module_credential--exports.CredentialManager.CredentialManager+getCredentialMetadata) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.getAllCredentialMetadata(auth, options)](#module_credential--exports.CredentialManager.CredentialManager+getAllCredentialMetadata) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.updateCredentialMetadata(auth, id, options)](#module_credential--exports.CredentialManager.CredentialManager+updateCredentialMetadata) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.resolveManifest(auth, options)](#module_credential--exports.CredentialManager.CredentialManager+resolveManifest) ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -249,19 +248,6 @@ Saves given credential into wallet content store along with credential metadata 
 | options.collection | <code>String</code> | (optional) ID of the wallet collection to which the credential should belong. |
 | options.manifest | <code>String</code> | (required) credential manifest of the credential being saved.  Refer @see [Credential Manifest](https://identity.foundation/credential-manifest/#credential-manifest-2) for more details. |
 
-<a name="module_credential--exports.CredentialManager.CredentialManager+saveCredentialManifest"></a>
-
-#### exports.CredentialManager.saveCredentialManifest(auth, contents) ⇒ <code>Promise.&lt;Object&gt;</code>
-Saves credential manifest into wallet content store.
-
-**Kind**: instance method of [<code>exports.CredentialManager</code>](#exp_module_credential--exports.CredentialManager)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - - empty promise or error if operation fails.  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| auth | <code>string</code> | authorization token for wallet operations. |
-| contents | <code>Object</code> | credential manifest data model.  Refer @see [Credential Manifest](https://identity.foundation/credential-manifest/#credential-manifest-2) for more details. |
-
 <a name="module_credential--exports.CredentialManager.CredentialManager+saveCredentialMetadata"></a>
 
 #### exports.CredentialManager.saveCredentialMetadata(auth, options) ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -281,7 +267,7 @@ Reads credential metadata and saves credential metadata data model into wallet c
 
 <a name="module_credential--exports.CredentialManager.CredentialManager+getCredentialMetadata"></a>
 
-#### exports.CredentialManager.getCredentialMetadata(auth, id, options) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### exports.CredentialManager.getCredentialMetadata(auth, id) ⇒ <code>Promise.&lt;Object&gt;</code>
 Gets credential metadata from wallet content store and also optionally resolves credential data using credential manifest.
 
 **Kind**: instance method of [<code>exports.CredentialManager</code>](#exp_module_credential--exports.CredentialManager)  
@@ -291,13 +277,11 @@ Gets credential metadata from wallet content store and also optionally resolves 
 | --- | --- | --- |
 | auth | <code>String</code> | authorization token for wallet operations. |
 | id | <code>String</code> | credential ID. |
-| options | <code>Object</code> | options to get credential metadata |
-| options.resolve | <code>Bool</code> | (optional) if true then resolves credential manifest of the given credential using descriptor info found in credential metadata. |
 
 <a name="module_credential--exports.CredentialManager.CredentialManager+getAllCredentialMetadata"></a>
 
 #### exports.CredentialManager.getAllCredentialMetadata(auth, options) ⇒ <code>Promise.&lt;Object&gt;</code>
-Gets all credential metadata from wallet content store and also optionally resolves credential using respective credential metadata info.
+Gets all credential metadata models from wallet content store.
 
 **Kind**: instance method of [<code>exports.CredentialManager</code>](#exp_module_credential--exports.CredentialManager)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - - promise containing list of credential metadata or error if operation fails.  
@@ -308,7 +292,6 @@ Gets all credential metadata from wallet content store and also optionally resol
 | options | <code>Object</code> | options to get all credential metadata. |
 | options.credentialIDs | <code>Bool</code> | (optional) filters credential metadata by given credential IDs. |
 | options.collection | <code>String</code> | (optional) filters credential metadata by given collection ID. |
-| options.resolve | <code>Bool</code> | (optional) if true then resolves credential manifest of the given credential using descriptor info found in credential metadata. |
 
 <a name="module_credential--exports.CredentialManager.CredentialManager+updateCredentialMetadata"></a>
 

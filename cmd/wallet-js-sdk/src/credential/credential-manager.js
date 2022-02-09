@@ -127,7 +127,7 @@ export class CredentialManager {
       await this.saveCredentialMetadata(auth, {
         credential: credentialMatch[0],
         descriptorID: id,
-        manifestID: manifest.id,
+        manifest,
         collection,
       });
     };
@@ -151,28 +151,6 @@ export class CredentialManager {
     await Promise.all(
       contents.map(_saveCredential).concat(descriptors.map(_saveMetadata))
     );
-
-    if (manifest) {
-      // save manifest & replace if already there, it might happen
-      await this.saveCredentialManifest(auth, manifest);
-    }
-  }
-
-  /**
-   * Saves credential manifest into wallet content store.
-   *
-   *  @param {string} auth - authorization token for wallet operations.
-   *  @param {Object} contents - credential manifest data model.
-   *  Refer @see {@link https://identity.foundation/credential-manifest/#credential-manifest-2|Credential Manifest} for more details.
-   *
-   *  @returns {Promise<Object>} - empty promise or error if operation fails.
-   */
-  async saveCredentialManifest(auth, content) {
-    await this.wallet.add({
-      auth,
-      contentType: contentTypes.METADATA,
-      content,
-    });
   }
 
   /**
@@ -189,7 +167,7 @@ export class CredentialManager {
    */
   async saveCredentialMetadata(
     auth,
-    { credential, manifestID, descriptorID, collection }
+    { credential, manifest, descriptorID, collection }
   ) {
     const {
       id,
@@ -200,6 +178,12 @@ export class CredentialManager {
       issuanceDate,
       expirationDate,
     } = credential;
+
+    const resolved = await this.resolveManifest(auth, {
+      credential,
+      descriptorID,
+      manifest,
+    });
 
     await this.wallet.add({
       auth,
@@ -216,8 +200,7 @@ export class CredentialManager {
         description,
         issuanceDate,
         expirationDate,
-        manifestID,
-        descriptorID,
+        resolved,
       },
     });
   }
@@ -227,54 +210,32 @@ export class CredentialManager {
    *
    *  @param {String} auth - authorization token for wallet operations.
    *  @param {String} id - credential ID.
-   *  @param {Object} options - options to get credential metadata
-   *  @param {Bool} options.resolve - (optional) if true then resolves credential manifest of the given credential using descriptor info found in credential metadata.
    *
    *  @returns {Promise<Object>} - promise containing credential metadata or error if operation fails.
    */
-  async getCredentialMetadata(auth, id, { resolve = false } = {}) {
+  async getCredentialMetadata(auth, id) {
     let { content } = await this.wallet.get({
       auth,
       contentType: contentTypes.METADATA,
       contentID: id,
     });
 
-    if (resolve) {
-      if (!content.manifestID || !content.descriptorID) {
-        throw `could not find matching manifest and descriptor to resolve the credential ${id}`;
-      }
-
-      const manifest = await this.wallet.get({
-        auth,
-        contentType: contentTypes.METADATA,
-        contentID: content.manifestID,
-      });
-
-      let result = await this.wallet.resolveCredential(auth, manifest.content, {
-        credentialID: id,
-        descriptorID: content.descriptorID,
-      });
-
-      content.resolved = result.resolved;
-    }
-
     return content;
   }
 
   /**
-   * Gets all credential metadata from wallet content store and also optionally resolves credential using respective credential metadata info.
+   * Gets all credential metadata models from wallet content store.
    *
    *  @param {String} auth - authorization token for wallet operations.
    *  @param {Object} options - options to get all credential metadata.
    *  @param {Bool} options.credentialIDs - (optional) filters credential metadata by given credential IDs.
    *  @param {String} options.collection - (optional) filters credential metadata by given collection ID.
-   *  @param {Bool} options.resolve - (optional) if true then resolves credential manifest of the given credential using descriptor info found in credential metadata.
    *
    *  @returns {Promise<Object>} - promise containing list of credential metadata or error if operation fails.
    */
   async getAllCredentialMetadata(
     auth,
-    { credentialIDs = [], collection = "", resolve = false } = {}
+    { credentialIDs = [], collection = "" } = {}
   ) {
     const { contents } = await this.wallet.getAll({
       auth,
@@ -295,30 +256,6 @@ export class CredentialManager {
         metadata.type == CREDENTIAL_METADATA_MODEL_TYPE &&
         _filterCred(metadata.id)
     );
-
-    if (resolve && metadataList.length > 0) {
-      const _resolve = async (metadata) => {
-        // do not resolve, if there aren't any manifest/descriptor entry
-        if (!metadata.manifestID || !metadata.descriptorID) {
-          return metadata;
-        }
-
-        let result = await this.wallet.resolveCredential(
-          auth,
-          contents[metadata.manifestID],
-          {
-            credentialID: metadata.id,
-            descriptorID: metadata.descriptorID,
-          }
-        );
-
-        metadata.resolved = result.resolved;
-
-        return metadata;
-      };
-
-      return await Promise.all(metadataList.map(_resolve));
-    }
 
     return metadataList;
   }

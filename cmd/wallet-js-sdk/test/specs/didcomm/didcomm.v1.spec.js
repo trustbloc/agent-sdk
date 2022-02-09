@@ -184,7 +184,6 @@ describe('Wallet DIDComm WACI credential share flow', async function () {
 describe('Wallet DIDComm WACI credential issuance flow - success scenarios', async function () {
     const fulfillmentJSON =  getJSONTestData("cred-fulfillment-DL.json")
     const sampleComment = "Offer to issue Drivers License for Mr.Smith"
-    let fulfillmentVP = getJSONTestData('cred-fulfillment-udc-vp.json')
 
     let credentialInteraction
     it('user accepts out-of-band invitation from issuer and initiates WACI credential interaction - presentation exchange flow', async function () {
@@ -220,9 +219,9 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
         let {threadID, presentations, manifest} = credentialInteraction
 
         // setup issuer.
-        fulfillmentVP.verifiableCredential[0].id = `http://example.edu/credentials/${uuid()}`
-        fulfillmentVP.credential_fulfillment.manifest_id = manifest.id
-        let acceptCredential = issuer.acceptRequestCredential({credential:fulfillmentVP})
+        fulfillmentJSON.verifiableCredential[0].id = `http://example.edu/credentials/${uuid()}`
+        fulfillmentJSON.credential_fulfillment.manifest_id = manifest.id
+        let acceptCredential = issuer.acceptRequestCredential({credential:fulfillmentJSON})
 
         // complete credential interaction.
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
@@ -273,9 +272,9 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
 
         // setup issuer.
         const redirect = "https://example.com/success"
-        fulfillmentVP.verifiableCredential[0].id  = `http://example.edu/credentials/${uuid()}`
-        fulfillmentVP.credential_fulfillment.manifest_id = manifest.id
-        let acceptCredential = issuer.acceptRequestCredential({credential:fulfillmentVP, redirect})
+        fulfillmentJSON.verifiableCredential[0].id  = `http://example.edu/credentials/${uuid()}`
+        fulfillmentJSON.credential_fulfillment.manifest_id = manifest.id
+        let acceptCredential = issuer.acceptRequestCredential({credential:fulfillmentJSON, redirect})
 
         // complete credential interaction.
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
@@ -328,9 +327,9 @@ describe('Wallet DIDComm WACI credential issuance flow - success scenarios', asy
         let {threadID, presentations, manifest} = credentialInteraction
 
         // setup issuer.
-        fulfillmentVP.verifiableCredential[0].id  = `http://example.edu/credentials/${uuid()}`
-        fulfillmentVP.credential_fulfillment.manifest_id = manifest.id
-        let acceptCredential = issuer.acceptRequestCredential({credential:fulfillmentVP})
+        fulfillmentJSON.verifiableCredential[0].id  = `http://example.edu/credentials/${uuid()}`
+        fulfillmentJSON.credential_fulfillment.manifest_id = manifest.id
+        let acceptCredential = issuer.acceptRequestCredential({credential:fulfillmentJSON})
 
         // complete credential interaction.
         let didcomm = new DIDComm({agent: walletUserAgent, user: WALLET_WACI_USER})
