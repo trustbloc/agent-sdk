@@ -301,6 +301,7 @@ describe('Wallet DIDComm V2 WACI credential share flow', async function () {
         const response = await didcomm.completeCredentialShare(auth, threadID, presentations, {controller}, {waitForDone: true})
 
         expect(response.status).to.be.equal("OK")
+        expect(response.url).to.be.equal(redirectURL)
 
         let presentation = await acceptPresentation
         expect(presentation.verifiableCredential).to.not.empty
@@ -337,6 +338,7 @@ describe('Wallet DIDComm V2 WACI credential share flow', async function () {
         const response = await didcomm.completeCredentialShare(auth, threadID, presentations, {controller}, {waitForDone: true, autoAccept: true})
 
         expect(response.status).to.be.equal("FAIL")
+        // expect(response.url).to.be.equal(redirectURL)
 
         let presentation = await declinePresentProof
         expect(presentation.verifiableCredential).to.not.empty
