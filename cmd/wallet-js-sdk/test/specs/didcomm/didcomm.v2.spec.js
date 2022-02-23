@@ -56,7 +56,7 @@ async function adapterPubDID(adapter, routerDoc, routerConn, serviceID) {
 
     const createDIDRequest = {
         "serviceID": serviceID,
-        "serviceEndpoint": testConfig.mediatorV2WSEndPoint,
+        "serviceEndpoint": testConfig.mediatorWSEndPoint,
         "didcommServiceType": DIDCOMM_V2_SERVICE_TYPE,
         "publicKeys": [{
             "id": keySet.keyID,
@@ -131,7 +131,7 @@ before(async function () {
 
     {
         // register wallet to router
-        let {router_connection_id: conn} = await connectToMediator(walletUserAgentV2, testConfig.mediatorV2EndPoint,  {isDIDCommV2: true})
+        let {router_connection_id: conn} = await connectToMediator(walletUserAgentV2, testConfig.mediatorEndPoint,  {isDIDCommV2: true})
         // let conn = await getMediatorConnections(walletUserAgentV2, {single: true})
 
         expect(conn).to.not.empty
