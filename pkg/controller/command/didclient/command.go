@@ -53,7 +53,8 @@ const (
 	// log constants.
 	successString = "success"
 
-	didCommServiceType = "did-communication"
+	didCommServiceType   = "did-communication"
+	didCommV2ServiceType = "DIDCommMessaging"
 
 	// ed25519KeyType defines ed25119 key type.
 	ed25519KeyType = "ed25519"
@@ -208,7 +209,7 @@ func (c *Command) ResolveOrbDID(rw io.Writer, req io.Reader) command.Error {
 }
 
 // CreateOrbDID creates a new orb DID.
-func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { //nolint: funlen,gocyclo,gocognit
+func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { // nolint: funlen,gocyclo,gocognit
 	var request CreateOrbDIDRequest
 
 	err := json.NewDecoder(req).Decode(&request)
@@ -448,7 +449,7 @@ func getKey(keyType string, value []byte) (interface{}, error) {
 }
 
 // CreatePeerDID creates a new peer DID.
-func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //nolint: funlen,gocyclo
+func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { // nolint: funlen,gocyclo
 	var request CreatePeerDIDRequest
 
 	err := json.NewDecoder(req).Decode(&request)
@@ -502,9 +503,12 @@ func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //n
 
 	didSvc, ok := did.LookupService(docResolution.DIDDocument, didCommServiceType)
 	if !ok {
-		logutil.LogError(logger, CommandName, CreatePeerDIDCommandMethod, errMissingDIDCommServiceType)
+		didSvc, ok = did.LookupService(docResolution.DIDDocument, didCommV2ServiceType)
+		if !ok {
+			logutil.LogError(logger, CommandName, CreatePeerDIDCommandMethod, errMissingDIDCommServiceType)
 
-		return command.NewExecuteError(CreateDIDErrorCode, fmt.Errorf(errMissingDIDCommServiceType, didCommServiceType))
+			return command.NewExecuteError(CreateDIDErrorCode, fmt.Errorf(errMissingDIDCommServiceType, didCommServiceType))
+		}
 	}
 
 	for _, val := range didSvc.RecipientKeys {

@@ -40,21 +40,18 @@ export class Adapter {
         this.label = label
     }
 
-    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc19"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
+    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc587"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
         this.agent = await loadFrameworks({name: this.label, mediaTypeProfiles:mediaTypeProfiles, keyType:keyType, keyAgreementType:keyAgreementType})
 
         let mediatorURL = testConfig.mediatorEndPoint
-        let isDIDComm = false
-        // TODO remove logic when testconfig.mediatorV2Endpoint is removed.
+        let isDIDCommV2 = false
         for (let mtp of mediaTypeProfiles) {
             if (mtp === "didcomm/v2") {
-                console.log("didcomm/v2 mediatypeprofile set, using following mediator URL: "+testConfig.mediatorV2EndPoint)
-                mediatorURL = testConfig.mediatorV2EndPoint
-                isDIDComm = true
+                isDIDCommV2 = true
             }
         }
 
-        let {invitation_did} = await connectToMediator(this.agent, mediatorURL,  {isDIDCommV2:isDIDComm})
+        let {invitation_did} = await connectToMediator(this.agent, mediatorURL,  {isDIDCommV2:isDIDCommV2})
 
         let conns = await getMediatorConnections(this.agent, {single: true})
         expect(conns).to.not.empty
@@ -112,7 +109,7 @@ export class VerifierAdapter extends Adapter {
         super(label)
     }
 
-    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc19"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
+    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc587"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
         return await super.init({mediaTypeProfiles:mediaTypeProfiles, keyType:keyType, keyAgreementType:keyAgreementType})
     }
 
@@ -228,7 +225,7 @@ export class IssuerAdapter extends Adapter {
         super(label)
     }
 
-    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc19"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
+    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc587"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
         return await super.init({mediaTypeProfiles:mediaTypeProfiles, keyType:keyType, keyAgreementType:keyAgreementType})
     }
 

@@ -70,7 +70,7 @@ after(function () {
 describe('running DIDComm V2 connection tests', async function () {
     it('alice connected to V2 mediator', async function () {
         try {
-            await connectToMediator(alice, testConfig.mediatorV2EndPoint, {isDIDCommV2: true})
+            await connectToMediator(alice, testConfig.mediatorEndPoint, {isDIDCommV2: true})
             let conns = await getMediatorConnections(alice)
             expect(conns).to.not.empty
         } catch (e) {
@@ -83,7 +83,7 @@ describe('running DIDComm V2 connection tests', async function () {
     it('bob connected to V2 mediator', async function () {
         try {
 
-            await connectToMediator(bob, testConfig.mediatorV2EndPoint,{isDIDCommV2: true})
+            await connectToMediator(bob, testConfig.mediatorEndPoint,{isDIDCommV2: true})
             let conns = await getMediatorConnections(bob, {single: true})
             expect(conns).to.not.empty
 
