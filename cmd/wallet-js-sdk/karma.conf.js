@@ -23,8 +23,8 @@ module.exports = function (config) {
         webpack: webpackConfig,
         reporters: ['spec'],
         browsers: ['ChromeHeadless_cors'],
-        browserNoActivityTimeout: 60000,
-        browserDisconnectTimeout: 60000,
+        browserNoActivityTimeout: 120000,
+        browserDisconnectTimeout: 120000,
         customLaunchers: {
             ChromeHeadless_cors: {
                 base: "ChromeHeadless",
@@ -39,7 +39,7 @@ module.exports = function (config) {
         client: {
             captureConsole: false,
             mocha: {
-                timeout: 30000
+                timeout: 60000
             }
         }
     })
