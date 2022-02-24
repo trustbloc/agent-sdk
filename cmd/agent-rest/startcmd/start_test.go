@@ -529,6 +529,33 @@ func TestStartCmdInvalidSyntax(t *testing.T) {
 	require.Contains(t, err.Error(), "parsing \"oops\": invalid syntax")
 }
 
+func TestStartCmdWithInvalidReadLimit(t *testing.T) {
+	startCmd, err := Cmd(&mockServer{})
+	require.NoError(t, err)
+
+	args := []string{
+		"--" + agentHostFlagName,
+		randomURL(),
+		"--" + agentInboundHostFlagName,
+		httpProtocol + "@" + randomURL(),
+		"--" + agentInboundHostExternalFlagName,
+		httpProtocol + "@" + randomURL(),
+		"--" + agentWebSocketReadLimitFlagName,
+		"invalid",
+		"--" + databaseTypeFlagName,
+		databaseTypeMemOption,
+		"--" + agentDefaultLabelFlagName,
+		"agent",
+		"--" + agentWebhookFlagName,
+		"",
+	}
+	startCmd.SetArgs(args)
+
+	err = startCmd.Execute()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "failed to parse web socket read limit")
+}
+
 func TestStartCmdValidArgs(t *testing.T) {
 	startCmd, err := Cmd(&mockServer{})
 	require.NoError(t, err)
@@ -659,6 +686,7 @@ func TestStartAriesWithOutboundTransports(t *testing.T) {
 				dbParam:              &dbParam{dbType: databaseTypeMemOption},
 				defaultLabel:         "x",
 				outboundTransports:   []string{"http", "ws"},
+				websocketReadLimit:   65536,
 			}
 
 			err := startAgent(parameters)

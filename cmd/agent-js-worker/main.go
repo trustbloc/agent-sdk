@@ -151,6 +151,7 @@ type agentStartOpts struct {
 	KeyType                  string      `json:"key-type"`
 	KeyAgreementType         string      `json:"key-agreement-type"`
 	MediaTypeProfiles        []string    `json:"media-type-profiles"`
+	WebSocketReadLimit       int64       `json:"web-socket-read-limit"`
 }
 
 type userConfig struct {
@@ -702,7 +703,13 @@ func addOutboundTransports(startOpts *agentStartOpts, options []aries.Option) ([
 
 			options = append(options, aries.WithOutboundTransports(outbound))
 		case "ws":
-			options = append(options, aries.WithOutboundTransports(ws.NewOutbound()))
+			var outboundOpts []ws.OutboundClientOpt
+
+			if startOpts.WebSocketReadLimit > 0 {
+				outboundOpts = append(outboundOpts, ws.WithOutboundReadLimit(startOpts.WebSocketReadLimit))
+			}
+
+			options = append(options, aries.WithOutboundTransports(ws.NewOutbound(outboundOpts...)))
 		default:
 			return nil, fmt.Errorf("unsupported transport : %s", transport)
 		}
