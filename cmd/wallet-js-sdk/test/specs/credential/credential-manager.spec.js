@@ -152,8 +152,10 @@ describe('Credential Manager data model tests', async function () {
         expect(metadata.description).to.be.equal(sampleUDC.description)
         expect(metadata.expirationDate).to.be.equal(sampleUDC.expirationDate)
         expect(metadata.type).to.be.equal("CredentialMetadata")
+        expect(metadata.issuerStyle).to.not.empty
         expect(metadata.resolved).to.have.lengthOf(1)
         expect(metadata.resolved[0].properties).to.have.lengthOf(2)
+        expect(metadata.resolved[0].styles).to.not.empty
 
         // resolve credential
         const manifest = getJSONTestData('udc-cred-manifest.json')
