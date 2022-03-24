@@ -139,6 +139,9 @@ describe('Collection Manager Tests', async function () {
 
         let {contents} = await credentialManager.getAll(auth, {collectionID: previous})
         expect(Object.keys(contents)).to.have.lengthOf(2)
+
+        let metadataList = await credentialManager.getAllCredentialMetadata(auth, {collection: previous})
+        expect(metadataList).to.have.lengthOf(2)
     })
 
     it('user removes a collection from wallet', async function () {
@@ -152,12 +155,12 @@ describe('Collection Manager Tests', async function () {
     it('user finds credentials belonging to collection removed from wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
 
-        // credential metadata gone from collection
-        let metadataList = await credentialManager.getAllCredentialMetadata(auth, {collectionID: previous})
-        expect(metadataList).to.have.lengthOf(2)
-
         let {contents} = await credentialManager.getAll(auth)
         expect(Object.keys(contents)).to.be.empty
+
+        // credential metadata also gone from collection along with credentials
+        let metadataList = await credentialManager.getAllCredentialMetadata(auth, {collection: previous})
+        expect(metadataList).to.be.empty
     })
 
     it('user gets all collections from wallet', async function () {

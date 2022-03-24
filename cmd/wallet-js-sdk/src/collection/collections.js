@@ -4,7 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import { contentTypes, definedProps, UniversalWallet } from "..";
+import {contentTypes, CredentialManager, definedProps, UniversalWallet} from "..";
 
 const JSONLD_CTX_COLLECTION = [
   "https://w3id.org/wallet/v1",
@@ -37,6 +37,7 @@ export class CollectionManager {
    */
   constructor({ agent, user } = {}) {
     this.agent = agent;
+    this.user = user
     this.wallet = new UniversalWallet({ agent: this.agent, user });
   }
 
@@ -124,15 +125,10 @@ export class CollectionManager {
       `deleting ${vcIDs.length} credentials from ${collectionID} vault`
     );
 
+    const credentialManager = new CredentialManager({agent: this.agent, user: this.user})
+
     await Promise.all([
-      vcIDs.forEach(
-        async (contentID) =>
-          await this.wallet.remove({
-            auth,
-            contentType: contentTypes.CREDENTIAL,
-            contentID,
-          })
-      ),
+      vcIDs.forEach(async contentID => await credentialManager.remove(auth, contentID)),
       this.wallet.remove({
         auth,
         contentType: contentTypes.COLLECTION,
@@ -142,7 +138,7 @@ export class CollectionManager {
   }
 
   /**
-   * Removes a collection from wallet content store and also deletes all the contents which belongs to the collection.
+   * Updates a collection from wallet content store.
    *
    *  @param {String} auth - authorization token for wallet operations.
    *  @param {String} collectionID - ID of the collection to retrieved from store.

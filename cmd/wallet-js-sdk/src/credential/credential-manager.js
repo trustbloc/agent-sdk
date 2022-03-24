@@ -201,6 +201,7 @@ export class CredentialManager {
         issuanceDate,
         expirationDate,
         resolved,
+        collection,
         issuerStyle: manifest.issuer
       },
     });
