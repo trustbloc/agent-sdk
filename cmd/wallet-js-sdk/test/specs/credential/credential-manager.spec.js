@@ -7,7 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 import {expect} from "chai";
 
 import {getJSONTestData, loadFrameworks, testConfig, prepareTestManifest, wait} from "../common";
-import {contentTypes, CredentialManager, DIDManager, UniversalWallet, WalletUser} from "../../../src";
+import {
+    CollectionManager,
+    contentTypes,
+    CredentialManager,
+    DIDManager,
+    UniversalWallet,
+    WalletUser
+} from "../../../src";
 import {IssuerAdapter} from "../mocks/adapters";
 import jp from "jsonpath";
 
@@ -73,10 +80,13 @@ describe('Credential Manager data model tests', async function () {
         auth = authResponse.token
     })
 
-
+    let collection
     it('user saves a credential into wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_USER})
         const sampleUDCManifest = prepareTestManifest('udc-cred-manifest.json')
+        let collectionManager = new CollectionManager({agent: walletUserAgent, user: WALLET_USER})
+        collection = await collectionManager.create(auth, {name:"sample-name", description:"sample description"})
+        expect(collection).to.not.empty
 
         await credentialManager.save(auth, {credentials: [sampleUDC]},
             {
@@ -87,7 +97,8 @@ describe('Credential Manager data model tests', async function () {
                         format: VC_FORMAT,
                         path: "$[0]"
                     }
-                ]
+                ],
+                collection,
             })
     })
 
@@ -152,6 +163,7 @@ describe('Credential Manager data model tests', async function () {
         expect(metadata.description).to.be.equal(sampleUDC.description)
         expect(metadata.expirationDate).to.be.equal(sampleUDC.expirationDate)
         expect(metadata.type).to.be.equal("CredentialMetadata")
+        expect(metadata.collection).to.be.equal(collection)
         expect(metadata.issuerStyle).to.not.empty
         expect(metadata.resolved).to.have.lengthOf(1)
         expect(metadata.resolved[0].properties).to.have.lengthOf(2)
@@ -359,7 +371,7 @@ describe('Credential Query Tests', async function () {
         auth = authResponse.token
     })
 
-
+    let collection
     it('user saves multiple credentials into wallet', async function () {
         let credentialManager = new CredentialManager({agent: walletUserAgent, user: WALLET_QUERY_USER})
         const manifest = getJSONTestData('allvcs-cred-manifest.json')
@@ -380,9 +392,12 @@ describe('Credential Query Tests', async function () {
                 "path": "$[2]"
             }
         ]
+        let collectionManager = new CollectionManager({agent: walletUserAgent, user: WALLET_QUERY_USER})
+        collection = await collectionManager.create(auth, {name:"sample-name", description:"sample description"})
+        expect(collection).to.not.empty
 
         await credentialManager.save(auth, {credentials: [sampleUDC, samplePRC, sampleUDCBBS]},
-            { manifest, descriptorMap})
+            { manifest, descriptorMap, collection})
 
         let {contents} = await credentialManager.getAll(auth)
 
@@ -530,6 +545,7 @@ describe('Credential Query Tests', async function () {
         for (const metadata of metadataList) {
             expect(metadata).to.not.empty
             expect(metadata.resolved).to.not.empty
+            expect(metadata.collection).to.be.equal(collection)
         }
 
     })
