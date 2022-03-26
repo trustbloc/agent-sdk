@@ -1172,7 +1172,7 @@ func prepareRemoteJWEKey(keyURL string, kmsImpl kms.KeyManager) ([]byte, string,
 
 	kid := keyURL[id:] // need KID part only of keyURL since remoteKMS has the keystore URL.
 
-	pubKeyBytes, err := kmsImpl.ExportPubKeyBytes(kid)
+	pubKeyBytes, _, err := kmsImpl.ExportPubKeyBytes(kid)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to retrieve main public key bytes from remote KMS: %w", err)
 	}
