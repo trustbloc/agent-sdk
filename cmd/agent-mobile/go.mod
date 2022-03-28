@@ -8,11 +8,11 @@ go 1.17
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/hyperledger/aries-framework-go v0.1.8-0.20220324201531-18c87667df19
+	github.com/hyperledger/aries-framework-go v0.1.8-0.20220326012408-071ce8fc905c
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v0.1.4-0.20220325184342-8ccd5c996898
-	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220324201531-18c87667df19
-	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220324201531-18c87667df19
-	github.com/hyperledger/aries-framework-go/test/component v0.0.0-20220324201531-18c87667df19
+	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220326012408-071ce8fc905c
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220326012408-071ce8fc905c
+	github.com/hyperledger/aries-framework-go/test/component v0.0.0-20220326012408-071ce8fc905c
 	github.com/piprate/json-gold v0.4.1-0.20210813112359-33b90c4ca86c
 	github.com/stretchr/testify v1.7.0
 	github.com/trustbloc/agent-sdk v0.0.0-00010101000000-000000000000
@@ -27,7 +27,7 @@ require (
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
-	github.com/cespare/xxhash/v2 v2.1.1 // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/evanphx/json-patch v4.1.0+incompatible // indirect
 	github.com/fxamacker/cbor/v2 v2.3.0 // indirect
@@ -38,7 +38,7 @@ require (
 	github.com/google/tink/go v1.6.1-0.20210519071714-58be99b3c4d0 // indirect
 	github.com/google/trillian v1.3.14-0.20210520152752-ceda464a95a3 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v0.0.0-20220325181924-aed46b24a321 // indirect
+	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v0.0.0-20220325184342-8ccd5c996898 // indirect
 	github.com/hyperledger/aries-framework-go/component/storage/edv v0.0.0-20220322085443-50e8f9bd208b // indirect
 	github.com/ipfs/go-cid v0.0.7 // indirect
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a // indirect
@@ -47,7 +47,7 @@ require (
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1 // indirect
 	github.com/minio/sha256-simd v0.1.1 // indirect
-	github.com/mitchellh/mapstructure v1.4.1 // indirect
+	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/multiformats/go-base32 v0.0.3 // indirect
 	github.com/multiformats/go-base36 v0.1.0 // indirect
@@ -66,7 +66,7 @@ require (
 	github.com/tidwall/match v1.0.3 // indirect
 	github.com/tidwall/pretty v1.0.2 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
-	github.com/trustbloc/edge-core v0.1.8-0.20211216164925-ce0474dc589d // indirect
+	github.com/trustbloc/edge-core v0.1.8-0.20220324215259-0ab3fd8db3f3 // indirect
 	github.com/trustbloc/orb v0.1.4-0.20220314105645-15799999dd8b // indirect
 	github.com/trustbloc/sidetree-core-go v0.7.1-0.20220314104818-0ae9fc89df5b // indirect
 	github.com/trustbloc/vct v0.1.4-0.20220311095043-9804a0520090 // indirect
@@ -76,11 +76,11 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
+	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324 // indirect
-	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c // indirect
-	google.golang.org/grpc v1.39.0 // indirect
+	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
+	google.golang.org/grpc v1.42.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
