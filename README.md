@@ -2,7 +2,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://raw.githubusercontent.com/trustbloc/agent-sdk/main/LICENSE)
 [![Godocs](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/trustbloc/agent-sdk)
 
-[![Build Status](https://dev.azure.com/trustbloc/edge/_apis/build/status/trustbloc.agent-sdk?branchName=main)](https://dev.azure.com/trustbloc/edge/_build/latest?definitionId=45&branchName=main)
+[![Build Status](https://github.com/trustbloc/agent-sdk/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/trustbloc/agent-sdk/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/trustbloc/agent-sdk/branch/main/graph/badge.svg)](https://codecov.io/gh/trustbloc/agent-sdk)
 [![Go Report Card](https://goreportcard.com/badge/github.com/trustbloc/agent-sdk)](https://goreportcard.com/report/github.com/trustbloc/agent-sdk)
 
