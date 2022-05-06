@@ -84,6 +84,14 @@ Refer  Wallet SDK Data Model [documentation](data_models.md) to know about data 
 </dd>
 </dl>
 
+## Functions
+
+<dl>
+<dt><a href="#waitFor">waitFor()</a></dt>
+<dd><p>Wait for given duration in millisecond and return promise.</p>
+</dd>
+</dl>
+
 <a name="module_collection"></a>
 
 ## collection
@@ -172,7 +180,7 @@ Removes a collection from wallet content store and also deletes all contents whi
 <a name="module_collection--exports.CollectionManager.CollectionManager+update"></a>
 
 #### exports.CollectionManager.update(auth, collectionID, collection) ⇒ <code>Promise</code>
-Removes a collection from wallet content store and also deletes all the contents which belongs to the collection.
+Updates a collection from wallet content store.
 
 **Kind**: instance method of [<code>exports.CollectionManager</code>](#exp_module_collection--exports.CollectionManager)  
 **Returns**: <code>Promise</code> - - empty promise or an error if operation fails..  
@@ -582,6 +590,8 @@ did-manager module provides DID related features for wallet like creating, impor
         * [.getAllDIDs(options)](#module_did-manager--exports.DIDManager.DIDManager+getAllDIDs) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.getDID(options)](#module_did-manager--exports.DIDManager.DIDManager+getDID) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.resolveOrbDID(options)](#module_did-manager--exports.DIDManager.DIDManager+resolveOrbDID) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.refreshOrbDID(options)](#module_did-manager--exports.DIDManager.DIDManager+refreshOrbDID) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.removeDID(options)](#module_did-manager--exports.DIDManager.DIDManager+removeDID) ⇒ <code>Promise.&lt;Object&gt;</code>
 
 <a name="exp_module_did-manager--exports.DIDManager"></a>
 
@@ -608,6 +618,8 @@ DID Manger provides DID related features for wallet like,
 #### exports.DIDManager.createOrbDID(auth, options) ⇒ <code>Promise.&lt;Object&gt;</code>
 Creates Orb DID and saves it in wallet content store.
 
+If DID is not anchored (equivalentId ID found in DID document metadata) then saves DID resolved from equivalent ID.
+
 **Kind**: instance method of [<code>exports.DIDManager</code>](#exp_module_did-manager--exports.DIDManager)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - - Promise of DID Resolution response  or an error if operation fails..  
 **See**: [The did:orb Method](https://trustbloc.github.io/did-method-orb)  
@@ -621,6 +633,11 @@ Creates Orb DID and saves it in wallet content store.
 | options.signatureType | <code>String</code> | <code>Ed25519VerificationKey2018</code> | (optional, default Ed25519VerificationKey2018) signature type to be used for DID verification methods. |
 | options.keyAgreementType | <code>String</code> | <code>X25519KeyAgreementKey2019</code> | (optional, default X25519KeyAgreementKey2019) keyAgreement VM type to be used for DID key agreement (payload encryption). For JWK type, use `JsonWebKey2020`. |
 | options.purposes | <code>Array.&lt;String&gt;</code> | <code>authentication</code> | (optional, default "authentication") purpose of the key. |
+| options.routerKeyAgreementIDs | <code>Array.&lt;String&gt;</code> | <code>[</code> | (optional, used for DIDComm V2 only, default empty list) list of router keys IDs. |
+| options.routerConnections | <code>Array.&lt;String&gt;</code> | <code>[</code> | (optional, used for DIDComm V2 only, default empty list) list of router connections. |
+| options.serviceID | <code>String</code> |  | (optional, default no serviceID set) serviceID to which this DID should belong to. |
+| options.serviceEndpoint | <code>String</code> |  | (optional, default no serviceEndpoint set) serviceEndpoint to which this DID should have its service accessible. |
+| options.didcommServiceType | <code>String</code> |  | (optional, default no didcommServiceType set) didcommServiceType to which this DID belong to (didcomm v1: "did-communication", or didcomm V2: "DIDCommMessaging"). |
 | options.collection | <code>String</code> |  | (optional, default no collection) collection to which this DID should belong in wallet content store. |
 
 <a name="module_did-manager--exports.DIDManager.DIDManager+createPeerDID"></a>
@@ -709,6 +726,34 @@ resolve orb DID.
 | options | <code>Object</code> |  |
 | options.auth | <code>string</code> | authorization token for wallet operations. |
 | options.contentID | <code>string</code> | DID ID. |
+
+<a name="module_did-manager--exports.DIDManager.DIDManager+refreshOrbDID"></a>
+
+#### exports.DIDManager.refreshOrbDID(options) ⇒ <code>Promise.&lt;Object&gt;</code>
+refreshes saved orb DID in wallet content store if it is published.
+
+**Kind**: instance method of [<code>exports.DIDManager</code>](#exp_module_did-manager--exports.DIDManager)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - resolved DID ID - Canonical ID of the new published DID or null if not published.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| options | <code>Object</code> |  |
+| options.auth | <code>string</code> | authorization token for wallet operations. |
+| options.contentID | <code>string</code> | DID ID (typically orb https domain ID). |
+
+<a name="module_did-manager--exports.DIDManager.DIDManager+removeDID"></a>
+
+#### exports.DIDManager.removeDID(options) ⇒ <code>Promise.&lt;Object&gt;</code>
+removes given DID from wallet content store.
+
+**Kind**: instance method of [<code>exports.DIDManager</code>](#exp_module_did-manager--exports.DIDManager)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - empty promise or an error if operation fails.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| options | <code>Object</code> |  |
+| options.auth | <code>string</code> | authorization token for wallet operations. |
+| options.contentID | <code>string</code> | DID ID of the DID to be deleted. |
 
 <a name="module_blinded-routing"></a>
 
@@ -1574,7 +1619,10 @@ Updates TrustBloc wallet user preferences.
 <a name="module_wallet-user--exports.WalletUser.WalletUser+getPreferences"></a>
 
 #### exports.WalletUser.getPreferences(auth) ⇒ <code>Promise.&lt;Object&gt;</code>
-Gets TrustBloc walletuser preference.
+Gets TrustBloc wallet user preference.
+
+If controller DID is from orb https domain, then this function checks if that DID is published.
+If published then it refreshes DID in underlying wallet content store and updates user preference.
 
 **Kind**: instance method of [<code>exports.WalletUser</code>](#exp_module_wallet-user--exports.WalletUser)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - - promise containing preference metadata or error if operation fails.  
@@ -1672,6 +1720,12 @@ Reads out-of-band invitation goal code.
  Supports DIDComm V1 & V2
 
 **Kind**: global constant  
+<a name="waitFor"></a>
+
+## waitFor()
+Wait for given duration in millisecond and return promise.
+
+**Kind**: global function  
 ## Contributing
 Thank you for your interest in contributing. Please see our [community contribution guidelines](https://github.com/trustbloc/community/blob/main/CONTRIBUTING.md) for more information.
 

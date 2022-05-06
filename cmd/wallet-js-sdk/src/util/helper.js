@@ -234,3 +234,14 @@ export const extractOOBGoalCode = (oob) => {
 
   return null;
 };
+
+/**
+ * Wait for given duration in millisecond and return promise.
+ */
+export function waitFor(duration) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve();
+    }, duration);
+  });
+}

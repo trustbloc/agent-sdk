@@ -4,7 +4,12 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import { contentTypes, getMediatorConnections, UniversalWallet } from "..";
+import {
+  contentTypes,
+  getMediatorConnections,
+  retryPromiseWithDelay,
+  UniversalWallet, waitFor,
+} from "..";
 
 const DEFAULT_KEY_TYPE = "ED25519";
 const DEFAULT_SIGNATURE_TYPE = "Ed25519VerificationKey2018";
@@ -41,6 +46,8 @@ export class DIDManager {
 
   /**
    * Creates Orb DID and saves it in wallet content store.
+   *
+   * If DID is not anchored (equivalentId ID found in DID document metadata) then saves DID resolved from equivalent ID.
    *
    * @see {@link https://trustbloc.github.io/did-method-orb|The did:orb Method}
    *
@@ -119,23 +126,44 @@ export class DIDManager {
           purposes: ["keyAgreement"],
         },
       ],
-      "routerKAIDS": routerKeyAgreementIDs,
-      "routerConnections": routerConnections,
+      routerKAIDS: routerKeyAgreementIDs,
+      routerConnections: routerConnections,
     };
 
     if (serviceID) {
-      createDIDRequest["serviceID"] = serviceID
+      createDIDRequest["serviceID"] = serviceID;
     }
 
     if (serviceEndpoint) {
-      createDIDRequest["serviceEndpoint"] = serviceEndpoint
+      createDIDRequest["serviceEndpoint"] = serviceEndpoint;
     }
 
     if (didcommServiceType) {
-      createDIDRequest["didcommServiceType"] = didcommServiceType
+      createDIDRequest["didcommServiceType"] = didcommServiceType;
     }
 
     let content = await this.agent.didclient.createOrbDID(createDIDRequest);
+
+    if (
+      content.didDocumentMetadata.equivalentId &&
+      content.didDocumentMetadata.equivalentId.length > 0
+    ) {
+      const resolveWithRetry = async (retryCount = 5) => {
+        if (retryCount == 0) throw new Error("exceeded all retry attempts to resolve odb DID by equivalent ID");
+        try {
+          // we are using `https` domain now here.
+          return await this.resolveOrbDID(auth, content.didDocumentMetadata.equivalentId[0]);
+        } catch (e) {
+          console.error("failed to resolve orb DID, retrying due to error", e)
+          await waitFor(1000);
+          return await resolveWithRetry(retryCount - 1);
+        }
+      };
+
+      content = await resolveWithRetry()
+    }
+
+    await this.saveDID(auth, { content, collection });
 
     console.debug(
       "created and saved Orb DID successfully",
@@ -263,14 +291,52 @@ export class DIDManager {
    * @returns {Promise<Object>} - result.content - DID document resolution from did resolver.
    */
   async resolveOrbDID(auth, contentID) {
-    const createDIDRequest = {
+    return await this.agent.didclient.resolveOrbDID({
       did: contentID,
-    };
+    });
+  }
 
-    let content = await this.agent.didclient.resolveOrbDID(createDIDRequest);
+  /**
+   * refreshes saved orb DID in wallet content store if it is published.
+   *
+   *  @param {Object} options
+   *  @param {string} options.auth - authorization token for wallet operations.
+   *  @param {string} options.contentID - DID ID (typically orb https domain ID).
+   *
+   * @returns {Promise<Object>} - resolved DID ID - Canonical ID of the new published DID or null if not published.
+   */
+  async refreshOrbDID(auth, contentID) {
+    let resolvedDID = await this.resolveOrbDID(auth, contentID);
+    if (
+      resolvedDID.didDocumentMetadata &&
+      resolvedDID.didDocumentMetadata.method &&
+      resolvedDID.didDocumentMetadata.method.published
+    ) {
+      await Promise.all([
+        this.saveDID(auth, { content: resolvedDID }),
+        this.removeDID(auth, contentID),
+      ]);
 
-    console.debug("resolve Orb DID successfully", content.didDocument.id);
+      return resolvedDID.didDocumentMetadata.canonicalId;
+    }
 
-    return content;
+    return null;
+  }
+
+  /**
+   * removes given DID from wallet content store.
+   *
+   *  @param {Object} options
+   *  @param {string} options.auth - authorization token for wallet operations.
+   *  @param {string} options.contentID - DID ID of the DID to be deleted.
+   *
+   * @returns {Promise<Object>} - empty promise or an error if operation fails.
+   */
+  async removeDID(auth, contentID) {
+    return await this.wallet.remove({
+      auth,
+      contentType: contentTypes.DID_RESOLUTION_RESPONSE,
+      contentID,
+    });
   }
 }

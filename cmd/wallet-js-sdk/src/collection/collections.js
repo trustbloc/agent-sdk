@@ -4,7 +4,12 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-import {contentTypes, CredentialManager, definedProps, UniversalWallet} from "..";
+import {
+  contentTypes,
+  CredentialManager,
+  definedProps,
+  UniversalWallet,
+} from "..";
 
 const JSONLD_CTX_COLLECTION = [
   "https://w3id.org/wallet/v1",
@@ -37,7 +42,7 @@ export class CollectionManager {
    */
   constructor({ agent, user } = {}) {
     this.agent = agent;
-    this.user = user
+    this.user = user;
     this.wallet = new UniversalWallet({ agent: this.agent, user });
   }
 
@@ -125,10 +130,15 @@ export class CollectionManager {
       `deleting ${vcIDs.length} credentials from ${collectionID} vault`
     );
 
-    const credentialManager = new CredentialManager({agent: this.agent, user: this.user})
+    const credentialManager = new CredentialManager({
+      agent: this.agent,
+      user: this.user,
+    });
 
     await Promise.all([
-      vcIDs.forEach(async contentID => await credentialManager.remove(auth, contentID)),
+      vcIDs.forEach(
+        async (contentID) => await credentialManager.remove(auth, contentID)
+      ),
       this.wallet.remove({
         auth,
         contentType: contentTypes.COLLECTION,
