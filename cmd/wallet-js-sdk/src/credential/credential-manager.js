@@ -202,7 +202,7 @@ export class CredentialManager {
         expirationDate,
         resolved,
         collection,
-        issuerStyle: manifest.issuer
+        issuerStyle: manifest.issuer,
       },
     });
   }

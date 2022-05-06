@@ -263,10 +263,12 @@ export class WalletUser {
   }
 
   /**
-   * Gets TrustBloc walletuser preference.
+   * Gets TrustBloc wallet user preference.
+   *
+   * If controller DID is from orb https domain, then this function checks if that DID is published.
+   * If published then it refreshes DID in underlying wallet content store and updates user preference.
    *
    *  @param {String} auth - authorization token for wallet operations.
-   *
    *  @returns {Promise<Object>} - promise containing preference metadata or error if operation fails.
    */
   async getPreferences(auth) {
@@ -276,42 +278,28 @@ export class WalletUser {
       contentID: `${METADATA_PREFIX}${this.user}`,
     });
 
-    if (
-      result.content.controller &&
-      result.content.controller.includes("did:orb:https")
-    ) {
-      let resolveDID = await this.didManager.resolveOrbDID(
-        auth,
-        result.content.controller
+    if ( result.content.controller && result.content.controller.includes("did:orb:https")) {
+      let refreshedDID = await this.didManager.refreshOrbDID(
+          auth,
+          result.content.controller
       );
-      if (
-        resolveDID.didDocumentMetadata &&
-        resolveDID.didDocumentMetadata.method
-      ) {
-        console.debug("check DID if it is published");
-        if (resolveDID.didDocumentMetadata.method.published) {
-          await this.wallet.remove({
-            auth,
-            contentID: `${METADATA_PREFIX}${this.user}`,
-            contentType: contentTypes.METADATA,
-          });
 
-          result.content.controller =
-            resolveDID.didDocumentMetadata.canonicalId;
+      if (refreshedDID) {
+        await this.wallet.remove({
+          auth,
+          contentID: `${METADATA_PREFIX}${this.user}`,
+          contentType: contentTypes.METADATA,
+        });
 
-          console.info(
-            "did is published will use canonical id ",
-            result.content.controller
-          );
+        console.log('DID is published ! switching to canonical ID for controller')
+        result.content.controller = refreshedDID
 
-          await this.didManager.saveDID(auth, { content: resolveDID });
+        await this.saveMetadata(auth, result.content);
 
-          await this.saveMetadata(auth, result.content);
-
-          // TODO refresh credential
-        }
+        // TODO refresh credential
       }
     }
+
     return result;
   }
 
