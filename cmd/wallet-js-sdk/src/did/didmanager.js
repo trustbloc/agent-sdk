@@ -312,8 +312,10 @@ export class DIDManager {
       resolvedDID.didDocumentMetadata.method &&
       resolvedDID.didDocumentMetadata.method.published
     ) {
+      // resolve canonical DID ID to get fresh DID Document.
+      let content = await this.resolveOrbDID(auth, resolvedDID.didDocumentMetadata.canonicalId);
       await Promise.all([
-        this.saveDID(auth, { content: resolvedDID }),
+        this.saveDID(auth, { content }),
         this.removeDID(auth, contentID),
       ]);
 
