@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hyperledger/aries-framework-go/pkg/common/model"
 	cryptoapi "github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
@@ -847,11 +848,13 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 			Context: []string{"https://w3id.org/did/v1"},
 			Service: []did.Service{
 				{
-					ID:              uuid.New().String(),
-					Type:            didCommServiceType,
-					ServiceEndpoint: routerEndpoint,
-					RoutingKeys:     keys,
-					RecipientKeys:   []string{"1ert5", "x5356s"},
+					ID:   uuid.New().String(),
+					Type: didCommServiceType,
+					ServiceEndpoint: model.Endpoint{
+						URI:         routerEndpoint,
+						RoutingKeys: keys,
+					},
+					RecipientKeys: []string{"1ert5", "x5356s"},
 				},
 			},
 		}}
@@ -888,7 +891,7 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 				{
 					ID:              uuid.New().String(),
 					Type:            didCommServiceType,
-					ServiceEndpoint: "http://router.com",
+					ServiceEndpoint: model.Endpoint{URI: "http://router.com"},
 				},
 			},
 		}}
@@ -965,7 +968,7 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 				{
 					ID:              uuid.New().String(),
 					Type:            didCommServiceType,
-					ServiceEndpoint: "http://router.com",
+					ServiceEndpoint: model.Endpoint{URI: "http://router.com"},
 					RecipientKeys:   []string{"1ert5", "x5356s"},
 				},
 			},
@@ -993,7 +996,7 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 				{
 					ID:              uuid.New().String(),
 					Type:            didCommServiceType,
-					ServiceEndpoint: "http://router.com",
+					ServiceEndpoint: model.Endpoint{URI: "http://router.com"},
 				},
 			},
 		}}

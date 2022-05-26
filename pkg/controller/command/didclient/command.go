@@ -23,6 +23,7 @@ import (
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
 	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
+	"github.com/hyperledger/aries-framework-go/pkg/common/model"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 	mediatorservice "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
@@ -245,10 +246,12 @@ func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { // n
 	logutil.LogDebug(logger, CommandName, CreateOrbDIDCommandMethod, fmt.Sprintf("routerKeys: %+v", routerKeys))
 
 	didDoc.Service = []did.Service{{
-		ID:              serviceID,
-		Type:            didcommv2Servicetype,
-		ServiceEndpoint: serviceEndpoint,
-		RoutingKeys:     routerKeys,
+		ID:   serviceID,
+		Type: didcommv2Servicetype,
+		ServiceEndpoint: model.Endpoint{
+			URI:         serviceEndpoint,
+			RoutingKeys: routerKeys,
+		},
 	}}
 
 	var didMethodOpt []vdr.DIDMethodOption
@@ -484,8 +487,10 @@ func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { // 
 		peer.DIDMethod,
 		&did.Doc{
 			Service: []did.Service{{
-				ServiceEndpoint: config.Endpoint(),
-				RoutingKeys:     config.Keys(),
+				ServiceEndpoint: model.Endpoint{
+					URI:         config.Endpoint(),
+					RoutingKeys: config.Keys(),
+				},
 			}},
 			VerificationMethod: []did.VerificationMethod{*did.NewVerificationMethodFromBytes(
 				"#"+keyID,

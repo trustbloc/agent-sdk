@@ -9,12 +9,12 @@ go 1.17
 require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
-	github.com/hyperledger/aries-framework-go v0.1.9-0.20220412155017-81442062e607
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v1.0.0-rc.1
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc.1
-	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20220326012408-071ce8fc905c
-	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220330140627-07042d78580c
-	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220330140627-07042d78580c
+	github.com/hyperledger/aries-framework-go v0.1.9-0.20220524181534-2d8ae9d24ae0
+	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v1.0.0-rc.1.0.20220521065522-ac29393a9bbd
+	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc.1.0.20220521065522-ac29393a9bbd
+	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20220524181534-2d8ae9d24ae0
+	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220524181534-2d8ae9d24ae0
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220524181534-2d8ae9d24ae0
 	github.com/igor-pavlenko/httpsignatures-go v0.0.23
 	github.com/stretchr/testify v1.7.0
 	github.com/trustbloc/edge-core v0.1.8
