@@ -23,6 +23,7 @@ import (
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
 	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
+	"github.com/hyperledger/aries-framework-go/pkg/common/model"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 	mediatorservice "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
@@ -221,9 +222,9 @@ func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { // n
 
 	didDoc := did.Doc{}
 
-	didcommv2Servicetype := "DIDCommMessaging"
+	didcommServicetype := didCommV2ServiceType
 	if request.DIDcommServiceType != "" {
-		didcommv2Servicetype = request.DIDcommServiceType
+		didcommServicetype = request.DIDcommServiceType
 	}
 
 	serviceID := "sidetree"
@@ -245,11 +246,16 @@ func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { // n
 	logutil.LogDebug(logger, CommandName, CreateOrbDIDCommandMethod, fmt.Sprintf("routerKeys: %+v", routerKeys))
 
 	didDoc.Service = []did.Service{{
-		ID:              serviceID,
-		Type:            didcommv2Servicetype,
-		ServiceEndpoint: serviceEndpoint,
-		RoutingKeys:     routerKeys,
+		ID:   serviceID,
+		Type: didcommServicetype,
+		ServiceEndpoint: model.NewDIDCommV2Endpoint(
+			[]model.DIDCommV2Endpoint{{RoutingKeys: routerKeys, URI: serviceEndpoint}}),
 	}}
+
+	if didDoc.Service[0].Type == didCommServiceType {
+		didDoc.Service[0].ServiceEndpoint = model.NewDIDCommV1Endpoint(serviceEndpoint)
+		didDoc.Service[0].RoutingKeys = routerKeys
+	}
 
 	var didMethodOpt []vdr.DIDMethodOption
 
@@ -484,8 +490,8 @@ func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { // 
 		peer.DIDMethod,
 		&did.Doc{
 			Service: []did.Service{{
-				ServiceEndpoint: config.Endpoint(),
-				RoutingKeys:     config.Keys(),
+				ServiceEndpoint: model.NewDIDCommV2Endpoint(
+					[]model.DIDCommV2Endpoint{{URI: config.Endpoint(), RoutingKeys: config.Keys()}}),
 			}},
 			VerificationMethod: []did.VerificationMethod{*did.NewVerificationMethodFromBytes(
 				"#"+keyID,

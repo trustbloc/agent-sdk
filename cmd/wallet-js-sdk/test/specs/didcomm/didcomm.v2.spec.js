@@ -94,6 +94,9 @@ async function adapterPubDID(adapter, routerDoc, routerConn, serviceID) {
     let docRes = await adapter.agent.didclient.createOrbDID(createDIDRequest)
     expect(docRes).to.not.empty
 
+    let resolveDID = async () => await adapter.agent.didclient.resolveOrbDID({did: docRes.didDocument.id})
+    await retryWithDelay(resolveDID, 10, 5000)
+
     return docRes.didDocument.id
 }
 

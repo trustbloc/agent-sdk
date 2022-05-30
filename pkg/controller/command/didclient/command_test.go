@@ -18,14 +18,14 @@ import (
 	"fmt"
 	"testing"
 
-	cryptoapi "github.com/hyperledger/aries-framework-go/pkg/crypto"
-	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
-
 	"github.com/google/uuid"
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
+	"github.com/hyperledger/aries-framework-go/pkg/common/model"
+	cryptoapi "github.com/hyperledger/aries-framework-go/pkg/crypto"
+	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 	mediatorsvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	mockprotocol "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol"
 	mockroute "github.com/hyperledger/aries-framework-go/pkg/mock/didcomm/protocol/mediator"
@@ -847,11 +847,12 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 			Context: []string{"https://w3id.org/did/v1"},
 			Service: []did.Service{
 				{
-					ID:              uuid.New().String(),
-					Type:            didCommServiceType,
-					ServiceEndpoint: routerEndpoint,
-					RoutingKeys:     keys,
-					RecipientKeys:   []string{"1ert5", "x5356s"},
+					ID:   uuid.New().String(),
+					Type: didCommServiceType,
+					ServiceEndpoint: model.NewDIDCommV2Endpoint(
+						[]model.DIDCommV2Endpoint{{URI: routerEndpoint}}),
+					RoutingKeys:   keys,
+					RecipientKeys: []string{"1ert5", "x5356s"},
 				},
 			},
 		}}
@@ -886,9 +887,10 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 			Context: []string{"https://w3id.org/did/v1"},
 			Service: []did.Service{
 				{
-					ID:              uuid.New().String(),
-					Type:            didCommServiceType,
-					ServiceEndpoint: "http://router.com",
+					ID:   uuid.New().String(),
+					Type: didCommServiceType,
+					ServiceEndpoint: model.NewDIDCommV2Endpoint(
+						[]model.DIDCommV2Endpoint{{URI: "http://router.com"}}),
 				},
 			},
 		}}
@@ -963,10 +965,11 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 			Context: []string{"https://w3id.org/did/v1"},
 			Service: []did.Service{
 				{
-					ID:              uuid.New().String(),
-					Type:            didCommServiceType,
-					ServiceEndpoint: "http://router.com",
-					RecipientKeys:   []string{"1ert5", "x5356s"},
+					ID:   uuid.New().String(),
+					Type: didCommServiceType,
+					ServiceEndpoint: model.NewDIDCommV2Endpoint(
+						[]model.DIDCommV2Endpoint{{URI: "http://router.com"}}),
+					RecipientKeys: []string{"1ert5", "x5356s"},
 				},
 			},
 		}}
@@ -991,9 +994,10 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 			Context: []string{"https://w3id.org/did/v1"},
 			Service: []did.Service{
 				{
-					ID:              uuid.New().String(),
-					Type:            didCommServiceType,
-					ServiceEndpoint: "http://router.com",
+					ID:   uuid.New().String(),
+					Type: didCommServiceType,
+					ServiceEndpoint: model.NewDIDCommV2Endpoint(
+						[]model.DIDCommV2Endpoint{{URI: "http://router.com"}}),
 				},
 			},
 		}}
