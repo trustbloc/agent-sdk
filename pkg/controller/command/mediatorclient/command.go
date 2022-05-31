@@ -307,11 +307,10 @@ func (c *Command) CreateInvitation(rw io.Writer, req io.Reader) command.Error {
 
 	if request.From != "" {
 		invitationV2, err = c.outOfBandV2.CreateInvitation(
-			outofbandv2.WithAccept("didcomm/v2"),
+			outofbandv2.WithAccept("didcomm/aip2;env=rfc587", "didcomm/v2"),
 			outofbandv2.WithGoal(request.Goal, request.GoalCode),
 			outofbandv2.WithLabel(request.Label),
 			outofbandv2.WithFrom(request.From),
-			// outofbandv2.WithAttachments(),
 		)
 
 		if err != nil {
@@ -327,6 +326,7 @@ func (c *Command) CreateInvitation(rw io.Writer, req io.Reader) command.Error {
 			outofband.WithHandshakeProtocols(request.Protocols...),
 			outofband.WithGoal(request.Goal, request.GoalCode),
 			outofband.WithLabel(request.Label),
+			outofband.WithAccept("didcomm/aip2;env=rfc19", "didcomm/aip1"),
 			outofband.WithRouterConnections(connections[rand.Intn(len(connections))])) //nolint: gosec
 		if err != nil {
 			logutil.LogError(logger, CommandName, CreateInvitation, fmt.Sprintf("oob v1 error: %s", err.Error()))

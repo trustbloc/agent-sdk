@@ -40,7 +40,7 @@ export class Adapter {
         this.label = label
     }
 
-    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc587"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
+    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc587","didcomm/aip2;env=rfc19"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
         this.agent = await loadFrameworks({name: this.label, mediaTypeProfiles:mediaTypeProfiles, keyType:keyType, keyAgreementType:keyAgreementType})
 
         let mediatorURL = testConfig.mediatorEndPoint
@@ -109,7 +109,7 @@ export class VerifierAdapter extends Adapter {
         super(label)
     }
 
-    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc587"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
+    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc587","didcomm/aip2;env=rfc19"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
         return await super.init({mediaTypeProfiles:mediaTypeProfiles, keyType:keyType, keyAgreementType:keyAgreementType})
     }
 
@@ -225,7 +225,7 @@ export class IssuerAdapter extends Adapter {
         super(label)
     }
 
-    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc587"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
+    async init({mediaTypeProfiles = ["didcomm/aip2;env=rfc587","didcomm/aip2;env=rfc19"], keyType = 'ed25519', keyAgreementType = 'p256kw'} = {}) {
         return await super.init({mediaTypeProfiles:mediaTypeProfiles, keyType:keyType, keyAgreementType:keyAgreementType})
     }
 

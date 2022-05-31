@@ -42,7 +42,7 @@ export function getJSONTestData(filename) {
 export async function loadFrameworks({
       name = 'user-agent',
       logLevel = '',
-      mediaTypeProfiles = ["didcomm/aip2;env=rfc587"],
+      mediaTypeProfiles = ["didcomm/aip2;env=rfc587","didcomm/aip2;env=rfc19"],
       keyType = 'ed25519',
       keyAgreementType = 'p256kw'} = {}) {
     let agentOpts = JSON.parse(JSON.stringify(agentStartupOpts))
