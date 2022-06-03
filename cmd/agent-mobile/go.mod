@@ -11,7 +11,7 @@ require (
 	github.com/hyperledger/aries-framework-go v0.1.9-0.20220602200413-1135b419c644
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v1.0.0-rc.1.0.20220603055629-55b4fab22d40
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220428211718-66cc046674a1
-	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220330140627-07042d78580c
+	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220603152932-5b6aec9c0c00
 	github.com/hyperledger/aries-framework-go/test/component v0.0.0-20220330140627-07042d78580c
 	github.com/piprate/json-gold v0.4.1
 	github.com/stretchr/testify v1.7.0
