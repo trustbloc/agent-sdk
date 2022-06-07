@@ -5,6 +5,8 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import chai, { expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
+import { v4 as uuidv4 } from "uuid";
 
 import { getJSONTestData, loadFrameworks, testConfig } from "../common";
 import { VerifierAdapter } from "../mocks/adapters";
@@ -15,8 +17,6 @@ import {
   getMediatorConnections,
   UniversalWallet,
 } from "../../../src";
-import chaiAsPromised from "chai-as-promised";
-import { v4 as uuidv4 } from "uuid";
 
 chai.use(chaiAsPromised);
 
