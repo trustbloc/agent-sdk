@@ -4,6 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+import { v4 as uuidv4 } from "uuid";
 import {
   contentTypes,
   CredentialManager,
@@ -16,8 +17,6 @@ const JSONLD_CTX_COLLECTION = [
   "https://trustbloc.github.io/context/wallet/collections-v1.jsonld",
 ];
 const DEF_COLLECTION_TYPE = "Vault";
-
-var uuid = require("uuid/v4");
 
 /**
  *  collection module provides wallet collection data model features for grouping wallet contents.
@@ -63,7 +62,7 @@ export class CollectionManager {
   async create(auth, { name, description, type = DEF_COLLECTION_TYPE } = {}) {
     let content = {
       "@context": JSONLD_CTX_COLLECTION,
-      id: uuid(),
+      id: uuidv4(),
       type,
       name,
       description,

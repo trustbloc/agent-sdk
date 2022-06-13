@@ -5,8 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import jp from "jsonpath";
-
-var uuid = require("uuid/v4");
+import { v4 as uuidv4 } from "uuid";
 
 export const PRE_STATE = "pre_state";
 export const POST_STATE = "post_state";
@@ -86,7 +85,7 @@ export const normalizePresentationSubmission = (query, presentation) => {
   if (!presentation.presentation_submission) {
     return presentation.verifiableCredential.map((credential) => {
       return {
-        id: uuid(),
+        id: uuidv4(),
         credentials: [credential],
       };
     });
