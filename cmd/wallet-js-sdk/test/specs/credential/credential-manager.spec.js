@@ -5,6 +5,8 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import { expect } from "chai";
+import { v4 as uuidv4 } from "uuid";
+import jp from "jsonpath";
 
 import {
   getJSONTestData,
@@ -22,8 +24,6 @@ import {
   WalletUser,
 } from "../../../src";
 import { IssuerAdapter } from "../mocks/adapters";
-import jp from "jsonpath";
-import { v4 as uuidv4 } from "uuid";
 
 const WALLET_USER = "smith-agent";
 const WALLET_QUERY_USER = "smith-query-agent";
