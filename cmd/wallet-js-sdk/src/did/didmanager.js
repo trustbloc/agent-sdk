@@ -8,7 +8,8 @@ import {
   contentTypes,
   getMediatorConnections,
   retryPromiseWithDelay,
-  UniversalWallet, waitFor,
+  UniversalWallet,
+  waitFor,
 } from "..";
 
 const DEFAULT_KEY_TYPE = "ED25519";
@@ -149,18 +150,24 @@ export class DIDManager {
       content.didDocumentMetadata.equivalentId.length > 0
     ) {
       const resolveWithRetry = async (retryCount = 5) => {
-        if (retryCount == 0) throw new Error("exceeded all retry attempts to resolve odb DID by equivalent ID");
+        if (retryCount == 0)
+          throw new Error(
+            "exceeded all retry attempts to resolve odb DID by equivalent ID"
+          );
         try {
           // we are using `https` domain now here.
-          return await this.resolveOrbDID(auth, content.didDocumentMetadata.equivalentId[0]);
+          return await this.resolveOrbDID(
+            auth,
+            content.didDocumentMetadata.equivalentId[0]
+          );
         } catch (e) {
-          console.error("failed to resolve orb DID, retrying due to error", e)
+          console.error("failed to resolve orb DID, retrying due to error", e);
           await waitFor(1000);
           return await resolveWithRetry(retryCount - 1);
         }
       };
 
-      content = await resolveWithRetry()
+      content = await resolveWithRetry();
     }
 
     await this.saveDID(auth, { content, collection });
@@ -313,7 +320,10 @@ export class DIDManager {
       resolvedDID.didDocumentMetadata.method.published
     ) {
       // resolve canonical DID ID to get fresh DID Document.
-      let content = await this.resolveOrbDID(auth, resolvedDID.didDocumentMetadata.canonicalId);
+      let content = await this.resolveOrbDID(
+        auth,
+        resolvedDID.didDocumentMetadata.canonicalId
+      );
       await Promise.all([
         this.saveDID(auth, { content }),
         this.removeDID(auth, contentID),

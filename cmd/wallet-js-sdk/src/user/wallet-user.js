@@ -278,10 +278,13 @@ export class WalletUser {
       contentID: `${METADATA_PREFIX}${this.user}`,
     });
 
-    if ( result.content.controller && result.content.controller.includes("did:orb:https")) {
+    if (
+      result.content.controller &&
+      result.content.controller.includes("did:orb:https")
+    ) {
       let refreshedDID = await this.didManager.refreshOrbDID(
-          auth,
-          result.content.controller
+        auth,
+        result.content.controller
       );
 
       if (refreshedDID) {
@@ -291,8 +294,10 @@ export class WalletUser {
           contentType: contentTypes.METADATA,
         });
 
-        console.log('DID is published ! switching to canonical ID for controller')
-        result.content.controller = refreshedDID
+        console.log(
+          "DID is published ! switching to canonical ID for controller"
+        );
+        result.content.controller = refreshedDID;
 
         await this.saveMetadata(auth, result.content);
 
