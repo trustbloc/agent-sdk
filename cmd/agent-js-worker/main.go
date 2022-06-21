@@ -12,6 +12,7 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
+	goctx "context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -45,6 +46,7 @@ import (
 	arieshttp "github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/http"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/transport/ws"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/jose"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/jose/jwk"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/ldcontext/remote"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
@@ -61,7 +63,10 @@ import (
 	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/mitchellh/mapstructure"
 	jsonld "github.com/piprate/json-gold/ld"
+	"github.com/trustbloc/auth/spi/gnap/proof/httpsig"
 	"github.com/trustbloc/edge-core/pkg/log"
+	edvclient "github.com/trustbloc/edv/pkg/client"
+	"github.com/trustbloc/edv/pkg/restapi/models"
 
 	"github.com/trustbloc/agent-sdk/pkg/auth/zcapld"
 	agentctrl "github.com/trustbloc/agent-sdk/pkg/controller"
@@ -90,6 +95,8 @@ const (
 	masterKeyDBKeyName       = masterKeyStoreName
 	masterKeyNumBytes        = 32
 	defaultClearCache        = "5m"
+	walletTokenExpiryMins    = "20"
+	authBootstrapDataPath    = "/bootstrap"
 )
 
 // TODO Signal JS when WASM is loaded and ready.
@@ -152,6 +159,11 @@ type agentStartOpts struct {
 	KeyAgreementType         string      `json:"key-agreement-type"`
 	MediaTypeProfiles        []string    `json:"media-type-profiles"`
 	WebSocketReadLimit       int64       `json:"web-socket-read-limit"`
+	AuthServerURL            string      `json:"hubAuthURL"`
+	KMSServerURL             string      `json:"kms-server-url"`
+	GNAPSigningJWK           string      `json:"gnap-signing-jwk"`
+	GNAPAccessToken          string      `json:"gnap-access-token"`
+	GNAPUserSubject          string      `json:"gnap-user-subject"`
 }
 
 type userConfig struct {
@@ -305,25 +317,25 @@ func handlerNotFoundErr(c *command) *result {
 func addAgentHandlers(pkgMap map[string]map[string]func(*command) *result) {
 	fnMap := make(map[string]func(*command) *result)
 	fnMap[startFn] = func(c *command) *result {
-		cOpts, err := startOpts(c.Payload)
+		opts, err := startOpts(c.Payload)
 		if err != nil {
 			return newErrResult(c.ID, err.Error())
 		}
 
-		err = setLogLevel(cOpts.LogLevel)
+		err = setLogLevel(opts.LogLevel)
 		if err != nil {
 			return newErrResult(c.ID, err.Error())
 		}
 
-		options, err := agentOpts(cOpts)
+		ariesOpts, err := ariesAgentOpts(opts)
 		if err != nil {
 			return newErrResult(c.ID, err.Error())
 		}
 
 		msgHandler := msghandler.NewRegistrar()
-		options = append(options, aries.WithMessageServiceProvider(msgHandler))
+		ariesOpts = append(ariesOpts, aries.WithMessageServiceProvider(msgHandler))
 
-		a, err := aries.New(options...)
+		a, err := aries.New(ariesOpts...)
 		if err != nil {
 			return newErrResult(c.ID, err.Error())
 		}
@@ -333,12 +345,12 @@ func addAgentHandlers(pkgMap map[string]map[string]func(*command) *result) {
 			return newErrResult(c.ID, err.Error())
 		}
 
-		handlers, err := getAriesHandlers(ctx, msgHandler, cOpts)
+		handlers, err := getAriesHandlers(ctx, msgHandler, opts)
 		if err != nil {
 			return newErrResult(c.ID, err.Error())
 		}
 
-		agentHandlers, err := getAgentHandlers(ctx, msgHandler, cOpts)
+		agentHandlers, err := getAgentHandlers(ctx, msgHandler, opts)
 		if err != nil {
 			return newErrResult(c.ID, err.Error())
 		}
@@ -521,6 +533,8 @@ func newErrResult(id, msg string) *result {
 }
 
 func startOpts(payload map[string]interface{}) (*agentStartOpts, error) {
+	logger.Debugf("agent start options: %+v\n", payload)
+
 	opts := &agentStartOpts{}
 
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
@@ -626,10 +640,10 @@ var (
 )
 
 //nolint:gocyclo,funlen
-func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
-	msgHandler := msghandler.NewRegistrar()
-
+func ariesAgentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 	var options []aries.Option
+
+	msgHandler := msghandler.NewRegistrar()
 	options = append(options, aries.WithMessageServiceProvider(msgHandler))
 
 	if startOpts.TransportReturnRoute != "" {
@@ -660,7 +674,7 @@ func agentOpts(startOpts *agentStartOpts) ([]aries.Option, error) {
 
 	kmsImpl, cryptoImpl, options, err = createKMSAndCrypto(startOpts, indexedDBProvider, options)
 	if err != nil {
-		return nil, fmt.Errorf("unexpected failure while creating LocalKMS and Crypto instance: %w", err)
+		return nil, fmt.Errorf("failed to create kms and crypto: %w", err)
 	}
 
 	options, err = addStorageOptions(startOpts, indexedDBProvider, kmsImpl, cryptoImpl, options)
@@ -769,65 +783,231 @@ func createEDVStorage(opts *agentStartOpts, indexedDBProvider *indexeddb.Provide
 func createKMSAndCrypto(opts *agentStartOpts, indexedDBKMSProvider storage.Provider,
 	allAriesOptions []aries.Option) (kms.KeyManager, cryptoapi.Crypto, []aries.Option, error) {
 	if opts.KMSType == kmsTypeWebKMS {
-		return createWebkms(opts, allAriesOptions)
+		return createWebKMS(opts, allAriesOptions)
 	}
 
-	return createLocalKMSAndCrypto(indexedDBKMSProvider, allAriesOptions)
+	return createLocalKMS(indexedDBKMSProvider, allAriesOptions)
 }
 
-func createWebkms(opts *agentStartOpts,
+//nolint:funlen,nestif
+func createWebKMS(opts *agentStartOpts,
 	allAriesOptions []aries.Option) (*webkms.RemoteKMS, *webcrypto.RemoteCrypto, []aries.Option, error) {
-	zcapSVC := zcapld.New(opts.AuthzKeyStoreURL, opts.UserConfig.AccessToken, opts.UserConfig.SecretShare)
+	var (
+		headerFunc func(req *http.Request) (*http.Header, error)
+		webKMS     *webkms.RemoteKMS
+	)
 
-	httpClient := &http.Client{}
+	httpClient := http.DefaultClient
 
-	capability, err := decodeAndGunzip(opts.OPSKMSCapability)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to prepare OPS KMS capability for use: %w", err)
-	}
+	if opts.GNAPAccessToken != "" {
+		var err error
 
-	wKMS := webkms.New(opts.OpsKeyStoreURL, httpClient,
-		webkms.WithHeaders(func(req *http.Request) (*http.Header, error) {
-			if len(capability) != 0 {
-				invocationAction, err := capabilityInvocationAction(req)
-				if err != nil {
-					return nil, fmt.Errorf("webkms: failed to determine the capability's invocation action: %w", err)
-				}
+		if headerFunc, err = gnapAddHeaderFunc(opts.GNAPAccessToken, opts.GNAPSigningJWK); err != nil {
+			return nil, nil, nil, fmt.Errorf("failed to create gnap header func: %w", err)
+		}
 
-				return zcapSVC.SignHeader(req, capability, invocationAction)
+		if opts.OpsKeyStoreURL == "" { // user requires onboarding
+			keyStoreURL, _, err := webkms.CreateKeyStore(httpClient, opts.KMSServerURL, opts.GNAPUserSubject, "", nil,
+				webkms.WithHeaders(headerFunc))
+			if err != nil {
+				return nil, nil, nil, fmt.Errorf("failed to create key store: %w", err)
 			}
 
-			return nil, nil
-		}))
+			logger.Debugf("key store URL: %s", keyStoreURL)
+
+			opts.OpsKeyStoreURL = keyStoreURL
+
+			webKMS = webkms.New(keyStoreURL, httpClient, webkms.WithHeaders(headerFunc))
+
+			if err := onboardUser(opts, webKMS); err != nil {
+				return nil, nil, nil, fmt.Errorf("failed to onboard user: %w", err)
+			}
+		}
+	} else if opts.OPSKMSCapability != "" {
+		capability, err := decodeAndGunzip(opts.OPSKMSCapability)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("failed to prepare OPS KMS capability for use: %w", err)
+		}
+
+		zcapSvc := zcapld.New(opts.AuthzKeyStoreURL, opts.UserConfig.AccessToken, opts.UserConfig.SecretShare)
+
+		headerFunc = func(req *http.Request) (*http.Header, error) {
+			invocationAction, err := capabilityInvocationAction(req)
+			if err != nil {
+				return nil, fmt.Errorf("webkms: failed to determine the capability's invocation action: %w", err)
+			}
+
+			return zcapSvc.SignHeader(req, capability, invocationAction)
+		}
+
+		webKMS = webkms.New(opts.OpsKeyStoreURL, httpClient, webkms.WithHeaders(headerFunc))
+	}
 
 	allAriesOptions = append(allAriesOptions,
 		aries.WithKMS(func(ctx kms.Provider) (kms.KeyManager, error) {
-			return wKMS, nil
+			return webKMS, nil
 		}))
 
-	var opt []webkms.Opt
+	var kmsOpts []webkms.Opt
+
 	if opts.CacheSize >= 0 {
-		opt = append(opt, webkms.WithCache(opts.CacheSize))
+		kmsOpts = append(kmsOpts, webkms.WithCache(opts.CacheSize))
 	}
 
-	opt = append(opt, webkms.WithHeaders(func(req *http.Request) (*http.Header, error) {
-		if len(capability) != 0 {
-			invocationAction, err := capabilityInvocationAction(req)
-			if err != nil {
-				return nil, fmt.Errorf("webcrypto: failed to determine the capability's invocation action: %w", err)
-			}
+	kmsOpts = append(kmsOpts, webkms.WithHeaders(headerFunc))
 
-			return zcapSVC.SignHeader(req, capability, invocationAction)
-		}
-
-		return nil, nil
-	}))
-
-	wCrypto := webcrypto.New(opts.OpsKeyStoreURL, httpClient, opt...)
+	wCrypto := webcrypto.New(opts.OpsKeyStoreURL, http.DefaultClient, kmsOpts...)
 
 	allAriesOptions = append(allAriesOptions, aries.WithCrypto(wCrypto))
 
-	return wKMS, wCrypto, allAriesOptions, nil
+	return webKMS, wCrypto, allAriesOptions, nil
+}
+
+func gnapAddHeaderFunc(gnapAccessToken, gnapSigningJWK string) (func(req *http.Request) (*http.Header, error), error) {
+	signingJWK := &jwk.JWK{}
+
+	err := json.Unmarshal([]byte(gnapSigningJWK), signingJWK)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal gnap signing jwk: %w", err)
+	}
+
+	signingJWK.Algorithm = "ES256"
+
+	return func(req *http.Request) (*http.Header, error) {
+		req.Header.Set("Authorization", fmt.Sprintf("GNAP %s", gnapAccessToken))
+
+		r, err := httpsig.Sign(req, nil, signingJWK, "sha-256") // TODO: pass body bytes
+		if err != nil {
+			return nil, fmt.Errorf("failed to sign request: %w", err)
+		}
+
+		return &r.Header, nil
+	}, nil
+}
+
+type bootstrapData struct {
+	User              string `json:"user,omitempty"`
+	UserEDVVaultURL   string `json:"edvVaultURL,omitempty"`
+	OpsEDVVaultURL    string `json:"opsVaultURL,omitempty"`
+	AuthzKeyStoreURL  string `json:"authzKeyStoreURL,omitempty"`
+	OpsKeyStoreURL    string `json:"opsKeyStoreURL,omitempty"`
+	EDVOpsKIDURL      string `json:"edvOpsKIDURL,omitempty"`
+	EDVHMACKIDURL     string `json:"edvHMACKIDURL,omitempty"`
+	UserEDVCapability string `json:"edvCapability,omitempty"`
+	OPSKMSCapability  string `json:"opsKMSCapability,omitempty"`
+	UserEDVServer     string `json:"userEDVServer,omitempty"`
+	UserEDVVaultID    string `json:"userEDVVaultID,omitempty"`
+	UserEDVEncKID     string `json:"userEDVEncKID,omitempty"`
+	UserEDVMACKID     string `json:"userEDVMACKID,omitempty"`
+	TokenExpiry       string `json:"tokenExpiry,omitempty"`
+}
+
+type userBootstrapData struct {
+	Data *bootstrapData `json:"data,omitempty"`
+}
+
+//nolint:funlen
+func onboardUser(opts *agentStartOpts, webKMS *webkms.RemoteKMS) error {
+	// 1. Create EDV data vault
+	config := &models.DataVaultConfiguration{
+		Sequence:    0,
+		Controller:  opts.GNAPUserSubject,
+		ReferenceID: uuid.New().String(),
+		KEK:         models.IDTypePair{ID: uuid.New().URN(), Type: "AesKeyWrappingKey2019"},
+		HMAC:        models.IDTypePair{ID: uuid.New().URN(), Type: "Sha256HmacKey2019"},
+	}
+
+	edvVaultURL, _, err := edvclient.New(opts.EDVServerURL).CreateDataVault(config,
+		edvclient.WithRequestHeader(func(req *http.Request) (*http.Header, error) {
+			req.Header.Set("Authorization", "GNAP "+opts.GNAPAccessToken)
+
+			return &req.Header, nil
+		}),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create EDV data vault: %w", err)
+	}
+
+	opts.EDVVaultID = getVaultID(edvVaultURL)
+
+	logger.Debugf("EDV data vault URL: %s", edvVaultURL)
+
+	// 2. Create key for encrypted formatter (EDV storage provider)
+	edvOpsKID, edvOpsKeyURL, err := webKMS.Create(kms.NISTP256ECDHKW)
+	if err != nil {
+		return fmt.Errorf("failed to create EDV ops key: %w", err)
+	}
+
+	opts.EDVOpsKIDURL = edvOpsKeyURL.(string) //nolint:errcheck,forcetypeassert
+
+	logger.Debugf("EDV ops key URL: %s", opts.EDVOpsKIDURL)
+
+	// 3. Create MAC key for generating document IDs (EDV storage provider)
+	edvHMACKID, edvHMACKeyURL, err := webKMS.Create(kms.HMACSHA256Tag256)
+	if err != nil {
+		return fmt.Errorf("failed to create EDV HMAC key: %w", err)
+	}
+
+	opts.EDVHMACKIDURL = edvHMACKeyURL.(string) //nolint:errcheck,forcetypeassert
+
+	logger.Debugf("EDV HMAC key URL: %s", opts.EDVHMACKIDURL)
+
+	// 4. Post bootstrap data to auth server
+	data := &bootstrapData{
+		User:              uuid.NewString(),
+		UserEDVVaultURL:   edvVaultURL,
+		OpsEDVVaultURL:    "",
+		AuthzKeyStoreURL:  "",
+		OpsKeyStoreURL:    opts.OpsKeyStoreURL,
+		EDVOpsKIDURL:      opts.EDVOpsKIDURL,
+		EDVHMACKIDURL:     opts.EDVHMACKIDURL,
+		UserEDVCapability: "",
+		OPSKMSCapability:  "",
+		UserEDVVaultID:    opts.EDVVaultID,
+		UserEDVServer:     opts.EDVServerURL,
+		UserEDVEncKID:     edvOpsKID,
+		UserEDVMACKID:     edvHMACKID,
+		TokenExpiry:       walletTokenExpiryMins,
+	}
+
+	reqBytes, err := json.Marshal(userBootstrapData{
+		Data: data,
+	})
+	if err != nil {
+		return fmt.Errorf("marshal boostrap data : %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(goctx.Background(),
+		http.MethodPost, opts.AuthServerURL+authBootstrapDataPath, bytes.NewBuffer(reqBytes))
+	if err != nil {
+		return fmt.Errorf("failed to create bootstrap request to auth server: %w", err)
+	}
+
+	req.Header.Set("Authorization", "GNAP "+opts.GNAPAccessToken)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to post bootstrap data: %w", err)
+	}
+
+	defer func() {
+		err = resp.Body.Close()
+		if err != nil {
+			logger.Errorf("failed to close response body: %w", err)
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to post bootstrap data: %s", resp.Status)
+	}
+
+	return nil
+}
+
+func getVaultID(vaultURL string) string {
+	parts := strings.Split(vaultURL, "/")
+
+	return parts[len(parts)-1]
 }
 
 func decodeAndGunzip(zcap string) ([]byte, error) {
@@ -953,7 +1133,7 @@ func capabilityInvocationAction(req *http.Request) (string, error) { //nolint:fu
 	return action, nil
 }
 
-func createLocalKMSAndCrypto(indexedDBKMSProvider storage.Provider,
+func createLocalKMS(indexedDBKMSProvider storage.Provider,
 	allAriesOptions []aries.Option) (*localkms.LocalKMS, *tinkcrypto.Crypto, []aries.Option, error) {
 	masterKeyReader, err := prepareMasterKeyReader(indexedDBKMSProvider)
 	if err != nil {
@@ -1048,7 +1228,10 @@ func createEDVStorageProvider(opts *agentStartOpts, storageProvider storage.Prov
 		return nil, fmt.Errorf("failed to prepare formatted provider: %w", err)
 	}
 
-	edvRESTProvider := prepareEDVRESTProvider(opts, encryptedFormatter)
+	edvRESTProvider, err := prepareEDVRESTProvider(opts, encryptedFormatter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare edv rest provider: %w", err)
+	}
 
 	batchedProvider := batchedstore.NewProvider(edvRESTProvider, opts.EDVBatchSize)
 
@@ -1072,13 +1255,22 @@ func createEDVStorageProvider(opts *agentStartOpts, storageProvider storage.Prov
 	return cachedProvider, nil
 }
 
-func prepareEDVRESTProvider(opts *agentStartOpts, formatter *edv.EncryptedFormatter) *edv.RESTProvider {
+//nolint:nestif
+func prepareEDVRESTProvider(opts *agentStartOpts, formatter *edv.EncryptedFormatter) (*edv.RESTProvider, error) {
 	userConf := opts.UserConfig
 	capability := []byte(opts.EDVCapability)
 	zcapSVC := zcapld.New(opts.AuthzKeyStoreURL, userConf.AccessToken, userConf.SecretShare)
 
-	return edv.NewRESTProvider(opts.EDVServerURL, opts.EDVVaultID, formatter,
-		edv.WithHeaders(func(req *http.Request) (*http.Header, error) {
+	var headerFunc func(req *http.Request) (*http.Header, error)
+
+	if opts.GNAPAccessToken != "" {
+		var err error
+
+		if headerFunc, err = gnapAddHeaderFunc(opts.GNAPAccessToken, opts.GNAPSigningJWK); err != nil {
+			return nil, fmt.Errorf("failed to create gnap header func: %w", err)
+		}
+	} else {
+		headerFunc = func(req *http.Request) (*http.Header, error) {
 			if len(capability) != 0 {
 				action := "write"
 
@@ -1090,8 +1282,12 @@ func prepareEDVRESTProvider(opts *agentStartOpts, formatter *edv.EncryptedFormat
 			}
 
 			return nil, nil
-		}),
-		edv.WithFullDocumentsReturnedFromQueries(), edv.WithBatchEndpointExtension())
+		}
+	}
+
+	return edv.NewRESTProvider(opts.EDVServerURL, opts.EDVVaultID, formatter,
+		edv.WithHeaders(headerFunc),
+		edv.WithFullDocumentsReturnedFromQueries(), edv.WithBatchEndpointExtension()), nil
 }
 
 func prepareEncryptedFormatter(opts *agentStartOpts, kmsStorageProvider storage.Provider, kmsImpl kms.KeyManager,
