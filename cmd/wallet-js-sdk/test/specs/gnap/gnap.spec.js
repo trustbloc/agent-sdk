@@ -154,7 +154,7 @@ describe("GNAP Auth Client - Continuing Request", function () {
       GNAP_AUTH_SERVER_URL,
     });
 
-    const result = await client.continue(mockRequest);
+    const result = await client.continue(mockRequest, "mock-continue-token-value");
 
     expect(result.status).to.be.equal(200);
     expect(result.data).to.be.equal(expectedResp);
