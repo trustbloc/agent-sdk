@@ -54,7 +54,7 @@ export class Client {
   }
 
   // Continue gnap auth request containing interact_ref.
-  async continue(req) {
+  async continue(req, continue_token) {
     // TODO : Implement http message signature module in JS (https://github.com/trustbloc/agent-sdk/issues/348)
     // const sig = this.signer.Sign(req);
 
@@ -64,6 +64,7 @@ export class Client {
       {
         headers: {
           "Content-Type": CONTENT_TYPE,
+          "Authorization": "GNAP " + continue_token,
           // "Signature-Input": "TODO", // TODO update signature input
           // TODO : Implement http message signature module in JS (https://github.com/trustbloc/agent-sdk/issues/348)
           // Signature: encode(sig, true),
