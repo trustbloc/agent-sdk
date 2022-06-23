@@ -6,7 +6,8 @@ SPDX-License-Identifier: Apache-2.0
 
 import axios from "axios";
 // TODO : Implement http message signature module in JS (https://github.com/trustbloc/agent-sdk/issues/348)
-// import { encode } from "js-base64";
+// import { encodeURI } from "js-base64";
+import getDigest from "../digest/digest";
 
 const GNAP_BASE_PATH = "/gnap";
 const AUTH_REQUEST_PATH = GNAP_BASE_PATH + "/auth";
@@ -44,6 +45,7 @@ export class Client {
     const gnapResp = await axios.post(url, req, {
       headers: {
         "Content-Type": CONTENT_TYPE,
+        "content-digest": getDigest("SHA-256", req),
         // "Signature-Input": "TODO", // TODO update signature input
         // TODO : Implement http message signature module in JS (https://github.com/trustbloc/agent-sdk/issues/348)
         // Signature: encode(sig, true),
@@ -57,20 +59,18 @@ export class Client {
   async continue(req, continue_token) {
     // TODO : Implement http message signature module in JS (https://github.com/trustbloc/agent-sdk/issues/348)
     // const sig = this.signer.Sign(req);
+    const url = this.gnapAuthServerURL + AUTH_CONTINUE_PATH;
 
-    const gnapResp = await axios.post(
-      this.gnapAuthServerURL + AUTH_CONTINUE_PATH,
-      req,
-      {
-        headers: {
-          "Content-Type": CONTENT_TYPE,
-          "Authorization": "GNAP " + continue_token,
-          // "Signature-Input": "TODO", // TODO update signature input
-          // TODO : Implement http message signature module in JS (https://github.com/trustbloc/agent-sdk/issues/348)
-          // Signature: encode(sig, true),
-        },
-      }
-    );
+    const gnapResp = await axios.post(url, req, {
+      headers: {
+        "Content-Type": CONTENT_TYPE,
+        Authorization: "GNAP " + continue_token,
+        "Content-Digest": getDigest("SHA-256", req),
+        // "Signature-Input": "TODO", // TODO update signature input
+        // TODO : Implement http message signature module in JS (https://github.com/trustbloc/agent-sdk/issues/348)
+        // Signature: encode(sig, true),
+      },
+    });
 
     return gnapResp;
   }
