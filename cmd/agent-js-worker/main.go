@@ -96,7 +96,7 @@ const (
 	masterKeyNumBytes        = 32
 	defaultClearCache        = "5m"
 	walletTokenExpiryMins    = "20"
-	authBootstrapDataPath    = "/bootstrap"
+	authBootstrapDataPath    = "/gnap/bootstrap"
 )
 
 // TODO Signal JS when WASM is loaded and ready.
