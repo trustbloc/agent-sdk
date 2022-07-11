@@ -822,6 +822,8 @@ func createWebKMS(opts *agentStartOpts,
 			if err := onboardUser(opts, webKMS); err != nil {
 				return nil, nil, nil, fmt.Errorf("failed to onboard user: %w", err)
 			}
+		} else {
+			webKMS = webkms.New(opts.OpsKeyStoreURL, httpClient, webkms.WithHeaders(headerFunc))
 		}
 	} else if opts.OPSKMSCapability != "" {
 		capability, err := decodeAndGunzip(opts.OPSKMSCapability)
