@@ -13,8 +13,7 @@ import (
 	"net/http"
 
 	"github.com/hyperledger/aries-framework-go/pkg/common/log"
-
-	"github.com/trustbloc/agent-sdk/pkg/controller/command"
+	"github.com/hyperledger/aries-framework-go/pkg/controller/command"
 )
 
 var logger = log.New("agent-sdk/rest")

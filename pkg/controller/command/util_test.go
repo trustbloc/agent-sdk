@@ -10,14 +10,15 @@ import (
 	"io"
 	"testing"
 
+	"github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	"github.com/stretchr/testify/require"
 	"github.com/trustbloc/edge-core/pkg/log"
 
-	"github.com/trustbloc/agent-sdk/pkg/controller/command"
+	agentcmd "github.com/trustbloc/agent-sdk/pkg/controller/command"
 )
 
 func Test_WriteNillableResponse(t *testing.T) {
-	command.WriteNillableResponse(&mockWriter{}, nil, log.New("util-test"))
+	agentcmd.WriteNillableResponse(&mockWriter{}, nil, log.New("util-test"))
 }
 
 type mockWriter struct{}
@@ -50,7 +51,7 @@ func (m *mockHandler) Handle() command.Exec {
 
 func TestAriesHandler_Handle(t *testing.T) {
 	t.Run("custom error", func(t *testing.T) {
-		h := command.AriesHandler{Handler: &mockHandler{func(rw io.Writer, req io.Reader) command.Error {
+		h := agentcmd.AriesHandler{Handler: &mockHandler{func(rw io.Writer, req io.Reader) command.Error {
 			return command.NewExecuteError(1, errors.New("test"))
 		}}}
 
@@ -61,7 +62,7 @@ func TestAriesHandler_Handle(t *testing.T) {
 	})
 
 	t.Run("success", func(t *testing.T) {
-		h := command.AriesHandler{Handler: &mockHandler{}}
+		h := agentcmd.AriesHandler{Handler: &mockHandler{}}
 
 		err := h.Handle()(nil, nil)
 		require.NoError(t, err)

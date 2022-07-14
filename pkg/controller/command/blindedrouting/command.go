@@ -40,7 +40,7 @@ const (
 
 const (
 	// InvalidRequestErrorCode is typically a code for validation errors.
-	InvalidRequestErrorCode = command.Code(iota + command.MediatorClient)
+	InvalidRequestErrorCode = ariescmd.Code(iota + command.MediatorClient)
 
 	// SendDIDDocRequestError is typically a code for send did doc request command errors.
 	SendDIDDocRequestError
@@ -91,28 +91,28 @@ func New(p Provider, msgHandler ariescmd.MessageHandler, notifier ariescmd.Notif
 }
 
 // GetHandlers returns list of all commands supported by this controller command.
-func (c *Command) GetHandlers() []command.Handler {
-	return []command.Handler{
+func (c *Command) GetHandlers() []ariescmd.Handler {
+	return []ariescmd.Handler{
 		cmdutil.NewCommandHandler(CommandName, SendDIDDocRequest, c.SendDIDDocRequest),
 		cmdutil.NewCommandHandler(CommandName, SendRegisterRouteRequest, c.SendRegisterRouteRequest),
 	}
 }
 
 // SendDIDDocRequest sends DID doc request over a connection.
-func (c *Command) SendDIDDocRequest(rw io.Writer, req io.Reader) command.Error {
+func (c *Command) SendDIDDocRequest(rw io.Writer, req io.Reader) ariescmd.Error {
 	var request DIDDocRequest
 
 	err := json.NewDecoder(req).Decode(&request)
 	if err != nil {
 		logutil.LogError(logger, CommandName, SendDIDDocRequest, err.Error())
 
-		return command.NewValidationError(InvalidRequestErrorCode, err)
+		return ariescmd.NewValidationError(InvalidRequestErrorCode, err)
 	}
 
 	if request.ConnectionID == "" {
 		logutil.LogError(logger, CommandName, SendDIDDocRequest, errInvalidConnectionID)
 
-		return command.NewValidationError(SendDIDDocRequestError, fmt.Errorf(errInvalidConnectionID))
+		return ariescmd.NewValidationError(SendDIDDocRequestError, fmt.Errorf(errInvalidConnectionID))
 	}
 
 	msgStr := fmt.Sprintf(`{"@id":"%s","@type": "%s"}`, uuid.New().String(), didDocRequestMsgType)
@@ -126,7 +126,7 @@ func (c *Command) SendDIDDocRequest(rw io.Writer, req io.Reader) command.Error {
 	if err != nil {
 		logutil.LogError(logger, CommandName, SendDIDDocRequest, err.Error())
 
-		return command.NewExecuteError(SendDIDDocRequestError, err)
+		return ariescmd.NewExecuteError(SendDIDDocRequestError, err)
 	}
 
 	command.WriteNillableResponse(rw, &DIDDocResponse{resMsg}, logger)
@@ -137,20 +137,20 @@ func (c *Command) SendDIDDocRequest(rw io.Writer, req io.Reader) command.Error {
 }
 
 // SendRegisterRouteRequest sends register route request as a response to reply from send DID doc request.
-func (c *Command) SendRegisterRouteRequest(rw io.Writer, req io.Reader) command.Error {
+func (c *Command) SendRegisterRouteRequest(rw io.Writer, req io.Reader) ariescmd.Error {
 	var request RegisterRouteRequest
 
 	err := json.NewDecoder(req).Decode(&request)
 	if err != nil {
 		logutil.LogError(logger, CommandName, SendRegisterRouteRequest, err.Error())
 
-		return command.NewValidationError(InvalidRequestErrorCode, err)
+		return ariescmd.NewValidationError(InvalidRequestErrorCode, err)
 	}
 
 	if request.MessageID == "" {
 		logutil.LogError(logger, CommandName, SendRegisterRouteRequest, errInvalidMessageID)
 
-		return command.NewValidationError(SendRegisterRouteRequestError, fmt.Errorf(errInvalidMessageID))
+		return ariescmd.NewValidationError(SendRegisterRouteRequestError, fmt.Errorf(errInvalidMessageID))
 	}
 
 	msgBytes, err := json.Marshal(map[string]interface{}{
@@ -163,7 +163,7 @@ func (c *Command) SendRegisterRouteRequest(rw io.Writer, req io.Reader) command.
 	if err != nil {
 		logutil.LogError(logger, CommandName, SendRegisterRouteRequest, err.Error())
 
-		return command.NewValidationError(SendRegisterRouteRequestError, err)
+		return ariescmd.NewValidationError(SendRegisterRouteRequestError, err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), sendMsgTimeOut)
@@ -173,7 +173,7 @@ func (c *Command) SendRegisterRouteRequest(rw io.Writer, req io.Reader) command.
 	if err != nil {
 		logutil.LogError(logger, CommandName, SendRegisterRouteRequest, err.Error())
 
-		return command.NewExecuteError(SendRegisterRouteRequestError, err)
+		return ariescmd.NewExecuteError(SendRegisterRouteRequestError, err)
 	}
 
 	command.WriteNillableResponse(rw, &RegisterRouteResponse{res}, logger)

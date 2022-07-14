@@ -3,6 +3,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
+// Package command provides commands for rest/wasm/cli usage.
 package command
 
 import (
@@ -32,14 +33,14 @@ func WriteNillableResponse(w io.Writer, v interface{}, l logger) {
 
 // AriesHandler implements aries handler.
 type AriesHandler struct {
-	Handler
+	command.Handler
 }
 
 // Handle execute function of the command.
 func (ah AriesHandler) Handle() command.Exec {
 	return func(rw io.Writer, req io.Reader) command.Error {
 		if err := ah.Handler.Handle()(rw, req); err != nil {
-			return command.NewExecuteError(command.Code(err.Code()), err)
+			return command.NewExecuteError(err.Code(), err)
 		}
 
 		return nil

@@ -13,6 +13,10 @@ echo "Running $0"
 
 PATH="$GOBIN:$PATH" GOOS=js GOARCH=wasm go test "github.com/trustbloc/agent-sdk/pkg/storage/jsindexeddbcache" -count=1 -exec=wasmbrowsertest -cover -timeout=10m
 
+PATH="$GOBIN:$PATH" GOOS=js GOARCH=wasm go test "github.com/trustbloc/agent-sdk/pkg/wasmsetup" -count=1 -exec=wasmbrowsertest -timeout=10m
+
+PATH="$GOBIN:$PATH" GOOS=js GOARCH=wasm go test "github.com/trustbloc/agent-sdk/pkg/agentsetup" -count=1 -exec=wasmbrowsertest -timeout=10m
+
 
 # run unit test for agent-js-worker
 cd cmd/agent-js-worker

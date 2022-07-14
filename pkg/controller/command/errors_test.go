@@ -9,20 +9,21 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	"github.com/stretchr/testify/require"
 
-	"github.com/trustbloc/agent-sdk/pkg/controller/command"
+	agencmd "github.com/trustbloc/agent-sdk/pkg/controller/command"
 )
 
 func TestNewExecuteError(t *testing.T) {
-	e := command.NewExecuteError(1, fmt.Errorf("error"))
+	e := agencmd.NewExecuteError(1, fmt.Errorf("error"))
 	require.Equal(t, "error", e.Error())
 	require.Equal(t, command.Code(1), e.Code())
 	require.Equal(t, command.Type(1), e.Type())
 }
 
 func TestNewValidationError(t *testing.T) {
-	e := command.NewValidationError(1, fmt.Errorf("error"))
+	e := agencmd.NewValidationError(1, fmt.Errorf("error"))
 	require.Equal(t, "error", e.Error())
 	require.Equal(t, command.Code(1), e.Code())
 	require.Equal(t, command.Type(0), e.Type())

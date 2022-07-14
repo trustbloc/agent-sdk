@@ -9,7 +9,7 @@ package cmdutil
 import (
 	"net/http"
 
-	"github.com/trustbloc/agent-sdk/pkg/controller/command"
+	"github.com/hyperledger/aries-framework-go/pkg/controller/command"
 )
 
 // NewHTTPHandler returns instance of HTTPHandler which can be used handle

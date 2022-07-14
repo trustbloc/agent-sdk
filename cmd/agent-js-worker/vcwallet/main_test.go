@@ -23,7 +23,6 @@ func TestMain(_ *testing.M) {
 	isTest = true
 
 	results := make(chan *wasmsetup.Result)
-
 	js.Global().Set("handleResult", js.FuncOf(acceptResults(results)))
 
 	go main()
