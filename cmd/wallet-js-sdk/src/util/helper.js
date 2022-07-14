@@ -244,3 +244,15 @@ export function waitFor(duration) {
     }, duration);
   });
 }
+
+export function createKeyPair(alg, curve, extractable, keyUsages) {
+  return window.crypto.subtle.generateKey(
+      {
+        name: alg,
+        namedCurve: curve,
+      },
+      extractable,
+      keyUsages,
+  );
+}
+
