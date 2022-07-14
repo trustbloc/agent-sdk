@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import * as Agent from "@trustbloc/agent-sdk-web";
+import * as AgentLite from "@trustbloc/agent-lite-sdk-web";
 import { v4 as uuidv4 } from "uuid";
 
 export const DIDEXCHANGE_STATE_TOPIC = "didexchange_states";
@@ -52,6 +53,7 @@ export async function loadFrameworks({
   mediaTypeProfiles = ["didcomm/aip2;env=rfc587", "didcomm/aip2;env=rfc19"],
   keyType = "ed25519",
   keyAgreementType = "p256kw",
+  onlyWallet = false,
 } = {}) {
   let agentOpts = JSON.parse(JSON.stringify(agentStartupOpts));
   agentOpts["indexedDB-namespace"] = `${name}db`;
@@ -64,7 +66,7 @@ export async function loadFrameworks({
     agentOpts["log-level"] = logLevel;
   }
 
-  return new Agent.Framework(agentOpts);
+  return !onlyWallet ? new Agent.Framework(agentOpts) : new AgentLite.Framework(agentOpts);
 }
 
 export function wait(ms) {

@@ -9,6 +9,7 @@ const TerserPlugin = require("terser-webpack-plugin");
 const isSnapshot = require('./package.json').dependencies.hasOwnProperty("@trustbloc-cicd/agent-sdk-web")
 const isSnapshotDev = require('./package.json').devDependencies.hasOwnProperty("@trustbloc-cicd/agent-sdk-web")
 const agent_sdk = (isSnapshot || isSnapshotDev) ? "@trustbloc-cicd/agent-sdk-web" : "@trustbloc/agent-sdk-web"
+const agent_lite_sdk = (isSnapshot || isSnapshotDev) ? "@trustbloc-cicd/agent-lite-sdk-web" : "@trustbloc/agent-lite-sdk-web"
 
 module.exports = {
     entry: {
@@ -34,7 +35,8 @@ module.exports = {
     },
     resolve: {
         alias: {
-            "@trustbloc/agent-sdk-web": path.resolve(__dirname, 'node_modules/' + agent_sdk)
+            "@trustbloc/agent-sdk-web": path.resolve(__dirname, 'node_modules/' + agent_sdk),
+            "@trustbloc/agent-lite-sdk-web": path.resolve(__dirname, 'node_modules/' + agent_lite_sdk)
         }
     }
 };

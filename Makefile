@@ -73,6 +73,7 @@ aries-js-bdd: clean agent-server-docker
 wallet-sdk-tests:
 	@set -e
 	@cd cmd/agent-js-worker && npm install
+	@cd cmd/agent-lite-js-worker && npm install
 	@cd cmd/wallet-js-sdk && npm install && npm run test
 
 .PHONY: unit-test-mobile

@@ -1,0 +1,55 @@
+{
+  "name": "@trustbloc/agent-lite-sdk-web",
+  "version": "0.1.0",
+  "description": "TrustBloc Agent Wasm API",
+  "main": "dist/web/agent.js",
+  "browser": "dist/web/agent.js",
+  "scripts": {
+    "build:web": "webpack --config ./webpack.config.web.js --mode=production",
+    "build:rest": "webpack --config ./webpack.config.rest.js --mode=production",
+    "build:assets": "bash scripts/build_assets.sh",
+    "build": "rm -rf dist/* && cp -p ../../LICENSE . && npm run build:assets && npm run build:web && npm run build:rest && generate-export-aliases",
+    "prepare": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "config": {
+    "exportAliases": {
+      "rest": "./dist/rest/agent.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/trustbloc/agent-sdk.git"
+  },
+  "keywords": [
+    "agent",
+    "trustbloc"
+  ],
+  "files": [
+    "dist"
+  ],
+  "author": "trustbloc/agent-sdk",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/trustbloc/agent-sdk/issues"
+  },
+  "homepage": "https://github.com/trustbloc/agent-sdk#readme",
+  "devDependencies": {
+    "clean-webpack-plugin": "3.0.0",
+    "copy-webpack-plugin": "6.1.0",
+    "file-loader": "6.1.0",
+    "webpack": "4.44.2",
+    "webpack-cli": "3.3.12",
+    "webpack-merge": "5.1.4",
+    "webpack-shell-plugin": "0.5.0"
+  },
+  "engines": {
+    "node": ">=12.13",
+    "npm": ">=6.13"
+  },
+  "dependencies": {
+    "axios": "0.20.0",
+    "generate-export-aliases": "^1.1.0",
+    "minimist": "^1.2.5"
+  }
+}

@@ -38,6 +38,7 @@
   },
   "devDependencies": {
     "@trustbloc-cicd/agent-sdk-web": "../agent-js-worker",
+    "@trustbloc-cicd/agent-lite-sdk-web": "../agent-lite-js-worker",
     "chai": "^4.3.6",
     "chai-as-promised": "^7.1.1",
     "html-webpack-plugin": "^5.5.0",
