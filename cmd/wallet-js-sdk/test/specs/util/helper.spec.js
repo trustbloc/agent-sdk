@@ -20,7 +20,8 @@ import {
   findAttachmentByFormatV2,
   normalizePresentationSubmission,
   updatePresentationSubmission,
-  WalletUser,
+  createGnapKeyPair,
+  WalletUser, createKeyPair,
 } from "../../../src";
 import { IssuerAdapter } from "../mocks/adapters";
 
@@ -531,5 +532,10 @@ describe("Testing generic util functions", async function () {
         ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
       )
     ).to.be.equal(fulfillment);
+  });
+  it("test creating crypto key pair", async function () {
+    let keypair = await createKeyPair('ECDSA', 'P-256', true,  ['sign', 'verify'])
+    expect(keypair.publicKey).to.be.exist
+    expect(keypair.privateKey).to.be.exist;
   });
 });
