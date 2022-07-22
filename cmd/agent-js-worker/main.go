@@ -878,7 +878,21 @@ func gnapAddHeaderFunc(gnapAccessToken, gnapSigningJWK string) (func(req *http.R
 	return func(req *http.Request) (*http.Header, error) {
 		req.Header.Set("Authorization", fmt.Sprintf("GNAP %s", gnapAccessToken))
 
-		r, err := httpsig.Sign(req, nil, signingJWK, "sha-256") // TODO: pass body bytes
+		var (
+			body []byte
+			e    error
+		)
+
+		if req.Body != nil {
+			body, e = ioutil.ReadAll(req.Body)
+			if e != nil {
+				return nil, fmt.Errorf("failed to read body: %w", err)
+			}
+
+			req.Body = ioutil.NopCloser(bytes.NewReader(body))
+		}
+
+		r, err := httpsig.Sign(req, body, signingJWK, "sha-256")
 		if err != nil {
 			return nil, fmt.Errorf("failed to sign request: %w", err)
 		}

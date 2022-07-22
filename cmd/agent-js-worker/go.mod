@@ -18,9 +18,9 @@ require (
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220617141911-82112d172a78
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/piprate/json-gold v0.4.1
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.7.5
 	github.com/trustbloc/agent-sdk v0.0.0-00010101000000-000000000000
-	github.com/trustbloc/auth/spi/gnap v0.0.0-20220623150111-0ec21d623157
+	github.com/trustbloc/auth/spi/gnap v0.0.0-20220720135047-587833ae9ab1
 	github.com/trustbloc/edge-core v0.1.8
 	github.com/trustbloc/edv v0.1.9-0.20220621144721-c5002b0e0ac3
 )
@@ -34,8 +34,11 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
+	github.com/dunglas/httpsfv v0.1.1 // indirect
 	github.com/evanphx/json-patch v4.1.0+incompatible // indirect
 	github.com/fxamacker/cbor/v2 v2.3.0 // indirect
+	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -50,6 +53,12 @@ require (
 	github.com/kawamuray/jsonpath v0.0.0-20201211160320-7483bafabd7e // indirect
 	github.com/kilic/bls12-381 v0.1.1-0.20210503002446-7b7597926c69 // indirect
 	github.com/klauspost/compress v1.15.6 // indirect
+	github.com/lestrrat-go/blackmagic v1.0.1 // indirect
+	github.com/lestrrat-go/httpcc v1.0.1 // indirect
+	github.com/lestrrat-go/httprc v1.0.1 // indirect
+	github.com/lestrrat-go/iter v1.0.2 // indirect
+	github.com/lestrrat-go/jwx/v2 v2.0.0 // indirect
+	github.com/lestrrat-go/option v1.0.0 // indirect
 	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1 // indirect
 	github.com/minio/sha256-simd v0.1.1 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
@@ -78,6 +87,7 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
+	github.com/yaronf/httpsign v0.1.13 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
 	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
