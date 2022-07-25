@@ -26,3 +26,4 @@ export * from "./util/helper";
 export { DeviceLogin } from "./device/login";
 export { DeviceRegister } from "./device/register";
 export { Client as GNAPClient } from "./gnap/client";
+export { HTTPSigner } from "./httpsig/signer";

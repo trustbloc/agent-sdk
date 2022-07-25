@@ -86,7 +86,7 @@ describe("HTTP Signature Module - Generating Digest", function () {
     const mockValidAlgorithmName = "SHA-256";
     const hash = await getDigest(mockValidAlgorithmName, mockData);
     expect(hash).to.equal(
-      `sha-256=:soyUshlcjtJZ8LQVqu4_ObCykgpFN2EUmfoESVaReiE:`
+      `sha-256=:soyUshlcjtJZ8LQVqu4/ObCykgpFN2EUmfoESVaReiE=:`
     );
   });
 
@@ -94,7 +94,7 @@ describe("HTTP Signature Module - Generating Digest", function () {
     const mockValidAlgorithmName = "SHA-512";
     const hash = await getDigest(mockValidAlgorithmName, mockData);
     expect(hash).to.equal(
-      `sha-512=:HcytP60FiinM744AP6cbur9YdDGsWlX7NiaL95WMXzyzERasnoVexhu5ty7L1IT3BL7gMnB_sOrSStK-6XuaOQ:`
+      `sha-512=:HcytP60FiinM744AP6cbur9YdDGsWlX7NiaL95WMXzyzERasnoVexhu5ty7L1IT3BL7gMnB/sOrSStK+6XuaOQ==:`
     );
   });
 

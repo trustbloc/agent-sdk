@@ -26,7 +26,7 @@ export default async function getDigest(name, data) {
       // convert buffer to byte array
       const hashArray = new Uint8Array(hashBuffer);
       // Encode byte array with base64
-      const encodedHash = fromUint8Array(hashArray, true);
+      const encodedHash = fromUint8Array(hashArray);
       return `sha-256=:${encodedHash}:`;
     }
     case "SHA-512": {
@@ -39,7 +39,7 @@ export default async function getDigest(name, data) {
       // convert buffer to byte array
       const hashArray = new Uint8Array(hashBuffer);
       // Encode byte array with base64
-      const encodedHash = fromUint8Array(hashArray, true);
+      const encodedHash = fromUint8Array(hashArray);
       return `sha-512=:${encodedHash}:`;
     }
     default:

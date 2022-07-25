@@ -101,7 +101,12 @@ describe("GNAP Auth Client - Requesting Access", function () {
       request.respondWith({ status: 200, response: expectedResp });
     }, 5);
 
-    const signer = { SignatureVal: "signature" };
+    const signer = {
+      signingKey: "signature",
+      generateSignatureParams: () => "mock-sig-params",
+      getSignatureInput: () => "mock-sig-input",
+      sign: async () => Promise.resolve("mock-signature"),
+    };
     const client = new GNAPClient({
       signer,
       GNAP_AUTH_SERVER_URL,
@@ -148,13 +153,21 @@ describe("GNAP Auth Client - Continuing Request", function () {
       request.respondWith({ status: 200, response: expectedResp });
     }, 5);
 
-    const signer = { SignatureVal: "signature" };
+    const MOCK_CONTINUE_TOKEN = "mock-continue-token-value";
+
+    const signer = {
+      authorization: MOCK_CONTINUE_TOKEN,
+      signingKey: "signature",
+      generateSignatureParams: () => "mock-sig-params",
+      getSignatureInput: () => "mock-sig-input",
+      sign: async () => Promise.resolve("mock-signature"),
+    };
     const client = new GNAPClient({
       signer,
       GNAP_AUTH_SERVER_URL,
     });
 
-    const result = await client.continue(mockRequest, "mock-continue-token-value");
+    const result = await client.continue(mockRequest, MOCK_CONTINUE_TOKEN);
 
     expect(result.status).to.be.equal(200);
     expect(result.data).to.be.equal(expectedResp);
