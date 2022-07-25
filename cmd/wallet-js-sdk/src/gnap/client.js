@@ -5,8 +5,6 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import axios from "axios";
-// TODO : Implement http message signature module in JS (https://github.com/trustbloc/agent-sdk/issues/348)
-// import { encodeURI } from "js-base64";
 import getDigest from "../digest/digest";
 
 const GNAP_BASE_PATH = "/gnap";
@@ -37,18 +35,31 @@ export class Client {
   // RequestAccess creates a GNAP grant access req then submit it to the server to receive a response with an
   // interact_ref value.
   async requestAccess(req) {
-    // TODO : Implement http message signature module in JS (https://github.com/trustbloc/agent-sdk/issues/348)
-    // const sig = this.signer.Sign(req);
-
+    const digest = await getDigest("SHA-256", req);
     const url = this.gnapAuthServerURL + AUTH_REQUEST_PATH;
+    const signatureName = "sig1";
+
+    // Generate signature params
+    const sigParams = this.signer.generateSignatureParams();
+    // Get signature input
+    const signatureInput = this.signer.getSignatureInput(
+      signatureName,
+      sigParams
+    );
+    // Get http signature
+    const signature = await this.signer.sign(
+      digest,
+      url,
+      signatureName,
+      sigParams
+    );
 
     const gnapResp = await axios.post(url, req, {
       headers: {
         "Content-Type": CONTENT_TYPE,
-        "content-digest": getDigest("SHA-256", req),
-        // "Signature-Input": "TODO", // TODO update signature input
-        // TODO : Implement http message signature module in JS (https://github.com/trustbloc/agent-sdk/issues/348)
-        // Signature: encode(sig, true),
+        "content-digest": digest,
+        "Signature-Input": signatureInput,
+        Signature: signature,
       },
     });
 
@@ -57,18 +68,32 @@ export class Client {
 
   // Continue gnap auth request containing interact_ref.
   async continue(req, continue_token) {
-    // TODO : Implement http message signature module in JS (https://github.com/trustbloc/agent-sdk/issues/348)
-    // const sig = this.signer.Sign(req);
+    const digest = await getDigest("SHA-256", req);
     const url = this.gnapAuthServerURL + AUTH_CONTINUE_PATH;
+    const signatureName = "sig1";
+
+    // Generate signature params
+    const sigParams = this.signer.generateSignatureParams();
+    // Get signature input
+    const signatureInput = this.signer.getSignatureInput(
+      signatureName,
+      sigParams
+    );
+    // Get http signature
+    const signature = await this.signer.sign(
+      digest,
+      url,
+      signatureName,
+      sigParams
+    );
 
     const gnapResp = await axios.post(url, req, {
       headers: {
         "Content-Type": CONTENT_TYPE,
         Authorization: "GNAP " + continue_token,
-        "Content-Digest": getDigest("SHA-256", req),
-        // "Signature-Input": "TODO", // TODO update signature input
-        // TODO : Implement http message signature module in JS (https://github.com/trustbloc/agent-sdk/issues/348)
-        // Signature: encode(sig, true),
+        "Content-Digest": digest,
+        "Signature-Input": signatureInput,
+        Signature: signature,
       },
     });
 
