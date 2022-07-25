@@ -842,20 +842,27 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 
 		routerEndpoint := "http://router.com"
 		keys := []string{"abc", "xyz"}
-		c.vdrRegistry = &mockvdr.MockVDRegistry{CreateValue: &did.Doc{
-			ID:      uuid.NewString(),
-			Context: []string{"https://w3id.org/did/v1"},
-			Service: []did.Service{
-				{
-					ID:   uuid.New().String(),
-					Type: didCommServiceType,
-					ServiceEndpoint: model.NewDIDCommV2Endpoint(
-						[]model.DIDCommV2Endpoint{{URI: routerEndpoint}}),
-					RoutingKeys:   keys,
-					RecipientKeys: []string{"1ert5", "x5356s"},
-				},
+		c.vdrRegistry = &mockvdr.MockVDRegistry{
+			CreateFunc: func(s string, d *did.Doc, option ...vdr.DIDMethodOption) (*did.DocResolution, error) {
+				return &did.DocResolution{
+					Context: []string{"https://w3id.org/did/v1"},
+					DIDDocument: &did.Doc{
+						ID:      uuid.NewString(),
+						Context: []string{"https://w3id.org/did/v1"},
+						Service: []did.Service{
+							{
+								ID:   uuid.New().String(),
+								Type: didCommServiceType,
+								ServiceEndpoint: model.NewDIDCommV2Endpoint(
+									[]model.DIDCommV2Endpoint{{URI: routerEndpoint}}),
+								RoutingKeys:   keys,
+								RecipientKeys: []string{"1ert5", "x5356s"},
+							},
+						},
+					},
+				}, nil
 			},
-		}}
+		}
 
 		mediatorConfig := mediatorsvc.NewConfig(routerEndpoint, keys)
 		c.mediatorClient = &mockMediatorClient{
@@ -882,18 +889,25 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
-		c.vdrRegistry = &mockvdr.MockVDRegistry{CreateValue: &did.Doc{
-			ID:      uuid.NewString(),
-			Context: []string{"https://w3id.org/did/v1"},
-			Service: []did.Service{
-				{
-					ID:   uuid.New().String(),
-					Type: didCommServiceType,
-					ServiceEndpoint: model.NewDIDCommV2Endpoint(
-						[]model.DIDCommV2Endpoint{{URI: "http://router.com"}}),
-				},
+		c.vdrRegistry = &mockvdr.MockVDRegistry{
+			CreateFunc: func(s string, d *did.Doc, option ...vdr.DIDMethodOption) (*did.DocResolution, error) {
+				return &did.DocResolution{
+					Context: []string{"https://w3id.org/did/v1"},
+					DIDDocument: &did.Doc{
+						ID:      uuid.NewString(),
+						Context: []string{"https://w3id.org/did/v1"},
+						Service: []did.Service{
+							{
+								ID:   uuid.New().String(),
+								Type: didCommServiceType,
+								ServiceEndpoint: model.NewDIDCommV2Endpoint(
+									[]model.DIDCommV2Endpoint{{URI: "http://router.com"}}),
+							},
+						},
+					},
+				}, nil
 			},
-		}}
+		}
 
 		c.mediatorClient = &mockMediatorClient{
 			GetConfigFunc: func(connID string) (*mediatorsvc.Config, error) {
