@@ -21,8 +21,8 @@ const BOB_LABEL = "bob-agent"
 let alice, bob
 
 before(async function () {
-    alice = await loadFrameworks({name: ALICE_LABEL})
-    bob = await loadFrameworks({name: BOB_LABEL})
+    alice = await loadFrameworks({name: ALICE_LABEL, mediaTypeProfiles: ["didcomm/aip2;env=rfc19"]})
+    bob = await loadFrameworks({name: BOB_LABEL, mediaTypeProfiles: ["didcomm/aip2;env=rfc19"]})
 });
 
 after(function () {
