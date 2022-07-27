@@ -23,19 +23,19 @@ import { fromUint8Array } from "js-base64";
 export class HTTPSigner {
   constructor({ authorization = "", signingKey }) {
     if (!signingKey) {
-      throw new Error(
+      throw new TypeError(
         "Error initializing HTTPSigner: signingKey cannot be empty"
       );
     } else if (!signingKey.publicKey) {
-      throw new Error(
+      throw new TypeError(
         "Error initializing HTTPSigner: publicKey cannot be empty"
       );
     } else if (!signingKey.privateKey) {
-      throw new Error(
+      throw new TypeError(
         "Error initializing HTTPSigner: privateKey cannot be empty"
       );
     } else if (!signingKey.kid) {
-      throw new Error("Error initializing HTTPSigner: kid cannot be empty");
+      throw new TypeError("Error initializing HTTPSigner: kid cannot be empty");
     }
     this.authorization = authorization;
     this.signingKey = signingKey;
@@ -47,16 +47,11 @@ export class HTTPSigner {
    * @returns {String} - generated signature params
    */
   generateSignatureParams() {
-    if (!this.signingKey.kid)
-      throw new Error("Error generating signature params: kid is required");
-
     const created = Math.floor(Date.now() / 1000);
 
-    const signatureParams = `("@method" "@target-uri" "content-digest"${
+    return `("@method" "@target-uri" "content-digest"${
       this.authorization && ' "authorization"'
     });created=${created};keyid="${this.signingKey.kid}"`;
-
-    return signatureParams;
   }
 
   /**
@@ -69,7 +64,11 @@ export class HTTPSigner {
    */
   getSignatureInput(name, sigParams) {
     if (!name)
-      throw new Error("Error getting signature input: name is required");
+      throw new TypeError("Error getting signature input: name is required");
+    if (!sigParams)
+      throw new TypeError(
+        "Error getting signature input: signature parameters are required"
+      );
     return `${name}=${sigParams}`;
   }
 
@@ -94,12 +93,15 @@ export class HTTPSigner {
    */
   async sign(digest, url, name, sigParams) {
     if (!digest)
-      throw new Error("Error generating a signature: digest is missing");
+      throw new TypeError("Error generating a signature: digest is missing");
     if (!url)
-      throw new Error("Error generating a signature: server url is missing");
-    if (!name) throw new Error("Error generating a signature: name is missing");
+      throw new TypeError(
+        "Error generating a signature: server url is missing"
+      );
+    if (!name)
+      throw new TypeError("Error generating a signature: name is missing");
     if (!sigParams)
-      throw new Error(
+      throw new TypeError(
         "Error generating a signature: signature parameters are missing"
       );
 
