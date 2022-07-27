@@ -387,7 +387,7 @@ func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
 		err        error
 	)
 
-	if opts.KMSType == kmsTypeWebKMS && opts.GNAPAccessToken != "" {
+	if opts.GNAPSigningJWK != "" && opts.GNAPAccessToken != "" {
 		headerFunc, err = gnapAddHeaderFunc(opts.GNAPAccessToken, opts.GNAPSigningJWK)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create gnap header func: %w", err)
@@ -403,6 +403,7 @@ func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
 			WebKMSAuthzProvider:              &webkmsZCAPSigner{},
 			EdvAuthzProvider:                 &edvZCAPSigner{},
 			WebKMSGNAPSigner:                 headerFunc,
+			EDVGNAPSigner:                    headerFunc,
 		}))
 	if err != nil {
 		return nil, err
