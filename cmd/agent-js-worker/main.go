@@ -382,6 +382,18 @@ type commandHandler struct {
 
 func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
 	opts *agentStartOpts) ([]commandHandler, error) {
+	var (
+		headerFunc func(r2 *http.Request) (*http.Header, error)
+		err        error
+	)
+
+	if opts.KMSType == kmsTypeWebKMS && opts.GNAPAccessToken != "" {
+		headerFunc, err = gnapAddHeaderFunc(opts.GNAPAccessToken, opts.GNAPSigningJWK)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create gnap header func: %w", err)
+		}
+	}
+
 	handlers, err := ariesctrl.GetCommandHandlers(ctx, ariesctrl.WithMessageHandler(r),
 		ariesctrl.WithDefaultLabel(opts.Label), ariesctrl.WithNotifier(&jsNotifier{}),
 		ariesctrl.WithWalletConfiguration(&vcwalletcmd.Config{
@@ -390,6 +402,7 @@ func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
 			EDVBatchEndpointExtensionEnabled: true,
 			WebKMSAuthzProvider:              &webkmsZCAPSigner{},
 			EdvAuthzProvider:                 &edvZCAPSigner{},
+			WebKMSGNAPSigner:                 headerFunc,
 		}))
 	if err != nil {
 		return nil, err
