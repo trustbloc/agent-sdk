@@ -936,7 +936,7 @@ type userBootstrapData struct {
 	Data *bootstrapData `json:"data,omitempty"`
 }
 
-//nolint:funlen
+//nolint:funlen,gocyclo
 func onboardUser(opts *agentStartOpts, webKMS *webkms.RemoteKMS) error {
 	// 1. Create EDV data vault
 	config := &models.DataVaultConfiguration{
@@ -947,12 +947,26 @@ func onboardUser(opts *agentStartOpts, webKMS *webkms.RemoteKMS) error {
 		HMAC:        models.IDTypePair{ID: uuid.New().URN(), Type: "Sha256HmacKey2019"},
 	}
 
-	edvVaultURL, _, err := edvclient.New(opts.EDVServerURL).CreateDataVault(config,
-		edvclient.WithRequestHeader(func(req *http.Request) (*http.Header, error) {
+	var (
+		headerFunc func(r2 *http.Request) (*http.Header, error)
+		err        error
+	)
+
+	if opts.GNAPSigningJWK != "" && opts.GNAPAccessToken != "" {
+		headerFunc, err = gnapAddHeaderFunc(opts.GNAPAccessToken, opts.GNAPSigningJWK)
+		if err != nil {
+			return fmt.Errorf("failed to create gnap header func: %w", err)
+		}
+	} else {
+		headerFunc = func(req *http.Request) (*http.Header, error) {
 			req.Header.Set("Authorization", "GNAP "+opts.GNAPAccessToken)
 
 			return &req.Header, nil
-		}),
+		}
+	}
+
+	edvVaultURL, _, err := edvclient.New(opts.EDVServerURL).CreateDataVault(config,
+		edvclient.WithRequestHeader(headerFunc),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create EDV data vault: %w", err)
