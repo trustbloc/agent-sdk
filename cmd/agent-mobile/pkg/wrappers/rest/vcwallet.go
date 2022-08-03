@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package rest
 
 import (
+	cmddidcommwallet "github.com/hyperledger/aries-framework-go/pkg/controller/command/didcommwallet"
 	cmdvcwallet "github.com/hyperledger/aries-framework-go/pkg/controller/command/vcwallet"
 
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/models"
@@ -98,18 +99,18 @@ func (wallet *VCWallet) CreateKeyPair(request *models.RequestEnvelope) *models.R
 
 // Connect accepts out-of-band invitations and performs DID exchange.
 func (wallet *VCWallet) Connect(request *models.RequestEnvelope) *models.ResponseEnvelope {
-	return wallet.createRespEnvelope(request, cmdvcwallet.ConnectMethod)
+	return wallet.createRespEnvelope(request, cmddidcommwallet.ConnectMethod)
 }
 
 // ProposePresentation accepts out-of-band invitation and sends message proposing presentation
 // from wallet to relying party.
 func (wallet *VCWallet) ProposePresentation(request *models.RequestEnvelope) *models.ResponseEnvelope {
-	return wallet.createRespEnvelope(request, cmdvcwallet.ProposePresentationMethod)
+	return wallet.createRespEnvelope(request, cmddidcommwallet.ProposePresentationMethod)
 }
 
 // PresentProof sends message present proof message from wallet to relying party.
 func (wallet *VCWallet) PresentProof(request *models.RequestEnvelope) *models.ResponseEnvelope {
-	return wallet.createRespEnvelope(request, cmdvcwallet.PresentProofMethod)
+	return wallet.createRespEnvelope(request, cmddidcommwallet.PresentProofMethod)
 }
 
 func (wallet *VCWallet) createRespEnvelope(request *models.RequestEnvelope, endpoint string) *models.ResponseEnvelope {
