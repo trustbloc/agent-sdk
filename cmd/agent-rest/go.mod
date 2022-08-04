@@ -9,18 +9,18 @@ go 1.17
 require (
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/gorilla/mux v1.8.0
-	github.com/hyperledger/aries-framework-go v0.1.9-0.20220803134551-6fd352335caf
+	github.com/hyperledger/aries-framework-go v0.1.9-0.20220803171934-fc0fdbe6389d
 	github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20220428163625-96d8261511e1
-	github.com/hyperledger/aries-framework-go-ext/component/storage/mongodb v0.0.0-20220615170242-cda5092b4faf
+	github.com/hyperledger/aries-framework-go-ext/component/storage/mongodb v0.0.0-20220621145854-c0137c65d7fa
 	github.com/hyperledger/aries-framework-go-ext/component/storage/mysql v0.0.0-20220330145438-233eb7999876
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v1.0.0-rc2.0.20220726145132-1d6231460892
-	github.com/hyperledger/aries-framework-go/component/storage/leveldb v0.0.0-20220326012408-071ce8fc905c
-	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220614152730-3d817acfa48b
+	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v1.0.0-rc2.0.20220728172020-0a8903e45149
+	github.com/hyperledger/aries-framework-go/component/storage/leveldb v0.0.0-20220324201531-18c87667df19
+	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220516154446-0ba34929e05b
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220614152730-3d817acfa48b
 	github.com/rs/cors v1.7.0
 	github.com/spf13/cobra v1.3.0
 	github.com/stretchr/testify v1.7.2
-	github.com/trustbloc/agent-sdk v0.1.8-0.20220326130420-71457bbc03b9
+	github.com/trustbloc/agent-sdk v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -47,8 +47,8 @@ require (
 	github.com/google/tink/go v1.6.1 // indirect
 	github.com/google/trillian v1.3.14-0.20210520152752-ceda464a95a3 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc2 // indirect
-	github.com/hyperledger/aries-framework-go/component/storage/edv v0.0.0-20220606124520-53422361c38c // indirect
+	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc2.0.20220729203359-da1de2fa21ce // indirect
+	github.com/hyperledger/aries-framework-go/component/storage/edv v0.0.0-20220713133919-d5d31b7d24e7 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/ipfs/go-cid v0.0.7 // indirect
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a // indirect
@@ -85,7 +85,7 @@ require (
 	github.com/tidwall/sjson v1.1.4 // indirect
 	github.com/trustbloc/edge-core v0.1.8 // indirect
 	github.com/trustbloc/orb v1.0.0-rc2.0.20220722161937-49dd83f0166a // indirect
-	github.com/trustbloc/sidetree-core-go v1.0.0-rc2.0.20220721143952-577302c8aca8 // indirect
+	github.com/trustbloc/sidetree-core-go v1.0.0-rc2.0.20220729143551-6cda4cea3bf5 // indirect
 	github.com/trustbloc/vct v1.0.0-rc2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
