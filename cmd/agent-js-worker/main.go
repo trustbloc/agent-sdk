@@ -151,8 +151,6 @@ func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
 			WebKMSCacheSize:                  opts.CacheSize,
 			EDVReturnFullDocumentsOnQuery:    true,
 			EDVBatchEndpointExtensionEnabled: true,
-			WebKMSAuthzProvider:              &agentsetup.WebkmsZCAPSigner{},
-			EdvAuthzProvider:                 &agentsetup.EdvZCAPSigner{},
 			WebKMSGNAPSigner:                 headerFunc,
 			EDVGNAPSigner:                    headerFunc,
 		}))

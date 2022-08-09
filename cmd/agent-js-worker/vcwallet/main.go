@@ -120,8 +120,6 @@ func getAriesHandlers(ctx *walletLiteProvider,
 		WebKMSCacheSize:                  opts.CacheSize,
 		EDVReturnFullDocumentsOnQuery:    true,
 		EDVBatchEndpointExtensionEnabled: true,
-		WebKMSAuthzProvider:              &agentsetup.WebkmsZCAPSigner{},
-		EdvAuthzProvider:                 &agentsetup.EdvZCAPSigner{},
 	})
 
 	vcmd, err := vdrcmd.New(ctx)
