@@ -24,6 +24,7 @@ import (
 	"github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree/doc"
 	"github.com/hyperledger/aries-framework-go/pkg/client/mediator"
 	"github.com/hyperledger/aries-framework-go/pkg/common/model"
+	"github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 	mediatorservice "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/mediator"
@@ -35,7 +36,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/peer"
 	"github.com/trustbloc/edge-core/pkg/log"
 
-	"github.com/trustbloc/agent-sdk/pkg/controller/command"
+	agentcmd "github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/cmdutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/logutil"
 )
@@ -80,7 +81,7 @@ const (
 
 const (
 	// InvalidRequestErrorCode is typically a code for validation errors.
-	InvalidRequestErrorCode = command.Code(iota + command.DIDClient)
+	InvalidRequestErrorCode = command.Code(iota + agentcmd.DIDClient)
 
 	// CreateDIDErrorCode is typically a code for create did errors.
 	CreateDIDErrorCode

@@ -5,22 +5,18 @@ SPDX-License-Identifier: Apache-2.0
 
 package command
 
-// Type is command error type.
-type Type int32
+import "github.com/hyperledger/aries-framework-go/pkg/controller/command"
 
 const (
 	// ValidationError is error type for command validation errors.
-	ValidationError Type = iota
+	ValidationError command.Type = iota
 	// ExecuteError is error type for command execution failure.
-	ExecuteError Type = iota
+	ExecuteError command.Type = iota
 )
-
-// Code is the error code of command errors.
-type Code int32
 
 const (
 	// UnknownStatus default error code for unknown errors.
-	UnknownStatus Code = iota
+	UnknownStatus command.Code = iota
 )
 
 // Group is the error groups.
@@ -39,36 +35,27 @@ const (
 	Store Group = 3000
 )
 
-// Error is the  interface for representing an command error condition, with the nil value representing no error.
-type Error interface {
-	error
-	// Code returns error code for this command error.
-	Code() Code
-	// Code returns error type for this command error.
-	Type() Type
-}
-
 // NewExecuteError returns new command execute error.
-func NewExecuteError(code Code, err error) Error {
+func NewExecuteError(code command.Code, err error) command.Error {
 	return &commandError{err, code, ExecuteError}
 }
 
 // NewValidationError returns new command validation error.
-func NewValidationError(code Code, err error) Error {
+func NewValidationError(code command.Code, err error) command.Error {
 	return &commandError{err, code, ValidationError}
 }
 
 // commandError implements basic command Error.
 type commandError struct {
 	error
-	code    Code
-	errType Type
+	code    command.Code
+	errType command.Type
 }
 
-func (c *commandError) Code() Code {
+func (c *commandError) Code() command.Code {
 	return c.code
 }
 
-func (c *commandError) Type() Type {
+func (c *commandError) Type() command.Type {
 	return c.errType
 }

@@ -14,7 +14,6 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/controller/webnotifier"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 
-	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/command/blindedrouting"
 	didclientcmd "github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
 	mediatorclientcmd "github.com/trustbloc/agent-sdk/pkg/controller/command/mediatorclient"
@@ -90,7 +89,7 @@ func WithNotifier(notifier ariescmd.Notifier) Opt {
 }
 
 // GetCommandHandlers returns all command handlers provided by controller.
-func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, error) { //nolint:interfacer
+func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]ariescmd.Handler, error) { //nolint:interfacer
 	cmdOpts := &allOpts{}
 	// Apply options
 	for _, opt := range opts {
@@ -127,7 +126,7 @@ func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]command.Handler, 
 	}
 
 	// creat handlers for all command operations.
-	var allHandlers []command.Handler
+	var allHandlers []ariescmd.Handler
 	allHandlers = append(allHandlers, didClientCmd.GetHandlers()...)
 	allHandlers = append(allHandlers, mediatorClientCmd.GetHandlers()...)
 	allHandlers = append(allHandlers, blindedRoutingCmd.GetHandlers()...)

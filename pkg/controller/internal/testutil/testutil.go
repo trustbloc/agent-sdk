@@ -17,9 +17,9 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	"github.com/stretchr/testify/require"
 
-	"github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/rest"
 )
 

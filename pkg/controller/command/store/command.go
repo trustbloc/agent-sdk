@@ -11,10 +11,11 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/trustbloc/edge-core/pkg/log"
 
-	"github.com/trustbloc/agent-sdk/pkg/controller/command"
+	agentcmd "github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/cmdutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/logutil"
 )
@@ -38,7 +39,7 @@ const (
 
 const (
 	// InvalidRequestErrorCode is typically a code for validation errors.
-	InvalidRequestErrorCode = command.Code(iota + command.Store)
+	InvalidRequestErrorCode = command.Code(iota + agentcmd.Store)
 	// PutErrorCode is typically a code for Put errors.
 	PutErrorCode
 	// GetErrorCode is typically a code for Get errors.

@@ -85,7 +85,7 @@ function newMsg(pkg, fn, payload) {
  *      "outbound-transport": ["ws", "http"],
  *      "transport-return-route": "all",
  *      "log-level": "debug",
- *      "blocDomain": "http://trustbloc.domain.com",
+ *      "bloc-domain": "http://trustbloc.domain.com",
  *      "trustbloc-resolver": "http://trustbloc.resolver.com",
  *      "agent-rest-url": "http://controller.api.example.com",
  *      "agent-rest-wshook": "ws://controller.api.example.com"
@@ -1698,7 +1698,7 @@ const Agent = function (opts) {
         notifications,
         {
             dir: opts.assetsPath,
-            wasm: opts.assetsPath + "/agent-js-worker.wasm",
+            wasm: opts.assetsPath + (opts.onlyWallet ? "/agent-vcwallet-js-worker.wasm" : "/agent-js-worker.wasm"),
             wasmJS: opts.assetsPath + "/wasm_exec.js"
         }
     )

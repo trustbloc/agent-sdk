@@ -21,7 +21,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/client/messaging"
 	"github.com/hyperledger/aries-framework-go/pkg/client/outofband"
 	"github.com/hyperledger/aries-framework-go/pkg/client/outofbandv2"
-	ariescmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
+	"github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	"github.com/hyperledger/aries-framework-go/pkg/didcomm/common/service"
 	didexchangeSvc "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/didexchange"
 	oobv2 "github.com/hyperledger/aries-framework-go/pkg/didcomm/protocol/outofbandv2"
@@ -30,7 +30,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/trustbloc/edge-core/pkg/log"
 
-	"github.com/trustbloc/agent-sdk/pkg/controller/command"
+	agentcmd "github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/cmdutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/logutil"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/msghandler"
@@ -51,7 +51,7 @@ const (
 
 const (
 	// InvalidRequestErrorCode is typically a code for validation errors.
-	InvalidRequestErrorCode = command.Code(iota + command.MediatorClient)
+	InvalidRequestErrorCode = command.Code(iota + agentcmd.MediatorClient)
 
 	// ConnectMediatorError is typically a code for mediator connect errors.
 	ConnectMediatorError
@@ -104,11 +104,11 @@ type Command struct {
 	mediator       *mediator.Client
 	messenger      *messaging.Client
 	didExchTimeout time.Duration
-	msgHandler     ariescmd.MessageHandler
+	msgHandler     command.MessageHandler
 }
 
 // New returns new mediator client controller command instance.
-func New(p Provider, msgHandler ariescmd.MessageHandler, notifier ariescmd.Notifier) (*Command, error) {
+func New(p Provider, msgHandler command.MessageHandler, notifier command.Notifier) (*Command, error) {
 	mediatorClient, err := mediator.New(p)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create mediator client : %w", err)

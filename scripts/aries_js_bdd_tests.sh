@@ -48,13 +48,13 @@ echo "gunzip public/aries-framework-go/assets/agent-js-worker.wasm.gz" >> $worki
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
   sed -i '' -e "s/Aries.Framework/Agent.Framework/" $working_dir/test/common.js
-  sed -i '' -e "s/db-namespace/indexedDB-namespace/" $working_dir/test/common.js
-  sed -i '' -e "s/\"log-level\": environment.LOG_LEVEL,/\"log-level\": \"debug\",\"storageType\": \"indexedDB\",/" $working_dir/test/common.js
+  sed -i '' -e "s/db-namespace/indexed-db-namespace/" $working_dir/test/common.js
+  sed -i '' -e "s/\"log-level\": environment.LOG_LEVEL,/\"log-level\": \"debug\",\"storage-type\": \"indexedDB\",/" $working_dir/test/common.js
   sed -i '' -e "s/15000/20000/" $working_dir/karma.conf.js
 else
   sed -i -e "s/Aries.Framework/Agent.Framework/" $working_dir/test/common.js
-  sed -i -e "s/db-namespace/indexedDB-namespace/" $working_dir/test/common.js
-  sed -i -e "s/\"log-level\": environment.LOG_LEVEL,/\"log-level\": \"debug\",\"storageType\": \"indexedDB\",/" $working_dir/test/common.js
+  sed -i -e "s/db-namespace/indexed-db-namespace/" $working_dir/test/common.js
+  sed -i -e "s/\"log-level\": environment.LOG_LEVEL,/\"log-level\": \"debug\",\"storage-type\": \"indexedDB\",/" $working_dir/test/common.js
   sed -i -e "s/15000/20000/" $working_dir/karma.conf.js
 fi
 

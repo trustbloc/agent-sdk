@@ -14,13 +14,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	"github.com/stretchr/testify/require"
 
-	"github.com/trustbloc/agent-sdk/pkg/controller/command"
+	agentcmd "github.com/trustbloc/agent-sdk/pkg/controller/command"
 )
 
 const (
-	sampleErr1 = iota + command.UnknownStatus
+	sampleErr1 = iota + agentcmd.UnknownStatus
 	sampleErr2
 	sampleErr3
 	sampleErr4
