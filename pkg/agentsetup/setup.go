@@ -11,7 +11,6 @@ SPDX-License-Identifier: Apache-2.0
 
 import (
 	"bytes"
-	"compress/gzip"
 	goctx "context"
 	"encoding/base64"
 	"encoding/json"
@@ -35,7 +34,6 @@ import (
 	"github.com/hyperledger/aries-framework-go/component/storageutil/batchedstore"
 	"github.com/hyperledger/aries-framework-go/component/storageutil/cachedstore"
 	arieslog "github.com/hyperledger/aries-framework-go/pkg/common/log"
-	vcwalletcmd "github.com/hyperledger/aries-framework-go/pkg/controller/command/vcwallet"
 	cryptoapi "github.com/hyperledger/aries-framework-go/pkg/crypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/tinkcrypto/primitive/composite/keyio"
@@ -61,7 +59,6 @@ import (
 	edvclient "github.com/trustbloc/edv/pkg/client"
 	"github.com/trustbloc/edv/pkg/restapi/models"
 
-	"github.com/trustbloc/agent-sdk/pkg/auth/zcapld"
 	"github.com/trustbloc/agent-sdk/pkg/storage/jsindexeddbcache"
 )
 
@@ -98,10 +95,8 @@ type AgentStartOpts struct {
 	IndexedDBNamespace       string      `json:"indexed-db-namespace"`
 	EDVServerURL             string      `json:"edv-server-url"`            // TODO to be removed/refined after universal wallet migration
 	EDVVaultID               string      `json:"edv-vault-id"`              // TODO to be removed/refined after universal wallet migration
-	EDVCapability            string      `json:"edv-capability,omitempty"` // TODO to be removed/refined after universal wallet migration
 	BlocDomain               string      `json:"bloc-domain"`
 	TrustblocResolver        string      `json:"trustbloc-resolver"`
-	AuthzKeyStoreURL         string      `json:"authz-key-store-url,omitempty"`
 	OpsKeyStoreURL           string      `json:"ops-key-store-url,omitempty"` // TODO to be removed/refined after universal wallet migration
 	EDVOpsKIDURL             string      `json:"edv-ops-kid-url,omitempty"`   // TODO to be removed/refined after universal wallet migration
 	EDVHMACKIDURL            string      `json:"edv-hmac-kid-url,omitempty"`  // TODO to be removed/refined after universal wallet migration
@@ -112,7 +107,6 @@ type AgentStartOpts struct {
 	UseEDVBatch              bool        `json:"use-edv-batch"`
 	EDVBatchSize             int         `json:"edv-batch-size"`
 	CacheSize                int         `json:"cache-size"`
-	OPSKMSCapability         string      `json:"ops-kms-capability,omitempty"` // TODO to be removed/refined after universal wallet migration
 	DidAnchorOrigin          string      `json:"did-anchor-origin"`
 	SidetreeToken            string      `json:"sidetree-token"`
 	ContextProviderURLs      []string    `json:"context-provider-url"`
@@ -347,24 +341,6 @@ func createWebKMS(opts *AgentStartOpts,
 		} else {
 			webKMS = webkms.New(opts.OpsKeyStoreURL, httpClient, webkms.WithHeaders(headerFunc))
 		}
-	} else if opts.OPSKMSCapability != "" {
-		capability, err := decodeAndGunzip(opts.OPSKMSCapability)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("failed to prepare OPS KMS capability for use: %w", err)
-		}
-
-		zcapSvc := zcapld.New(opts.AuthzKeyStoreURL, opts.UserConfig.AccessToken, opts.UserConfig.SecretShare)
-
-		headerFunc = func(req *http.Request) (*http.Header, error) {
-			invocationAction, err := capabilityInvocationAction(req)
-			if err != nil {
-				return nil, fmt.Errorf("webkms: failed to determine the capability's invocation action: %w", err)
-			}
-
-			return zcapSvc.SignHeader(req, capability, invocationAction)
-		}
-
-		webKMS = webkms.New(opts.OpsKeyStoreURL, httpClient, webkms.WithHeaders(headerFunc))
 	}
 
 	allAriesOptions = append(allAriesOptions,
@@ -427,12 +403,9 @@ type bootstrapData struct {
 	User              string `json:"user,omitempty"`
 	UserEDVVaultURL   string `json:"edvVaultURL,omitempty"`
 	OpsEDVVaultURL    string `json:"opsVaultURL,omitempty"`
-	AuthzKeyStoreURL  string `json:"authzKeyStoreURL,omitempty"`
 	OpsKeyStoreURL    string `json:"opsKeyStoreURL,omitempty"`
 	EDVOpsKIDURL      string `json:"edvOpsKIDURL,omitempty"`
 	EDVHMACKIDURL     string `json:"edvHMACKIDURL,omitempty"`
-	UserEDVCapability string `json:"edvCapability,omitempty"`
-	OPSKMSCapability  string `json:"opsKMSCapability,omitempty"`
 	UserEDVServer     string `json:"userEDVServer,omitempty"`
 	UserEDVVaultID    string `json:"userEDVVaultID,omitempty"`
 	UserEDVEncKID     string `json:"userEDVEncKID,omitempty"`
@@ -509,12 +482,9 @@ func onboardUser(opts *AgentStartOpts, webKMS *webkms.RemoteKMS) error {
 		User:              uuid.NewString(),
 		UserEDVVaultURL:   edvVaultURL,
 		OpsEDVVaultURL:    "",
-		AuthzKeyStoreURL:  "",
 		OpsKeyStoreURL:    opts.OpsKeyStoreURL,
 		EDVOpsKIDURL:      opts.EDVOpsKIDURL,
 		EDVHMACKIDURL:     opts.EDVHMACKIDURL,
-		UserEDVCapability: "",
-		OPSKMSCapability:  "",
 		UserEDVVaultID:    opts.EDVVaultID,
 		UserEDVServer:     opts.EDVServerURL,
 		UserEDVEncKID:     edvOpsKID,
@@ -560,129 +530,6 @@ func getVaultID(vaultURL string) string {
 	parts := strings.Split(vaultURL, "/")
 
 	return parts[len(parts)-1]
-}
-
-func decodeAndGunzip(zcap string) ([]byte, error) {
-	decoded, err := base64.URLEncoding.DecodeString(zcap)
-	if err != nil {
-		return nil, fmt.Errorf("failed to base64URL-decode zcap: %w", err)
-	}
-
-	compressed, err := gzip.NewReader(bytes.NewReader(decoded))
-	if err != nil {
-		return nil, fmt.Errorf("failed to open gzip reader: %w", err)
-	}
-
-	uncompressed, err := ioutil.ReadAll(compressed)
-	if err != nil {
-		return nil, fmt.Errorf("failed to gunzip zcap: %w", err)
-	}
-
-	return uncompressed, nil
-}
-
-func capabilityInvocationAction(req *http.Request) (string, error) { //nolint:funlen,gocognit,gocyclo
-	s := strings.Split(req.URL.Path, "/")
-
-	const minPathLen = 5 // /v1/keystores/{key_store_id}/keys
-
-	if len(s) < minPathLen {
-		return "", errors.New("invalid path")
-	}
-
-	op := strings.ToLower(s[4])
-
-	var action string
-
-	switch op {
-	case "keys":
-		op = strings.ToLower(s[len(s)-1])
-
-		switch op {
-		case "sign":
-			if req.Method == http.MethodPost {
-				action = "sign"
-			}
-		case "verify":
-			if req.Method == http.MethodPost {
-				action = "verify"
-			}
-		case "encrypt":
-			if req.Method == http.MethodPost {
-				action = "encrypt"
-			}
-		case "decrypt":
-			if req.Method == http.MethodPost {
-				action = "decrypt"
-			}
-		case "computemac":
-			if req.Method == http.MethodPost {
-				action = "computeMAC"
-			}
-		case "verifymac":
-			if req.Method == http.MethodPost {
-				action = "verifyMAC"
-			}
-		case "signmulti":
-			if req.Method == http.MethodPost {
-				action = "signMulti"
-			}
-		case "verifymulti":
-			if req.Method == http.MethodPost {
-				action = "verifyMulti"
-			}
-		case "deriveproof":
-			if req.Method == http.MethodPost {
-				action = "deriveProof"
-			}
-		case "verifyproof":
-			if req.Method == http.MethodPost {
-				action = "verifyProof"
-			}
-		case "easy":
-			if req.Method == http.MethodPost {
-				action = "easy"
-			}
-		case "wrap": //nolint:goconst
-			if req.Method == http.MethodPost {
-				action = "wrap"
-			}
-		case "unwrap":
-			if req.Method == http.MethodPost {
-				action = "unwrap"
-			}
-		default:
-			if req.Method == http.MethodPost {
-				action = "createKey"
-			}
-
-			if req.Method == http.MethodPut {
-				action = "importKey"
-			}
-
-			if req.Method == http.MethodGet && op != "keys" {
-				action = "exportKey"
-			}
-		}
-	case "wrap":
-		if req.Method == http.MethodPost {
-			action = "wrap"
-		}
-	case "easyopen":
-		if req.Method == http.MethodPost {
-			action = "easyOpen"
-		}
-	case "sealopen":
-		if req.Method == http.MethodPost {
-			action = "sealOpen"
-		}
-	}
-
-	if action == "" {
-		return "", fmt.Errorf("unsupported operation: %s /%s", req.Method, op)
-	}
-
-	return action, nil
 }
 
 func createLocalKMS(indexedDBKMSProvider storage.Provider,
@@ -809,9 +656,6 @@ func createEDVStorageProvider(opts *AgentStartOpts, storageProvider storage.Prov
 
 //nolint:nestif
 func prepareEDVRESTProvider(opts *AgentStartOpts, formatter *edv.EncryptedFormatter) (*edv.RESTProvider, error) {
-	userConf := opts.UserConfig
-	capability := []byte(opts.EDVCapability)
-	zcapSVC := zcapld.New(opts.AuthzKeyStoreURL, userConf.AccessToken, userConf.SecretShare)
 
 	var headerFunc func(req *http.Request) (*http.Header, error)
 
@@ -820,20 +664,6 @@ func prepareEDVRESTProvider(opts *AgentStartOpts, formatter *edv.EncryptedFormat
 
 		if headerFunc, err = GNAPAddHeaderFunc(opts.GNAPAccessToken, opts.GNAPSigningJWK); err != nil {
 			return nil, fmt.Errorf("failed to create gnap header func: %w", err)
-		}
-	} else {
-		headerFunc = func(req *http.Request) (*http.Header, error) {
-			if len(capability) != 0 {
-				action := "write"
-
-				if req.Method == http.MethodGet {
-					action = "read"
-				}
-
-				return zcapSVC.SignHeader(req, capability, action)
-			}
-
-			return nil, nil
 		}
 	}
 
@@ -1032,66 +862,6 @@ func SetLogLevel(logLevel string) error {
 	}
 
 	return nil
-}
-
-type WebkmsZCAPSigner struct{}
-
-func (b *WebkmsZCAPSigner) GetHeaderSigner(authzKeyStoreURL, accessToken, secretShare string) vcwalletcmd.HTTPHeaderSigner { //nolint:lll
-	return &webKMSHTTPHeaderSigner{
-		zcapSVC: zcapld.New(authzKeyStoreURL, accessToken, secretShare),
-	}
-}
-
-type EdvZCAPSigner struct{}
-
-func (b *EdvZCAPSigner) GetHeaderSigner(authzKeyStoreURL, accessToken, secretShare string) vcwalletcmd.HTTPHeaderSigner { //nolint:lll
-	return &edvHTTPHeaderSigner{
-		zcapSVC: zcapld.New(authzKeyStoreURL, accessToken, secretShare),
-	}
-}
-
-// webKMSHTTPHeaderSigner is zcap based http header signer for vc wallet webkms header.
-type webKMSHTTPHeaderSigner struct {
-	zcapSVC *zcapld.Service
-}
-
-// SignHeader signs HTTP header based on zcap.
-func (w *webKMSHTTPHeaderSigner) SignHeader(req *http.Request, kmsCapability []byte) (*http.Header, error) {
-	capability, err := decodeAndGunzip(string(kmsCapability))
-	if err != nil {
-		return nil, fmt.Errorf("failed to prepare KMS capability for use: %w ", err)
-	}
-
-	if len(capability) != 0 {
-		invocationAction, err := capabilityInvocationAction(req)
-		if err != nil {
-			return nil, fmt.Errorf("webkms: failed to determine the capability's invocation action: %w", err)
-		}
-
-		return w.zcapSVC.SignHeader(req, capability, invocationAction)
-	}
-
-	return &req.Header, nil
-}
-
-// edvHTTPHeaderSigner is zcap based http header signer for vc wallet edv header.
-type edvHTTPHeaderSigner struct {
-	zcapSVC *zcapld.Service
-}
-
-// SignHeader signs HTTP header based on zcap.
-func (w *edvHTTPHeaderSigner) SignHeader(req *http.Request, capability []byte) (*http.Header, error) {
-	if len(capability) != 0 {
-		action := "write"
-
-		if req.Method == http.MethodGet {
-			action = "read"
-		}
-
-		return w.zcapSVC.SignHeader(req, capability, action)
-	}
-
-	return &req.Header, nil
 }
 
 type ldStoreProvider struct {
