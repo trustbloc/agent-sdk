@@ -420,7 +420,7 @@ describe("Wallet DIDComm WACI credential issuance flow - success scenarios", asy
 
     // verify if issuer got expected message.
     let presentation = await acceptCredential;
-    expect(presentation.verifiableCredential).to.be.null;
+    expect(presentation.verifiableCredential).to.be.undefined;
     expect(presentation.proof).to.not.empty;
 
     // verify if new credential is saved.

@@ -104,6 +104,7 @@ export class DIDComm {
           ? [
               await getMediatorConnections(this.agent, {
                 single: true,
+                didcommVersion: 1,
               }),
             ]
           : routerConnections,
@@ -195,19 +196,24 @@ export class DIDComm {
     },
     { from, timeout } = {}
   ) {
+    // use a router connection matching the invitation's didcomm version
+    if (routerConnections.length === 0 && userAnyRouterConnection) {
+      let isDIDCommV2 = !!invitation["type"];
+
+      routerConnections = [
+        await getMediatorConnections(this.agent, {
+          single: true,
+          didcommVersion: isDIDCommV2 ? 2 : 1,
+        }),
+      ]
+    }
+
     let { presentationRequest } = await this.wallet.proposePresentation(
       auth,
       invitation,
       {
         myLabel,
-        routerConnections:
-          routerConnections.length == 0 && userAnyRouterConnection
-            ? [
-                await getMediatorConnections(this.agent, {
-                  single: true,
-                }),
-              ]
-            : routerConnections,
+        routerConnections,
         reuseConnection,
         reuseAnyConnection,
         connectionTimeout,
@@ -388,20 +394,25 @@ export class DIDComm {
     },
     { from, timeout } = {}
   ) {
+    // use a router connection matching the invitation's didcomm version
+    if (routerConnections.length === 0 && userAnyRouterConnection) {
+      let isDIDCommV2 = !!invitation["type"];
+
+      routerConnections = [
+        await getMediatorConnections(this.agent, {
+          single: true,
+          didcommVersion: isDIDCommV2 ? 2 : 1,
+        }),
+      ]
+    }
+
     // propose credential and expect offer credential response.
     let { offerCredential } = await this.wallet.proposeCredential(
       auth,
       invitation,
       {
         myLabel,
-        routerConnections:
-          routerConnections.length == 0 && userAnyRouterConnection
-            ? [
-                await getMediatorConnections(this.agent, {
-                  single: true,
-                }),
-              ]
-            : routerConnections,
+        routerConnections,
         reuseConnection,
         reuseAnyConnection,
         connectionTimeout,
@@ -755,8 +766,16 @@ function getPresentationAttachmentAndThreadID(presentationRequest) {
  *
  * @param agent instance
  */
-export async function getMediatorConnections(agent, { single } = {}) {
-  let resp = await agent.mediator.getConnections();
+export async function getMediatorConnections(agent, { single, didcommVersion } = {}) {
+  let req = {};
+
+  if (didcommVersion === 1) {
+    req.didcomm_v1 = true;
+  } else if (didcommVersion === 2) {
+    req.didcomm_v2 = true;
+  }
+
+  let resp = await agent.mediator.getConnections(req);
   if (!resp.connections || resp.connections.length === 0) {
     return "";
   }

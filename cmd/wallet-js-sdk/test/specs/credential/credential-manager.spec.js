@@ -575,7 +575,7 @@ describe("Credential Query Tests", async function () {
     ]);
 
     expect(results).to.have.lengthOf(1);
-    expect(results[0].verifiableCredential).to.have.lengthOf(0);
+    expect(results[0].verifiableCredential).to.be.undefined;
   });
 
   it("user performs QueryByExample in wallet", async function () {
