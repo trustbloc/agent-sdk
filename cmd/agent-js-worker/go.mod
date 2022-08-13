@@ -7,7 +7,7 @@ module github.com/trustbloc/agent-sdk/cmd/agent-js-worker
 go 1.17
 
 require (
-	github.com/hyperledger/aries-framework-go v0.1.9-0.20220805202510-1d1ff784e8b8
+	github.com/hyperledger/aries-framework-go v0.1.9-0.20220809201627-6c0753b49bcd
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/trustbloc/agent-sdk v0.0.0-00010101000000-000000000000
 	github.com/trustbloc/edge-core v0.1.8
@@ -46,7 +46,6 @@ require (
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220614152730-3d817acfa48b // indirect
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220617141911-82112d172a78 // indirect
 	github.com/hyperledger/aries-framework-go/test/component v0.0.0-20220614152730-3d817acfa48b // indirect
-	github.com/igor-pavlenko/httpsignatures-go v0.0.23 // indirect
 	github.com/ipfs/go-cid v0.0.7 // indirect
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a // indirect
 	github.com/kawamuray/jsonpath v0.0.0-20201211160320-7483bafabd7e // indirect

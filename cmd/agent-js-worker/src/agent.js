@@ -990,8 +990,8 @@ const Agent = function (opts) {
              *
              * @returns {Promise<Object>}
              */
-            getConnections: async function () {
-                return invoke(aw, pending, this.pkgname, "Connections", "{}", "timeout while fetching router connection id")
+            getConnections: async function (req) {
+                return invoke(aw, pending, this.pkgname, "Connections", req, "timeout while fetching router connection id")
             },
 
             /**

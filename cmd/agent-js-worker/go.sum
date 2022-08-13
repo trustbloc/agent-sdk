@@ -805,8 +805,9 @@ github.com/hyperledger/aries-framework-go v0.1.8/go.mod h1:7ilurt17sjWruVIBxZSrw
 github.com/hyperledger/aries-framework-go v0.1.9-0.20220526205258-18d510d84955/go.mod h1:7ilurt17sjWruVIBxZSrwn8qUbROq8LXYYY+O7dNxIM=
 github.com/hyperledger/aries-framework-go v0.1.9-0.20220602200413-1135b419c644/go.mod h1:7ilurt17sjWruVIBxZSrwn8qUbROq8LXYYY+O7dNxIM=
 github.com/hyperledger/aries-framework-go v0.1.9-0.20220725145110-78317f6d44d8/go.mod h1:wwKd/zpTcv2NuMSShCGka8vRgycSIO6KOkjSsyi5+Uc=
-github.com/hyperledger/aries-framework-go v0.1.9-0.20220805202510-1d1ff784e8b8 h1:LxHxLnKnhmLJLQLeIe55/aNikVZbwfbNiZyANfESCV4=
 github.com/hyperledger/aries-framework-go v0.1.9-0.20220805202510-1d1ff784e8b8/go.mod h1:wwKd/zpTcv2NuMSShCGka8vRgycSIO6KOkjSsyi5+Uc=
+github.com/hyperledger/aries-framework-go v0.1.9-0.20220809201627-6c0753b49bcd h1:zcae5bnk93Anms3k97a1AT8pu3KCJt/vBkZMbo7HhNk=
+github.com/hyperledger/aries-framework-go v0.1.9-0.20220809201627-6c0753b49bcd/go.mod h1:wwKd/zpTcv2NuMSShCGka8vRgycSIO6KOkjSsyi5+Uc=
 github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb v0.0.0-20220428163625-96d8261511e1/go.mod h1:q8qjsQpYo7AYG0pqQg1zgEoIVc+Hrpf5S0WciiwPDQA=
 github.com/hyperledger/aries-framework-go-ext/component/storage/mongodb v0.0.0-20220428163625-96d8261511e1/go.mod h1:rO6A/9mCSo2pPQqMVmhgGvOkFX/7FVLgoanqazkiKSc=
 github.com/hyperledger/aries-framework-go-ext/component/storage/mongodb v0.0.0-20220615170242-cda5092b4faf h1:F12zbOSRsye3IWK3Zb6prgrqQQFYnz5zjGSCh9pfYzk=
@@ -883,7 +884,6 @@ github.com/iancoleman/strcase v0.2.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/igor-pavlenko/httpsignatures-go v0.0.21/go.mod h1:3LVsCi3evlfQSNDKMTg3uElxEP8SjK3/Q5N9I8GU9W0=
-github.com/igor-pavlenko/httpsignatures-go v0.0.23 h1:b+bo2vox5fwHKGiGfnu9/L5gM6RwSBdKQMPi48scAj4=
 github.com/igor-pavlenko/httpsignatures-go v0.0.23/go.mod h1:3LVsCi3evlfQSNDKMTg3uElxEP8SjK3/Q5N9I8GU9W0=
 github.com/imdario/mergo v0.3.4/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
 github.com/imdario/mergo v0.3.6/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
@@ -1482,7 +1482,6 @@ github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1
 github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce/go.mod h1:o8v6yHRoik09Xen7gje4m9ERNah1d1PPsVq1VEx9vE4=
 github.com/transparency-dev/merkle v0.0.0-20220208131541-728dc2de1344/go.mod h1:B8FIw5LTq6DaULoHsVFRzYIUDkl8yuSwCdZnOZGKL/A=
-github.com/trustbloc/agent-sdk/cmd/agent-mobile v0.0.0-20220803142434-cf50e6813e39/go.mod h1:OUIZ31dldsvJIm8MBIrYx668SGfLidcf0H2fKeYYPj8=
 github.com/trustbloc/auth/spi/gnap v0.0.0-20220720135047-587833ae9ab1 h1:90WSqv1Nmerwb1VJIv/ptthGDOrw7kKeL4bEp9tceQc=
 github.com/trustbloc/auth/spi/gnap v0.0.0-20220720135047-587833ae9ab1/go.mod h1:ONvkj2rTwuhwQqtfJO7m4H9njyCr7LSJ8zHudZngoKs=
 github.com/trustbloc/edge-core v0.1.7/go.mod h1:nQnH3CcEHTRXsWZe/vgj+J0JxxjwFK9IvY3u0Sr/2XY=
