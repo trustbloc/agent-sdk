@@ -11,7 +11,7 @@ require (
 	github.com/google/tink/go v1.6.1
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
-	github.com/hyperledger/aries-framework-go v0.1.9-0.20220812134322-e05b76b09fcb
+	github.com/hyperledger/aries-framework-go v0.1.9-0.20220816070605-5fa4db149935
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/orb v1.0.0-rc2.0.20220811162145-47649b185a56
 	github.com/hyperledger/aries-framework-go-ext/component/vdr/sidetree v1.0.0-rc2.0.20220729203359-da1de2fa21ce
 	github.com/hyperledger/aries-framework-go/component/storage/edv v0.0.0-20220606124520-53422361c38c
