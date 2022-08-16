@@ -5,8 +5,6 @@
     "id": "did:example:123?linked-domains=3",
     "name": "Washington State Government",
     "styles": {
-      "thumbnail": {},
-      "hero": {},
       "background": {
         "color": ""
       },
