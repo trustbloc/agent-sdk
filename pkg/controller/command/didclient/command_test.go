@@ -73,7 +73,7 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("test no coordination service error", func(t *testing.T) {
-		c, err := New("domain", "origin", "", 0, &mockprotocol.MockProvider{
+		c, err := NewWithMediator("domain", "origin", "", 0, &mockprotocol.MockProvider{
 			ServiceErr: fmt.Errorf("sample-error"),
 		})
 		require.Error(t, err)
@@ -82,7 +82,7 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("test invalid coordination service error", func(t *testing.T) {
-		c, err := New("domain", "origin", "", 0, &mockprotocol.MockProvider{
+		c, err := NewWithMediator("domain", "origin", "", 0, &mockprotocol.MockProvider{
 			ServiceMap: map[string]interface{}{
 				mediatorsvc.Coordination: "xyz",
 			},
@@ -300,7 +300,7 @@ func TestCommand_CreateOrbDID(t *testing.T) {
 		require.Contains(t, cmdErr.Error(), "illegal base64 data")
 	})
 
-	c, err := New("domain", "origin", "", 0, getMockProvider())
+	c, err := NewWithMediator("domain", "origin", "", 0, getMockProvider())
 	require.NoError(t, err)
 	require.NotNil(t, c)
 
@@ -539,7 +539,7 @@ func TestCommand_CreateOrbDID(t *testing.T) {
 
 		addRouterKeyErr := fmt.Errorf("add router key failed")
 
-		badC, err := New("domain", "origin", "", 0,
+		badC, err := NewWithMediator("domain", "origin", "", 0,
 			getMockProviderWithMediator(&mockroute.MockMediatorSvc{
 				AddKeyErr: addRouterKeyErr,
 			}))
@@ -836,7 +836,7 @@ func TestCommand_CreatePeerDID(t *testing.T) {
 	})
 
 	t.Run("success (registered route)", func(t *testing.T) {
-		c, err := New("domain", "origin", "", 0, getMockProvider())
+		c, err := NewWithMediator("domain", "origin", "", 0, getMockProvider())
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -1069,11 +1069,11 @@ func (c *mockMediatorClient) GetConfig(connID string) (*mediatorsvc.Config, erro
 	return c.GetConfigFunc(connID)
 }
 
-func getMockProvider() Provider {
+func getMockProvider() ProviderWithMediator {
 	return getMockProviderWithMediator(&mockroute.MockMediatorSvc{})
 }
 
-func getMockProviderWithMediator(mediator interface{}) Provider {
+func getMockProviderWithMediator(mediator interface{}) ProviderWithMediator {
 	return &mockprotocol.MockProvider{
 		ServiceMap: map[string]interface{}{
 			mediatorsvc.Coordination: mediator,

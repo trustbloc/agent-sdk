@@ -102,7 +102,7 @@ func GetCommandHandlers(ctx *context.Provider, opts ...Opt) ([]ariescmd.Handler,
 	}
 
 	// did client command operation.
-	didClientCmd, err := didclientcmd.New(cmdOpts.blocDomain, cmdOpts.didAnchorOrigin, cmdOpts.sidetreeToken,
+	didClientCmd, err := didclientcmd.NewWithMediator(cmdOpts.blocDomain, cmdOpts.didAnchorOrigin, cmdOpts.sidetreeToken,
 		cmdOpts.unanchoredDIDMaxLifeTime, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize DID client: %w", err)
