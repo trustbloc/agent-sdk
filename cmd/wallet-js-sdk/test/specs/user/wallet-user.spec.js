@@ -14,7 +14,7 @@ const JOHN_USER = "john-agent";
 let john;
 
 before(async function () {
-  john = await loadFrameworks({ name: JOHN_USER });
+  john = await loadFrameworks({ name: JOHN_USER, enableDIDComm: true });
 });
 
 after(function () {

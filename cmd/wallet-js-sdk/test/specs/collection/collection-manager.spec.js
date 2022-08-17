@@ -17,7 +17,10 @@ let walletUserAgent, sampleUDC, samplePRC, sampleUDCBBS;
 chai.use(chaiAsPromised);
 
 before(async function () {
-  walletUserAgent = await loadFrameworks({ name: WALLET_USER });
+  walletUserAgent = await loadFrameworks({
+    name: WALLET_USER,
+    enableDIDComm: true,
+  });
 
   // load sample VCs from testdata.
   sampleUDC = getJSONTestData("udc-vc.json");

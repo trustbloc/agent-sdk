@@ -15,7 +15,7 @@ const signatureType = 'Ed25519VerificationKey2018'
 let rick
 
 before(async function () {
-    rick = await loadFrameworks({name: RICK_USER})
+    rick = await loadFrameworks({ name: RICK_USER, enableDIDComm: true });
 });
 
 after(function () {

@@ -28,7 +28,10 @@ const signatureType = "Ed25519VerificationKey2018";
 let walletAgent, rp, sampleMetadata;
 
 before(async function () {
-  walletAgent = await loadFrameworks({ name: WALLET_USER });
+  walletAgent = await loadFrameworks({
+    name: WALLET_USER,
+    enableDIDComm: true,
+  });
   await connectToMediator(walletAgent, testConfig.mediatorEndPoint);
   let conns = await getMediatorConnections(walletAgent);
   expect(conns).to.not.empty;

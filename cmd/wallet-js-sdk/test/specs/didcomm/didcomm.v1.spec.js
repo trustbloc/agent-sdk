@@ -40,7 +40,10 @@ before(async function () {
   this.timeout(0);
 
   // wallet agent
-  walletUserAgent = await loadFrameworks({ name: WALLET_WACI_USER });
+  walletUserAgent = await loadFrameworks({
+    name: WALLET_WACI_USER,
+    enableDIDComm: true,
+  });
 
   // issuer agent
   issuer = new IssuerAdapter(ISSUER_LABEL);

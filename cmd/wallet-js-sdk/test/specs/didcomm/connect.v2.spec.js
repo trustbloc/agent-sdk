@@ -29,8 +29,20 @@ let alice, bob
 let aliceDID
 
 before(async function () {
-    alice = await loadFrameworks({name: ALICE_LABEL_V2, mediaTypeProfiles:["didcomm/v2"], keyType:'ecdsap256ieee1363', keyAgreementType:'p256kw'})
-    bob = await loadFrameworks({name: BOB_LABEL_V2, mediaTypeProfiles:["didcomm/v2"], keyType:'ecdsap256ieee1363', keyAgreementType:'p256kw'})
+    alice = await loadFrameworks({
+      name: ALICE_LABEL_V2,
+      mediaTypeProfiles: ["didcomm/v2"],
+      keyType: "ecdsap256ieee1363",
+      keyAgreementType: "p256kw",
+      enableDIDComm: true,
+    });
+    bob = await loadFrameworks({
+      name: BOB_LABEL_V2,
+      mediaTypeProfiles: ["didcomm/v2"],
+      keyType: "ecdsap256ieee1363",
+      keyAgreementType: "p256kw",
+      enableDIDComm: true,
+    });
 
     aliceDID = await createWalletAndPublicDID(alice, ALICE_LABEL_V2, aliceDID)
     // await createWalletAndPublicDID(bob, BOB_LABEL_V2, bobDID)

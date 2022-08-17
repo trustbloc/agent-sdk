@@ -1698,7 +1698,7 @@ const Agent = function (opts) {
         notifications,
         {
             dir: opts.assetsPath,
-            wasm: opts.assetsPath + (opts.onlyWallet ? "/agent-vcwallet-js-worker.wasm" : "/agent-js-worker.wasm"),
+            wasm: opts.assetsPath + (opts.enableDIDComm ? "/agent-js-worker.wasm" : "/agent-vcwallet-js-worker.wasm"),
             wasmJS: opts.assetsPath + "/wasm_exec.js"
         }
     )
