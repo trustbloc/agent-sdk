@@ -29,7 +29,7 @@ let walletAgent, rp, sampleMetadata;
 
 
 before(async function () {
-  walletAgent = await loadFrameworks({ name: WALLET_USER, onlyWallet: true });
+  walletAgent = await loadFrameworks({ name: WALLET_USER });
 
   rp = new VerifierAdapter(RELYING_PARTY);
   await rp.init();

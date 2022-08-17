@@ -129,6 +129,7 @@ before(async function () {
     mediaTypeProfiles: [MEDIA_TYPE_PROFILE],
     keyType: KEY_TYPE,
     keyAgreementType: KEY_AGREEMENT_TYPE,
+    enableDIDComm: true,
   });
 
   // issuer agent

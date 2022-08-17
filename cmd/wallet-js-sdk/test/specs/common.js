@@ -52,7 +52,7 @@ export async function loadFrameworks({
   mediaTypeProfiles = ["didcomm/aip2;env=rfc587", "didcomm/aip2;env=rfc19"],
   keyType = "ed25519",
   keyAgreementType = "p256kw",
-  onlyWallet = false,
+  enableDIDComm = false,
 } = {}) {
   let agentOpts = JSON.parse(JSON.stringify(agentStartupOpts));
   agentOpts["indexed-db-namespace"] = `${name}db`;
@@ -60,7 +60,7 @@ export async function loadFrameworks({
   agentOpts["media-type-profiles"] = mediaTypeProfiles;
   agentOpts["key-type"] = keyType;
   agentOpts["key-agreement-type"] = keyAgreementType;
-  agentOpts["onlyWallet"] = onlyWallet
+  agentOpts["enableDIDComm"] = enableDIDComm;
 
   if (logLevel) {
     agentOpts["log-level"] = logLevel;

@@ -52,6 +52,7 @@ export class Adapter {
       mediaTypeProfiles: mediaTypeProfiles,
       keyType: keyType,
       keyAgreementType: keyAgreementType,
+      enableDIDComm: true,
     });
 
     let mediatorURL = testConfig.mediatorEndPoint;

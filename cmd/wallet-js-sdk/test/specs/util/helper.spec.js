@@ -40,7 +40,10 @@ let walletUserAgent,
 
 before(async function () {
   this.timeout(0);
-  walletUserAgent = await loadFrameworks({ name: WALLET_USER });
+  walletUserAgent = await loadFrameworks({
+    name: WALLET_USER,
+    enableDIDComm: true,
+  });
 
   issuer = new IssuerAdapter(VC_ISSUER);
   await issuer.init();
