@@ -98,8 +98,13 @@ const (
 // Provider describes dependencies for the client.
 type Provider interface {
 	VDRegistry() vdr.Registry
-	Service(id string) (interface{}, error)
 	KMS() kms.KeyManager
+}
+
+// ProviderWithMediator describes dependencies for the client.
+type ProviderWithMediator interface {
+	Provider
+	Service(id string) (interface{}, error)
 }
 
 type didBlocClient interface {
@@ -113,8 +118,8 @@ type mediatorClient interface {
 	GetConfig(connID string) (*mediatorservice.Config, error)
 }
 
-// New returns new DID Exchange controller command instance.
-func New(domain, didAnchorOrigin, token string, unanchoredDIDMaxLifeTime int, p Provider) (*Command, error) {
+func newCommand(domain, didAnchorOrigin, token string, unanchoredDIDMaxLifeTime int, p Provider,
+	mediatorClient mediatorClient, mediatorSvc mediatorservice.ProtocolService) (*Command, error) {
 	orbOpts := make([]orb.Option, 0)
 
 	if unanchoredDIDMaxLifeTime > 0 {
@@ -128,6 +133,25 @@ func New(domain, didAnchorOrigin, token string, unanchoredDIDMaxLifeTime int, p 
 		return nil, err
 	}
 
+	return &Command{
+		didBlocClient:   client,
+		domain:          domain,
+		vdrRegistry:     p.VDRegistry(),
+		mediatorClient:  mediatorClient,
+		mediatorSvc:     mediatorSvc,
+		keyManager:      p.KMS(),
+		didAnchorOrigin: didAnchorOrigin,
+	}, nil
+}
+
+// New returns new DID Exchange controller command instance.
+func New(domain, didAnchorOrigin, token string, unanchoredDIDMaxLifeTime int, p Provider) (*Command, error) {
+	return newCommand(domain, didAnchorOrigin, token, unanchoredDIDMaxLifeTime, p, nil, nil)
+}
+
+// NewWithMediator returns new DID Exchange controller command instance.
+func NewWithMediator(domain, didAnchorOrigin, token string,
+	unanchoredDIDMaxLifeTime int, p ProviderWithMediator) (*Command, error) {
 	mClient, err := mediator.New(p)
 	if err != nil {
 		return nil, err
@@ -145,15 +169,7 @@ func New(domain, didAnchorOrigin, token string, unanchoredDIDMaxLifeTime int, p 
 		return nil, errors.New("cast service to route service failed")
 	}
 
-	return &Command{
-		didBlocClient:   client,
-		domain:          domain,
-		vdrRegistry:     p.VDRegistry(),
-		mediatorClient:  mClient,
-		mediatorSvc:     mediatorSvc,
-		keyManager:      p.KMS(),
-		didAnchorOrigin: didAnchorOrigin,
-	}, nil
+	return newCommand(domain, didAnchorOrigin, token, unanchoredDIDMaxLifeTime, p, mClient, mediatorSvc)
 }
 
 // Command is controller command for DID Exchange.
@@ -169,11 +185,17 @@ type Command struct {
 
 // GetHandlers returns list of all commands supported by this controller command.
 func (c *Command) GetHandlers() []command.Handler {
-	return []command.Handler{
+	handlers := []command.Handler{
 		cmdutil.NewCommandHandler(CommandName, CreateOrbDIDCommandMethod, c.CreateOrbDID),
-		cmdutil.NewCommandHandler(CommandName, CreatePeerDIDCommandMethod, c.CreatePeerDID),
 		cmdutil.NewCommandHandler(CommandName, ResolveOrbDIDCommandMethod, c.ResolveOrbDID),
 	}
+
+	if c.mediatorClient != nil && c.mediatorSvc != nil {
+		handlers = append(handlers,
+			cmdutil.NewCommandHandler(CommandName, CreatePeerDIDCommandMethod, c.CreatePeerDID))
+	}
+
+	return handlers
 }
 
 // ResolveOrbDID resolve orb DID.

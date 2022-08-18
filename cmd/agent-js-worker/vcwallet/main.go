@@ -11,6 +11,8 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"syscall/js"
 
 	controllercmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
@@ -30,7 +32,10 @@ import (
 	jsonld "github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/edge-core/pkg/log"
 
+	"github.com/trustbloc/agent-sdk/pkg/controller/command/store"
+
 	"github.com/trustbloc/agent-sdk/pkg/agentsetup"
+	didclientcmd "github.com/trustbloc/agent-sdk/pkg/controller/command/didclient"
 	"github.com/trustbloc/agent-sdk/pkg/wasmsetup"
 )
 
@@ -39,6 +44,7 @@ var logger = log.New("agent-js-worker")
 const (
 	commandPkg = "agent"
 	startFn    = "Start"
+	stopFn     = "Stop"
 	workers    = 2
 
 	defaultEndpoint = "didcomm:transport/queue"
@@ -89,21 +95,29 @@ func addAgentHandlers(pkgMap map[string]map[string]func(*wasmsetup.Command) *was
 			return wasmsetup.NewErrResult(c.ID, err.Error())
 		}
 
-		ctx, err := agentOpts(opts)
+		services, err := createAgentServices(opts)
 		if err != nil {
 			return wasmsetup.NewErrResult(c.ID, err.Error())
 		}
 
-		handlers, err := getAriesHandlers(ctx, opts)
+		ariesHandlers, err := getAriesHandlers(services, opts)
 		if err != nil {
 			return wasmsetup.NewErrResult(c.ID, err.Error())
 		}
+
+		agentHandlers, err := getAgentHandlers(services, opts)
+		if err != nil {
+			return wasmsetup.NewErrResult(c.ID, err.Error())
+		}
+
+		var handlers []controllercmd.Handler
+		handlers = append(handlers, ariesHandlers...)
+		handlers = append(handlers, agentHandlers...)
 
 		// add command handlers
 		wasmsetup.AddCommandHandlers(handlers, pkgMap)
 
-		// TODO: uncomment addStopAgentHandler after proper refactoring of agent-js-worker go code.
-		// addStopAgentHandler(a, pkgMap)
+		addStopAgentHandler(services, pkgMap)
 
 		return &wasmsetup.Result{
 			ID:      c.ID,
@@ -114,12 +128,26 @@ func addAgentHandlers(pkgMap map[string]map[string]func(*wasmsetup.Command) *was
 	pkgMap[commandPkg] = fnMap
 }
 
-func getAriesHandlers(ctx *walletLiteProvider,
+func getAriesHandlers(ctx *walletServices,
 	opts *agentsetup.AgentStartOpts) ([]controllercmd.Handler, error) {
+	var (
+		headerFunc func(r2 *http.Request) (*http.Header, error)
+		err        error
+	)
+
+	if opts.GNAPSigningJWK != "" && opts.GNAPAccessToken != "" {
+		headerFunc, err = agentsetup.GNAPAddHeaderFunc(opts.GNAPAccessToken, opts.GNAPSigningJWK)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create gnap header func: %w", err)
+		}
+	}
+
 	wallet := vcwalletcmd.New(ctx, &vcwalletcmd.Config{
 		WebKMSCacheSize:                  opts.CacheSize,
 		EDVReturnFullDocumentsOnQuery:    true,
 		EDVBatchEndpointExtensionEnabled: true,
+		WebKMSGNAPSigner:                 headerFunc,
+		EDVGNAPSigner:                    headerFunc,
 	})
 
 	vcmd, err := vdrcmd.New(ctx)
@@ -132,6 +160,27 @@ func getAriesHandlers(ctx *walletLiteProvider,
 	handlers := wallet.GetHandlers()
 	handlers = append(handlers, vcmd.GetHandlers()...)
 	handlers = append(handlers, kcmd.GetHandlers()...)
+
+	return handlers, nil
+}
+
+func getAgentHandlers(ctx *walletServices,
+	opts *agentsetup.AgentStartOpts) ([]controllercmd.Handler, error) {
+	// did client command operation.
+	didClientCmd, err := didclientcmd.New(opts.BlocDomain, opts.DidAnchorOrigin, opts.SidetreeToken,
+		opts.UnanchoredDIDMaxLifeTime, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize DID client: %w", err)
+	}
+
+	storeCmd, err := store.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var handlers []controllercmd.Handler
+	handlers = append(handlers, didClientCmd.GetHandlers()...)
+	handlers = append(handlers, storeCmd.GetHandlers()...)
 
 	return handlers, nil
 }
@@ -161,43 +210,85 @@ func startOpts(payload map[string]interface{}) (*agentsetup.AgentStartOpts, erro
 	return opts, nil
 }
 
-type walletLiteProvider struct {
+func addStopAgentHandler(a io.Closer, pkgMap map[string]map[string]func(*wasmsetup.Command) *wasmsetup.Result) {
+	fnMap := make(map[string]func(*wasmsetup.Command) *wasmsetup.Result)
+	fnMap[stopFn] = func(c *wasmsetup.Command) *wasmsetup.Result {
+		err := a.Close()
+		if err != nil {
+			return wasmsetup.NewErrResult(c.ID, err.Error())
+		}
+
+		// reset handlers when stopped
+		for k := range pkgMap {
+			delete(pkgMap, k)
+		}
+
+		// put back start wasmsetup.Command once stopped
+		addAgentHandlers(pkgMap)
+
+		return &wasmsetup.Result{
+			ID:      c.ID,
+			Payload: map[string]interface{}{"message": "agent stopped"},
+		}
+	}
+	pkgMap[commandPkg] = fnMap
+}
+
+type walletServices struct {
 	storageProvider      storage.Provider
-	vDRegistry           vdrapi.Registry
+	vdrRegistry          vdrapi.Registry
 	crypto               cryptoapi.Crypto
 	kms                  kms.KeyManager
 	jSONLDDocumentLoader jsonld.DocumentLoader
 	mediaTypeProfiles    []string
 }
 
-func (p *walletLiteProvider) StorageProvider() storage.Provider {
+func (p *walletServices) StorageProvider() storage.Provider {
 	return p.storageProvider
 }
 
-func (p *walletLiteProvider) VDRegistry() vdrapi.Registry {
-	return p.vDRegistry
+func (p *walletServices) VDRegistry() vdrapi.Registry {
+	return p.vdrRegistry
 }
 
-func (p *walletLiteProvider) KMS() kms.KeyManager {
+func (p *walletServices) KMS() kms.KeyManager {
 	return p.kms
 }
 
-func (p *walletLiteProvider) Crypto() cryptoapi.Crypto {
+func (p *walletServices) Crypto() cryptoapi.Crypto {
 	return p.crypto
 }
 
-func (p *walletLiteProvider) JSONLDDocumentLoader() jsonld.DocumentLoader {
+func (p *walletServices) JSONLDDocumentLoader() jsonld.DocumentLoader {
 	return p.jSONLDDocumentLoader
 }
 
-func (p *walletLiteProvider) MediaTypeProfiles() []string {
+func (p *walletServices) MediaTypeProfiles() []string {
 	return p.mediaTypeProfiles
 }
 
-func agentOpts(startOpts *agentsetup.AgentStartOpts) (*walletLiteProvider, error) {
+// Close frees resources being maintained by the framework.
+func (p *walletServices) Close() error {
+	if p.storageProvider != nil {
+		err := p.storageProvider.Close()
+		if err != nil {
+			return fmt.Errorf("failed to close the store: %w", err)
+		}
+	}
+
+	if p.vdrRegistry != nil {
+		if err := p.vdrRegistry.Close(); err != nil {
+			return fmt.Errorf("vdr registry close failed: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func createAgentServices(startOpts *agentsetup.AgentStartOpts) (*walletServices, error) {
 	var options []aries.Option
 
-	provider := &walletLiteProvider{}
+	provider := &walletServices{}
 
 	if len(startOpts.MediaTypeProfiles) > 0 {
 		provider.mediaTypeProfiles = startOpts.MediaTypeProfiles
@@ -238,7 +329,7 @@ func agentOpts(startOpts *agentsetup.AgentStartOpts) (*walletLiteProvider, error
 		return nil, err
 	}
 
-	provider.vDRegistry = vrd
+	provider.vdrRegistry = vrd
 
 	return provider, nil
 }
