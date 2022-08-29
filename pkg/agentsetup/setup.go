@@ -65,11 +65,11 @@ import (
 var logger = log.New("agent-js-worker")
 
 const (
-	storageTypeIndexedDB     = "indexedDB"
-	storageTypeEDV           = "edv"
-	validStorageTypesMsg     = "Valid storage types: " + storageTypeEDV + ", " + storageTypeIndexedDB
+	StorageTypeIndexedDB     = "indexedDB"
+	StorageTypeEDV           = "edv"
+	validStorageTypesMsg     = "Valid storage types: " + StorageTypeEDV + ", " + StorageTypeIndexedDB
 	blankStorageTypeErrMsg   = "no storage type specified. " + validStorageTypesMsg
-	invalidStorageTypeErrMsg = "%s is not a valid storage type. " + validStorageTypesMsg
+	InvalidStorageTypeErrMsg = "%s is not a valid storage type. " + validStorageTypesMsg
 	kmsTypeWebKMS            = "webkms"
 	hmacKeyIDDBKeyName       = "hmackeyid"
 	keyIDStoreName           = "keyid"
@@ -93,14 +93,14 @@ type AgentStartOpts struct {
 	LogLevel                 string      `json:"log-level"`
 	StorageType              string      `json:"storage-type"`
 	IndexedDBNamespace       string      `json:"indexed-db-namespace"`
-	EDVServerURL             string      `json:"edv-server-url"`            // TODO to be removed/refined after universal wallet migration
-	EDVVaultID               string      `json:"edv-vault-id"`              // TODO to be removed/refined after universal wallet migration
+	EDVServerURL             string      `json:"edv-server-url"` // TODO to be removed/refined after universal wallet migration
+	EDVVaultID               string      `json:"edv-vault-id"`   // TODO to be removed/refined after universal wallet migration
 	BlocDomain               string      `json:"bloc-domain"`
 	TrustblocResolver        string      `json:"trustbloc-resolver"`
 	OpsKeyStoreURL           string      `json:"ops-key-store-url,omitempty"` // TODO to be removed/refined after universal wallet migration
 	EDVOpsKIDURL             string      `json:"edv-ops-kid-url,omitempty"`   // TODO to be removed/refined after universal wallet migration
 	EDVHMACKIDURL            string      `json:"edv-hmac-kid-url,omitempty"`  // TODO to be removed/refined after universal wallet migration
-	KMSType                  string      `json:"kms-type"`                  // TODO to be removed/refined after universal wallet migration
+	KMSType                  string      `json:"kms-type"`                    // TODO to be removed/refined after universal wallet migration
 	UserConfig               *UserConfig `json:"user-config,omitempty"`
 	UseEDVCache              bool        `json:"use-edv-cache"`
 	EDVClearCache            string      `json:"edv-clear-cache"`
@@ -268,32 +268,22 @@ func AddStorageOptions(startOpts *AgentStartOpts, indexedDBProvider *indexeddb.P
 	var err error
 
 	switch startOpts.StorageType {
-	case storageTypeEDV:
-		store, err = createEDVStorage(startOpts, indexedDBProvider, ariesKMS, ariesCrypto)
+	case StorageTypeEDV:
+		store, err = CreateEDVStorageProvider(startOpts, indexedDBProvider, ariesKMS, ariesCrypto)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create storage: %w", err)
 		}
 
 		allAriesOptions = append(allAriesOptions, aries.WithProtocolStateStoreProvider(indexedDBProvider))
-	case storageTypeIndexedDB:
+	case StorageTypeIndexedDB:
 		store = indexedDBProvider
 	default:
-		return nil, fmt.Errorf(invalidStorageTypeErrMsg, startOpts.StorageType)
+		return nil, fmt.Errorf(InvalidStorageTypeErrMsg, startOpts.StorageType)
 	}
 
 	allAriesOptions = append(allAriesOptions, aries.WithStoreProvider(store))
 
 	return allAriesOptions, nil
-}
-
-func createEDVStorage(opts *AgentStartOpts, indexedDBProvider *indexeddb.Provider,
-	kmsImpl kms.KeyManager, cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
-	store, err := createEDVProvider(opts, indexedDBProvider, kmsImpl, cryptoImpl)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create EDV provider: %w", err)
-	}
-
-	return store, nil
 }
 
 func CreateKMSAndCrypto(opts *AgentStartOpts, indexedDBKMSProvider storage.Provider,
@@ -400,17 +390,17 @@ func GNAPAddHeaderFunc(gnapAccessToken, gnapSigningJWK string) (func(req *http.R
 }
 
 type bootstrapData struct {
-	User              string `json:"user,omitempty"`
-	UserEDVVaultURL   string `json:"edvVaultURL,omitempty"`
-	OpsEDVVaultURL    string `json:"opsVaultURL,omitempty"`
-	OpsKeyStoreURL    string `json:"opsKeyStoreURL,omitempty"`
-	EDVOpsKIDURL      string `json:"edvOpsKIDURL,omitempty"`
-	EDVHMACKIDURL     string `json:"edvHMACKIDURL,omitempty"`
-	UserEDVServer     string `json:"userEDVServer,omitempty"`
-	UserEDVVaultID    string `json:"userEDVVaultID,omitempty"`
-	UserEDVEncKID     string `json:"userEDVEncKID,omitempty"`
-	UserEDVMACKID     string `json:"userEDVMACKID,omitempty"`
-	TokenExpiry       string `json:"tokenExpiry,omitempty"`
+	User            string `json:"user,omitempty"`
+	UserEDVVaultURL string `json:"edvVaultURL,omitempty"`
+	OpsEDVVaultURL  string `json:"opsVaultURL,omitempty"`
+	OpsKeyStoreURL  string `json:"opsKeyStoreURL,omitempty"`
+	EDVOpsKIDURL    string `json:"edvOpsKIDURL,omitempty"`
+	EDVHMACKIDURL   string `json:"edvHMACKIDURL,omitempty"`
+	UserEDVServer   string `json:"userEDVServer,omitempty"`
+	UserEDVVaultID  string `json:"userEDVVaultID,omitempty"`
+	UserEDVEncKID   string `json:"userEDVEncKID,omitempty"`
+	UserEDVMACKID   string `json:"userEDVMACKID,omitempty"`
+	TokenExpiry     string `json:"tokenExpiry,omitempty"`
 }
 
 type userBootstrapData struct {
@@ -479,17 +469,17 @@ func onboardUser(opts *AgentStartOpts, webKMS *webkms.RemoteKMS) error {
 
 	// 4. Post bootstrap data to auth server
 	data := &bootstrapData{
-		User:              uuid.NewString(),
-		UserEDVVaultURL:   edvVaultURL,
-		OpsEDVVaultURL:    "",
-		OpsKeyStoreURL:    opts.OpsKeyStoreURL,
-		EDVOpsKIDURL:      opts.EDVOpsKIDURL,
-		EDVHMACKIDURL:     opts.EDVHMACKIDURL,
-		UserEDVVaultID:    opts.EDVVaultID,
-		UserEDVServer:     opts.EDVServerURL,
-		UserEDVEncKID:     edvOpsKID,
-		UserEDVMACKID:     edvHMACKID,
-		TokenExpiry:       walletTokenExpiryMins,
+		User:            uuid.NewString(),
+		UserEDVVaultURL: edvVaultURL,
+		OpsEDVVaultURL:  "",
+		OpsKeyStoreURL:  opts.OpsKeyStoreURL,
+		EDVOpsKIDURL:    opts.EDVOpsKIDURL,
+		EDVHMACKIDURL:   opts.EDVHMACKIDURL,
+		UserEDVVaultID:  opts.EDVVaultID,
+		UserEDVServer:   opts.EDVServerURL,
+		UserEDVEncKID:   edvOpsKID,
+		UserEDVMACKID:   edvHMACKID,
+		TokenExpiry:     walletTokenExpiryMins,
 	}
 
 	reqBytes, err := json.Marshal(userBootstrapData{
@@ -571,16 +561,6 @@ func createLocalKMS(indexedDBKMSProvider storage.Provider,
 	return localKMS, c, allAriesOptions, nil
 }
 
-func createEDVProvider(opts *AgentStartOpts, indexedDBKMSProvider *indexeddb.Provider, kmsImpl kms.KeyManager,
-	cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
-	edvProvider, err := createEDVStorageProvider(opts, indexedDBKMSProvider, kmsImpl, cryptoImpl)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create EDV provider: %w", err)
-	}
-
-	return edvProvider, nil
-}
-
 // prepareMasterKeyReader prepares a master key reader for secret lock usage.
 func prepareMasterKeyReader(kmsSecretsStoreProvider storage.Provider) (*bytes.Reader, error) {
 	masterKeyStore, err := kmsSecretsStoreProvider.OpenStore(masterKeyStoreName)
@@ -615,14 +595,18 @@ func prepareMasterKeyReader(kmsSecretsStoreProvider storage.Provider) (*bytes.Re
 	return bytes.NewReader(masterKey), nil
 }
 
-func createEDVStorageProvider(opts *AgentStartOpts, storageProvider storage.Provider, kmsImpl kms.KeyManager,
+// CreateEDVStorageProvider creates an EDV storage provider. The given cryptoStorageProvider is used for storage of
+// keys if a local KMS is used.
+// The EDV provider returned by this function will used IndexedDB as a cache and will also make use of automatic
+// batching to improve performance.
+func CreateEDVStorageProvider(opts *AgentStartOpts, cryptoStorageProvider storage.Provider, kmsImpl kms.KeyManager,
 	cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
-	macCrypto, err := prepareMACCrypto(opts, storageProvider, kmsImpl, cryptoImpl)
+	macCrypto, err := prepareMACCrypto(opts, cryptoStorageProvider, kmsImpl, cryptoImpl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare MAC crypto: %w", err)
 	}
 
-	encryptedFormatter, err := prepareEncryptedFormatter(opts, storageProvider, kmsImpl, cryptoImpl, macCrypto)
+	encryptedFormatter, err := prepareEncryptedFormatter(opts, cryptoStorageProvider, kmsImpl, cryptoImpl, macCrypto)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare formatted provider: %w", err)
 	}
@@ -656,7 +640,6 @@ func createEDVStorageProvider(opts *AgentStartOpts, storageProvider storage.Prov
 
 //nolint:nestif
 func prepareEDVRESTProvider(opts *AgentStartOpts, formatter *edv.EncryptedFormatter) (*edv.RESTProvider, error) {
-
 	var headerFunc func(req *http.Request) (*http.Header, error)
 
 	if opts.GNAPAccessToken != "" {
