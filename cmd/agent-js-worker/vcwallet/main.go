@@ -15,6 +15,8 @@ import (
 	"net/http"
 	"syscall/js"
 
+	"github.com/hyperledger/aries-framework-go/component/storage/indexeddb"
+
 	controllercmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	kmscmd "github.com/hyperledger/aries-framework-go/pkg/controller/command/kms"
 	vcwalletcmd "github.com/hyperledger/aries-framework-go/pkg/controller/command/vcwallet"
@@ -300,8 +302,6 @@ func createAgentServices(startOpts *agentsetup.AgentStartOpts) (*walletServices,
 		return nil, fmt.Errorf("unexpected failure while creating IndexDB storage provider: %w", err)
 	}
 
-	provider.storageProvider = indexedDBProvider
-
 	loader, err := agentsetup.CreateJSONLDDocumentLoader(indexedDBProvider, startOpts.ContextProviderURLs)
 	if err != nil {
 		return nil, fmt.Errorf("create document loader: %w", err)
@@ -319,6 +319,13 @@ func createAgentServices(startOpts *agentsetup.AgentStartOpts) (*walletServices,
 	provider.kms = kmsImpl
 	provider.crypto = cryptoImpl
 
+	storageProvider, err := createMainStorageProvider(startOpts, indexedDBProvider, kmsImpl, cryptoImpl)
+	if err != nil {
+		return nil, err
+	}
+
+	provider.storageProvider = storageProvider
+
 	vdrs, err := agentsetup.CreateVDRs(startOpts.HTTPResolvers, startOpts.BlocDomain, startOpts.UnanchoredDIDMaxLifeTime)
 	if err != nil {
 		return nil, err
@@ -332,6 +339,27 @@ func createAgentServices(startOpts *agentsetup.AgentStartOpts) (*walletServices,
 	provider.vdrRegistry = vrd
 
 	return provider, nil
+}
+
+func createMainStorageProvider(startOpts *agentsetup.AgentStartOpts, indexedDBProvider *indexeddb.Provider,
+	kmsImpl kms.KeyManager, cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
+	var storageProvider storage.Provider
+
+	switch startOpts.StorageType {
+	case agentsetup.StorageTypeEDV:
+		var err error
+
+		storageProvider, err = agentsetup.CreateEDVStorageProvider(startOpts, indexedDBProvider, kmsImpl, cryptoImpl)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create EDV storage provider: %w", err)
+		}
+	case agentsetup.StorageTypeIndexedDB:
+		storageProvider = indexedDBProvider
+	default:
+		return nil, fmt.Errorf(agentsetup.InvalidStorageTypeErrMsg, startOpts.StorageType)
+	}
+
+	return storageProvider, nil
 }
 
 func createVDR(vdrs []vdrapi.VDR, startOpts *agentsetup.AgentStartOpts,
