@@ -24,8 +24,8 @@ export const MSG_TYPE_PROPOSE_CREDENTIAL_V3 =
   "https://didcomm.org/issue-credential/3.0/propose-credential";
 export const ATTACH_FORMAT_CREDENTIAL_MANIFEST =
   "dif/credential-manifest/manifest@v1.0";
-export const ATTACH_FORMAT_CREDENTIAL_FULFILLMENT =
-  "dif/credential-manifest/fulfillment@v1.0";
+export const ATTACH_FORMAT_CREDENTIAL_RESPONSE =
+  "dif/credential-manifest/response@v1.0";
 export const ATTACH_FORMAT_ISSUE_CREDENTIAL = "aries/ld-proof-vc@v1.0";
 
 export const testConfig = window.__ini__

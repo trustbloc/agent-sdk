@@ -1,6 +1,6 @@
 {
-  "@context": ["https://www.w3.org/2018/credentials/v1", "https://identity.foundation/credential-manifest/fulfillment/v1"],
-  "credential_fulfillment": {
+  "@context": ["https://www.w3.org/2018/credentials/v1", "https://identity.foundation/credential-manifest/response/v1"],
+  "credential_response": {
     "descriptor_map": [{
       "format": "ldp_vc",
       "id": "udc_output",
@@ -14,7 +14,7 @@
     "type": "Ed25519Signature2018",
     "verificationMethod": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5"
   },
-  "type": ["VerifiablePresentation", "CredentialFulfillment"],
+  "type": ["VerifiablePresentation", "CredentialResponse"],
   "verifiableCredential": [{
     "@context": ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"],
     "credentialSubject": {

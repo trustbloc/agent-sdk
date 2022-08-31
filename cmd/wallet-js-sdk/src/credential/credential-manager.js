@@ -55,8 +55,8 @@ export class CredentialManager {
    *  @param {Object} contents - credential(s) to be saved in wallet content store.
    *  @param {Array<Object>} contents.credentials - array of credentials to be saved in wallet content store.
    *  @param {Object} contents.presentation - presentation from which all the credentials to be saved in wallet content store.
-   *  If credential fulfillment presentation is provided then no need to supply descriptor map along with manifest.
-   *  Refer @see {@link https://identity.foundation/credential-manifest/#credential-fulfillment|Credential Fulfillment} for more details.
+   *  If credential response presentation is provided then no need to supply descriptor map along with manifest.
+   *  Refer @see {@link https://identity.foundation/credential-manifest/#credential-response|Credential Response} for more details.
    *  @param {Object} options - options for saving credential.
    *  @param {boolean} options.verify - (optional) to verify credential before save.
    *  @param {String} options.collection - (optional) ID of the wallet collection to which the credential should belong.
@@ -132,17 +132,17 @@ export class CredentialManager {
       });
     };
 
-    // validate fulfillment and collection descriptor map.
+    // validate response and collection descriptor map.
     let descriptors;
     if (descriptorMap) {
       descriptors = descriptorMap;
-    } else if (presentation["credential_fulfillment"]) {
-      // validate fulfillment against manifest provided
-      if (presentation["credential_fulfillment"].manifest_id != manifest.id) {
-        throw "credential fulfillment not matching with manifest provided";
+    } else if (presentation["credential_response"]) {
+      // validate response against manifest provided
+      if (presentation["credential_response"].manifest_id != manifest.id) {
+        throw "credential response not matching with manifest provided";
       }
 
-      descriptors = presentation["credential_fulfillment"].descriptor_map;
+      descriptors = presentation["credential_response"].descriptor_map;
     } else {
       throw "descriptor map is required to save mapping between credential being saved and manifest";
     }
@@ -306,19 +306,19 @@ export class CredentialManager {
   }
 
   /**
-   * Resolves credential by credential manifest, descriptor or fulfillment.
+   * Resolves credential by credential manifest, descriptor or response.
    *
-   * Given credential can be resolved by raw credential, ID of the credential saved in wallet, credential fulfillment,
+   * Given credential can be resolved by raw credential, ID of the credential saved in wallet, credential response,
    * ID of the manifest saved in wallet, raw credential manifest, output descriptor of the manifest etc
    *
    *  @param {String} auth - authorization token for wallet operations.
    *  @param {Object} options - options to resolve credential from wallet.
    *  @param {String} options.credentialID - (optional) ID of the credential to be resolved from wallet content store.
    *  @param {String} options.credential - (optional) raw credential data model to be resolved.
-   *  @param {String} options.fulfillment - (optional) credential fulfillment using which given raw credential or credential ID to be resolved.
+   *  @param {String} options.response - (optional) credential response using which given raw credential or credential ID to be resolved.
    *  @param {String} options.manifestID - (optional) ID of the manifest from wallet content store.
    *  @param {String} options.manifest - (optional) raw manifest to be used for resolving credential.
-   *  @param {String} options.descriptorID - (optional) if fulfillment not provided then this descriptor ID can be used to resolve credential.
+   *  @param {String} options.descriptorID - (optional) if response not provided then this descriptor ID can be used to resolve credential.
    *
    * Refer @see {@link https://identity.foundation/credential-manifest/|Credential Manifest Specifications} for more details.
    *
@@ -329,7 +329,7 @@ export class CredentialManager {
     {
       credentialID,
       credential,
-      fulfillment,
+      response,
       manifestID,
       manifest,
       descriptorID,
@@ -348,7 +348,7 @@ export class CredentialManager {
     let result = await this.wallet.resolveCredential(auth, manifest, {
       credentialID,
       descriptorID,
-      fulfillment,
+      response,
       credential,
     });
 

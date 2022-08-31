@@ -1,9 +1,9 @@
 {
   "@context": [
     "https://www.w3.org/2018/credentials/v1",
-    "https://identity.foundation/credential-manifest/fulfillment/v1"
+    "https://identity.foundation/credential-manifest/response/v1"
   ],
-  "credential_fulfillment": {
+  "credential_response": {
     "descriptor_map": [
       {
         "format": "ldp_vc",
@@ -16,7 +16,7 @@
   },
   "type": [
     "VerifiablePresentation",
-    "CredentialFulfillment"
+    "CredentialResponse"
   ],
   "verifiableCredential": [
     {

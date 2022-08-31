@@ -30,8 +30,8 @@ const ROUTER_CREATE_INVITATION_PATH = `/didcomm/invitation`;
 const ROUTER_CREATE_INVITATION_V2_PATH = `/didcomm/invitation-v2`;
 const ATTACH_FORMAT_CREDENTIAL_MANIFEST =
   "dif/credential-manifest/manifest@v1.0";
-const ATTACH_FORMAT_CREDENTIAL_FULFILLMENT =
-  "dif/credential-manifest/fulfillment@v1.0";
+const ATTACH_FORMAT_CREDENTIAL_RESPONSE =
+  "dif/credential-manifest/response@v1.0";
 const MSG_TYPE_ISSUE_CREDENTIAL_V2 =
   "https://didcomm.org/issue-credential/2.0/issue-credential";
 const MSG_TYPE_ISSUE_CREDENTIAL_V3 =
@@ -373,12 +373,12 @@ export class DIDComm {
    * @returns {String} response.threadID - thread ID of credential interaction, to be used for correlation in future.
    * @returns {Object} response.error - error containing status, code and redirect URL if requested by issuer.
    * @returns {Object} manifest - credential manifest sent by issuer.
-   * @returns {Object} fulfillment - credential fulfillment sent by issuer.
+   * @returns {Object} response - credential response sent by issuer.
    * @returns {Array<Object>} response.presentations - array of presentation responses from wallet query.
    * @returns {Array<Object>} response.normalized - normalized version of `response.presentations` where response credentials are grouped by input descriptors.
    * @returns {String} domain - domain parameter sent by issuer for proving ownership of DID or freshness of proof.
    * @returns {String} challenge - challenge parameter sent by issuer for proving ownership of DID or freshness of proof..
-   * @returns {String} comment - custom comment sent by issuer along with credential fulfillment.
+   * @returns {String} comment - custom comment sent by issuer along with credential response.
    * Can be used to detect multiple credential result for same query.
    */
   async initiateCredentialIssuance(
@@ -500,15 +500,15 @@ export class DIDComm {
       presentations = results;
     }
 
-    let fulfillment;
+    let response;
 
     if (offerCredential["@type"] || offerCredential["@id"]) {
-      // find fulfillment
-      // TODO : for now, assuming there will only be one fulfillment per offer credential msg
-      fulfillment = findAttachmentByFormat(
+      // find response
+      // TODO : for now, assuming there will only be one response per offer credential msg
+      response = findAttachmentByFormat(
         offerCredential.formats,
         offerCredential["offers~attach"],
-        ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
+        ATTACH_FORMAT_CREDENTIAL_RESPONSE
       );
     } else {
       if (
@@ -518,13 +518,13 @@ export class DIDComm {
         throw "no didcomm v2 attachments";
       }
 
-      fulfillment = findAttachmentByFormatV2(
+      response = findAttachmentByFormatV2(
         offerCredential.attachments,
-        ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
+        ATTACH_FORMAT_CREDENTIAL_RESPONSE
       );
     }
 
-    // TODO read descriptors from manifests & fulfillments for credential preview in UI. (Pending support in vcwallet).
+    // TODO read descriptors from manifests & responses for credential preview in UI. (Pending support in vcwallet).
 
     // TODO: centralize didcomm v1 vs v2 handling
     let comment, thid;
@@ -544,7 +544,7 @@ export class DIDComm {
     return {
       threadID: thid,
       manifest: credential_manifest,
-      fulfillment,
+      response,
       presentations,
       normalized,
       domain,
@@ -556,16 +556,16 @@ export class DIDComm {
   /**
    *  Completes WACI credential issuance flow.
    *
-   *  Sends request credential message to issuer as part of ongoing WACI issuance flow and waits for credential fulfillment response from issuer.
+   *  Sends request credential message to issuer as part of ongoing WACI issuance flow and waits for credential response response from issuer.
    *  Optionally sends presentations as credential application attachments as part of request credential message.
    *
-   *  Response credentials from credential fulfillment will be saved to collection of choice.
+   *  Response credentials from credential response will be saved to collection of choice.
    *
    *  @see {@link https://identity.foundation/waci-presentation-exchange/#issuance-2|WACI Issuance flow } for more details.
    *
    *  @param {String} auth -  authorization token for performing this wallet operation.
    *  @param {String} threadID - threadID of credential interaction.
-   *  @param {Object} presentation - to be sent as part of credential fulfillment. This presentations will be converted into credential fulfillment format
+   *  @param {Object} presentation - to be sent as part of credential response. This presentations will be converted into credential response format
    *
    *  @param {Object} proofOptions - proof options for signing presentation.
    *  @param {String} proofOptions.controller -  DID to be used for signing.
@@ -583,8 +583,8 @@ export class DIDComm {
    *  By default, 'proofValue' will be used.
    *
    *  @param {Object} options - (optional) for sending message requesting credential.
-   *  @param {Bool} options.waitForDone - (optional) If true then wallet will wait for credential fulfillment message or problem report to arrive.
-   *  @param {Time} options.WaitForDoneTimeout - (optional) timeout to wait for for credential fulfillment message or problem report to arrive. Will be considered only
+   *  @param {Bool} options.waitForDone - (optional) If true then wallet will wait for credential response message or problem report to arrive.
+   *  @param {Time} options.WaitForDoneTimeout - (optional) timeout to wait for for credential response message or problem report to arrive. Will be considered only
    *  when `options.waitForDone` is true.
    *  @param {Bool} options.autoAccept - (optional) if enabled then incoming issue credential or problem report will be auto accepted. If not provided then
    *  wallet will rely on underlying agent to accept incoming actions.
@@ -608,7 +608,7 @@ export class DIDComm {
     } = {},
     { waitForDone, WaitForDoneTimeout, autoAccept, collectionID } = {}
   ) {
-    // TODO convert presentation to credential fulfillment type and then sign.
+    // TODO convert presentation to credential response type and then sign.
     let signedPresentation;
     if (presentation) {
       let signed = await this.wallet.prove(
@@ -628,7 +628,7 @@ export class DIDComm {
       signedPresentation = signed.presentation;
     }
 
-    let fulfillment;
+    let credentialResponse;
     if (autoAccept) {
       waitForEvent(this.agent, {
         topic: ISSUE_CREDENTIAL_ACTION_TOPIC,
@@ -654,15 +654,15 @@ export class DIDComm {
             let attachments;
 
             if (Message["credentials~attach"]) {
-              fulfillment = findAttachmentByFormat(
+            credentialResponse = findAttachmentByFormat(
                 Message.formats,
                 Message["credentials~attach"],
-                ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
+                ATTACH_FORMAT_CREDENTIAL_RESPONSE
               );
             } else if (Message["attachments"]) {
-              fulfillment = findAttachmentByFormatV2(
+              credentialResponse = findAttachmentByFormatV2(
                 Message["attachments"],
-                ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
+                ATTACH_FORMAT_CREDENTIAL_RESPONSE
               );
             } else {
               throw "no attachments found in issue-credential message";
@@ -690,8 +690,8 @@ export class DIDComm {
       return response;
     }
 
-    // TODO verify credential fulfillment signature
-    if (!fulfillment) {
+    // TODO verify credential response signature
+    if (!credentialResponse) {
       throw "no incoming credentials found";
     }
 
@@ -701,7 +701,7 @@ export class DIDComm {
     });
     await credentialManager.save(
       auth,
-      { presentation: fulfillment },
+      { presentation: credentialResponse },
       { manifest, collection: collectionID }
     );
 

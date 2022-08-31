@@ -128,12 +128,12 @@ type UserConfig struct {
 }
 
 type kmsProvider struct {
-	storageProvider   storage.Provider
+	store             kms.Store
 	secretLockService secretlock.Service
 }
 
-func (k kmsProvider) StorageProvider() storage.Provider {
-	return k.storageProvider
+func (k kmsProvider) StorageProvider() kms.Store {
+	return k.store
 }
 
 func (k kmsProvider) SecretLock() secretlock.Service {
@@ -534,8 +534,15 @@ func createLocalKMS(indexedDBKMSProvider storage.Provider,
 		return nil, nil, nil, fmt.Errorf("failed to create secret lock service: %w", err)
 	}
 
+	// TODO (#412): Create our own implementation of the KMS storage interface and pass it in here instead of wrapping
+	//  the Aries storage provider.
+	kmsStore, err := kms.NewAriesProviderWrapper(indexedDBKMSProvider)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to create Aries KMS store wrapper")
+	}
+
 	kmsProv := kmsProvider{
-		storageProvider:   indexedDBKMSProvider,
+		store:             kmsStore,
 		secretLockService: secretLockService,
 	}
 

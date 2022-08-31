@@ -23,7 +23,7 @@ import {
   MSG_TYPE_PROPOSE_CREDENTIAL_V2,
   MSG_TYPE_PROPOSE_CREDENTIAL_V3,
   ATTACH_FORMAT_CREDENTIAL_MANIFEST,
-  ATTACH_FORMAT_CREDENTIAL_FULFILLMENT,
+  ATTACH_FORMAT_CREDENTIAL_RESPONSE,
   retryWithDelay,
   testConfig,
 } from "../common";
@@ -354,7 +354,7 @@ export class IssuerAdapter extends Adapter {
   }
 
   async acceptCredentialProposal(
-    { comment, manifest, fulfillment, noChallenge = false } = {},
+    { comment, manifest, response, noChallenge = false } = {},
     timeout
   ) {
     return await waitForEvent(this.agent, {
@@ -367,7 +367,7 @@ export class IssuerAdapter extends Adapter {
         ) {
           await acceptProposalV3(this.agent, payload, {
             manifest,
-            fulfillment,
+            response,
             comment,
             noChallenge,
           });
@@ -377,7 +377,7 @@ export class IssuerAdapter extends Adapter {
         ) {
           await acceptProposalV2(this.agent, payload, {
             manifest,
-            fulfillment,
+            response,
             comment,
             noChallenge,
           });
@@ -459,7 +459,7 @@ export class IssuerAdapter extends Adapter {
 async function acceptProposalV2(
   agent,
   payload,
-  { manifest, fulfillment, comment, noChallenge }
+  { manifest, response, comment, noChallenge }
 ) {
   let { piid } = payload.Properties;
   let attachID1 = uuidv4();
@@ -489,17 +489,17 @@ async function acceptProposalV2(
     });
   }
 
-  if (fulfillment) {
+  if (response) {
     let attachId = uuidv4();
     formats.push({
       attach_id: attachId,
-      format: ATTACH_FORMAT_CREDENTIAL_FULFILLMENT,
+      format: ATTACH_FORMAT_CREDENTIAL_RESPONSE,
     });
     attachments.push({
       "@id": attachId,
       "mime-type": "application/json",
       data: {
-        json: fulfillment,
+        json: response,
       },
     });
   }
@@ -518,7 +518,7 @@ async function acceptProposalV2(
 async function acceptProposalV3(
   agent,
   payload,
-  { manifest, fulfillment, noChallenge }
+  { manifest, response, noChallenge }
 ) {
   let { piid } = payload.Properties;
 
@@ -541,13 +541,13 @@ async function acceptProposalV3(
     });
   }
 
-  if (fulfillment) {
+  if (response) {
     attachments.push({
       id: uuidv4(),
       media_type: "application/json",
-      format: ATTACH_FORMAT_CREDENTIAL_FULFILLMENT,
+      format: ATTACH_FORMAT_CREDENTIAL_RESPONSE,
       data: {
-        json: fulfillment,
+        json: response,
       },
     });
   }
@@ -573,7 +573,7 @@ async function acceptRequestCredentialV2(
   if (credential) {
     icFormats.push({
       attach_id: attachID,
-      format: ATTACH_FORMAT_CREDENTIAL_FULFILLMENT,
+      format: ATTACH_FORMAT_CREDENTIAL_RESPONSE,
     });
 
     icAttachments.push({
@@ -610,7 +610,7 @@ async function acceptRequestCredentialV3(
     attachments.push({
       id: uuidv4(),
       media_type: "application/json",
-      format: ATTACH_FORMAT_CREDENTIAL_FULFILLMENT,
+      format: ATTACH_FORMAT_CREDENTIAL_RESPONSE,
       data: {
         json: credential,
       },
