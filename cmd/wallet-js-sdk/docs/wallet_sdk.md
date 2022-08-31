@@ -46,6 +46,12 @@ Refer  Wallet SDK Data Model [documentation](data_models.md) to know about data 
 <dt><a href="#module_didcomm">didcomm</a></dt>
 <dd><p>didcomm module provides wallet based DIDComm features.</p>
 </dd>
+<dt><a href="#module_client">client</a></dt>
+<dd><p>client module is the Authentication Server client that requests GNAP tokens from the Authorization Server.</p>
+</dd>
+<dt><a href="#module_HTTPSigner">HTTPSigner</a></dt>
+<dd><p>HTTPSigner provides functionality to generate http signatures for requests</p>
+</dd>
 <dt><a href="#module_vcwallet">vcwallet</a></dt>
 <dd><p>vcwallet module provides verifiable credential wallet SDK for aries universal wallet implementation.</p>
 </dd>
@@ -1014,6 +1020,80 @@ Get attachment and threadID from presentationRequest instance based on DIDComm V
 | Param | Description |
 | --- | --- |
 | presentationRequest | instance |
+
+<a name="module_client"></a>
+
+## client
+client module is the Authentication Server client that requests GNAP tokens from the Authorization Server.
+
+<a name="exp_module_client--exports.Client"></a>
+
+### .exports.Client ⏏
+Client requesting Gnap tokens from the Authorization Server.
+
+**Kind**: static class of [<code>client</code>](#module_client)  
+<a name="module_HTTPSigner"></a>
+
+## HTTPSigner
+HTTPSigner provides functionality to generate http signatures for requests
+
+
+* [HTTPSigner](#module_HTTPSigner)
+    * [.exports.HTTPSigner](#exp_module_HTTPSigner--exports.HTTPSigner) ⏏
+        * [.generateSignatureParams()](#module_HTTPSigner--exports.HTTPSigner.HTTPSigner+generateSignatureParams) ⇒ <code>String</code>
+        * [.getSignatureInput(name, sigParams)](#module_HTTPSigner--exports.HTTPSigner.HTTPSigner+getSignatureInput) ⇒ <code>String</code>
+        * [.proofType()](#module_HTTPSigner--exports.HTTPSigner.HTTPSigner+proofType) ⇒ <code>String</code>
+        * [.sign(digest, url, name, sigParams)](#module_HTTPSigner--exports.HTTPSigner.HTTPSigner+sign) ⇒ <code>String</code>
+
+<a name="exp_module_HTTPSigner--exports.HTTPSigner"></a>
+
+### .exports.HTTPSigner ⏏
+- generate signature params.
+ - get signature input.
+ - sign requests.
+
+**Kind**: static class of [<code>HTTPSigner</code>](#module_HTTPSigner)  
+<a name="module_HTTPSigner--exports.HTTPSigner.HTTPSigner+generateSignatureParams"></a>
+
+#### exports.HTTPSigner.generateSignatureParams() ⇒ <code>String</code>
+Generates and returns signature params string.
+
+**Kind**: instance method of [<code>exports.HTTPSigner</code>](#exp_module_HTTPSigner--exports.HTTPSigner)  
+**Returns**: <code>String</code> - - generated signature params  
+<a name="module_HTTPSigner--exports.HTTPSigner.HTTPSigner+getSignatureInput"></a>
+
+#### exports.HTTPSigner.getSignatureInput(name, sigParams) ⇒ <code>String</code>
+Generates and returns a signature input for the name and signature params provided.
+
+**Kind**: instance method of [<code>exports.HTTPSigner</code>](#exp_module_HTTPSigner--exports.HTTPSigner)  
+**Returns**: <code>String</code> - - generated signature input  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| name | <code>String</code> | name of the signature |
+| sigParams | <code>String</code> | signature parameters |
+
+<a name="module_HTTPSigner--exports.HTTPSigner.HTTPSigner+proofType"></a>
+
+#### exports.HTTPSigner.proofType() ⇒ <code>String</code>
+Returns the proof type of the http signature.
+
+**Kind**: instance method of [<code>exports.HTTPSigner</code>](#exp_module_HTTPSigner--exports.HTTPSigner)  
+**Returns**: <code>String</code> - - proof type of the http signature  
+<a name="module_HTTPSigner--exports.HTTPSigner.HTTPSigner+sign"></a>
+
+#### exports.HTTPSigner.sign(digest, url, name, sigParams) ⇒ <code>String</code>
+Generates and returns http signature for the request provided.
+
+**Kind**: instance method of [<code>exports.HTTPSigner</code>](#exp_module_HTTPSigner--exports.HTTPSigner)  
+**Returns**: <code>String</code> - - generated signature for the data provided  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| digest | <code>String</code> | digest value for the request that's being signed |
+| url | <code>String</code> | url of the server |
+| name | <code>String</code> | signature name |
+| sigParams | <code>String</code> | signature parameters |
 
 <a name="module_vcwallet"></a>
 
