@@ -255,7 +255,7 @@ describe("Wallet DIDComm WACI credential share flow", async function () {
 });
 
 describe("Wallet DIDComm WACI credential issuance flow - success scenarios", async function () {
-  const fulfillmentJSON = getJSONTestData("cred-fulfillment-DL.json");
+  const responseJSON = getJSONTestData("cred-response-DL.json");
   const sampleComment = "Offer to issue Drivers License for Mr.Smith";
 
   let credentialInteraction;
@@ -269,7 +269,7 @@ describe("Wallet DIDComm WACI credential issuance flow - success scenarios", asy
     issuer.acceptCredentialProposal({
       comment: sampleComment,
       manifest: manifestJSON,
-      fulfillment: fulfillmentJSON,
+      response: responseJSON,
     });
 
     let didcomm = new DIDComm({
@@ -285,7 +285,7 @@ describe("Wallet DIDComm WACI credential issuance flow - success scenarios", asy
     const {
       threadID,
       manifest,
-      fulfillment,
+      response,
       presentations,
       normalized,
       domain,
@@ -297,7 +297,7 @@ describe("Wallet DIDComm WACI credential issuance flow - success scenarios", asy
     expect(threadID).to.not.empty;
     expect(manifest).to.not.empty;
     expect(manifest.id).to.be.equal(manifestJSON.id);
-    expect(fulfillment).to.not.empty;
+    expect(response).to.not.empty;
     expect(presentations).to.not.empty;
     expect(normalized).to.not.empty;
     expect(threadID).to.not.empty;
@@ -311,10 +311,10 @@ describe("Wallet DIDComm WACI credential issuance flow - success scenarios", asy
     let { threadID, presentations, manifest } = credentialInteraction;
 
     // setup issuer.
-    fulfillmentJSON.verifiableCredential[0].id = `http://example.edu/credentials/${uuidv4()}`;
-    fulfillmentJSON.credential_fulfillment.manifest_id = manifest.id;
+    responseJSON.verifiableCredential[0].id = `http://example.edu/credentials/${uuidv4()}`;
+    responseJSON.credential_response.manifest_id = manifest.id;
     let acceptCredential = issuer.acceptRequestCredential({
-      credential: fulfillmentJSON,
+      credential: responseJSON,
     });
 
     // complete credential interaction.
@@ -356,7 +356,7 @@ describe("Wallet DIDComm WACI credential issuance flow - success scenarios", asy
     issuer.acceptCredentialProposal({
       comment: sampleComment,
       manifest: manifestJSON,
-      fulfillment: fulfillmentJSON,
+      response: responseJSON,
     });
 
     let didcomm = new DIDComm({
@@ -372,7 +372,7 @@ describe("Wallet DIDComm WACI credential issuance flow - success scenarios", asy
     const {
       threadID,
       manifest,
-      fulfillment,
+      response,
       presentations,
       normalized,
       domain,
@@ -384,7 +384,7 @@ describe("Wallet DIDComm WACI credential issuance flow - success scenarios", asy
     expect(threadID).to.not.empty;
     expect(manifest).to.not.empty;
     expect(manifest.id).to.be.equal(manifestJSON.id);
-    expect(fulfillment).to.not.empty;
+    expect(response).to.not.empty;
     expect(presentations).to.not.empty;
     expect(normalized).to.be.undefined;
     expect(domain).to.not.empty;
@@ -398,10 +398,10 @@ describe("Wallet DIDComm WACI credential issuance flow - success scenarios", asy
 
     // setup issuer.
     const redirect = "https://example.com/success";
-    fulfillmentJSON.verifiableCredential[0].id = `http://example.edu/credentials/${uuidv4()}`;
-    fulfillmentJSON.credential_fulfillment.manifest_id = manifest.id;
+    responseJSON.verifiableCredential[0].id = `http://example.edu/credentials/${uuidv4()}`;
+    responseJSON.credential_response.manifest_id = manifest.id;
     let acceptCredential = issuer.acceptRequestCredential({
-      credential: fulfillmentJSON,
+      credential: responseJSON,
       redirect,
     });
 
@@ -446,7 +446,7 @@ describe("Wallet DIDComm WACI credential issuance flow - success scenarios", asy
     issuer.acceptCredentialProposal({
       comment: sampleComment,
       manifest: manifestJSON,
-      fulfillment: fulfillmentJSON,
+      response: responseJSON,
       noChallenge: true,
     });
 
@@ -463,7 +463,7 @@ describe("Wallet DIDComm WACI credential issuance flow - success scenarios", asy
     const {
       threadID,
       manifest,
-      fulfillment,
+      response,
       presentations,
       normalized,
       domain,
@@ -475,7 +475,7 @@ describe("Wallet DIDComm WACI credential issuance flow - success scenarios", asy
     expect(threadID).to.not.empty;
     expect(manifest).to.not.empty;
     expect(manifest.id).to.be.equal(manifestJSON.id);
-    expect(fulfillment).to.not.empty;
+    expect(response).to.not.empty;
     expect(presentations).to.be.undefined;
     expect(normalized).to.be.undefined;
     expect(domain).to.be.undefined;
@@ -488,10 +488,10 @@ describe("Wallet DIDComm WACI credential issuance flow - success scenarios", asy
     let { threadID, presentations, manifest } = credentialInteraction;
 
     // setup issuer.
-    fulfillmentJSON.verifiableCredential[0].id = `http://example.edu/credentials/${uuidv4()}`;
-    fulfillmentJSON.credential_fulfillment.manifest_id = manifest.id;
+    responseJSON.verifiableCredential[0].id = `http://example.edu/credentials/${uuidv4()}`;
+    responseJSON.credential_response.manifest_id = manifest.id;
     let acceptCredential = issuer.acceptRequestCredential({
-      credential: fulfillmentJSON,
+      credential: responseJSON,
     });
 
     // complete credential interaction.
@@ -525,7 +525,7 @@ describe("Wallet DIDComm WACI credential issuance flow - success scenarios", asy
 });
 
 describe("Wallet DIDComm WACI credential issuance flow - failure scenarios", async function () {
-  const fulfillmentJSON = getJSONTestData("cred-fulfillment-DL.json");
+  const responseJSON = getJSONTestData("cred-response-DL.json");
   const sampleComment = "Offer to issue Drivers License for Mr.Smith";
 
   it("user accepts out-of-band invitation from issuer, initiates WACI credential interaction and issuer declines proposal", async function () {
@@ -552,7 +552,7 @@ describe("Wallet DIDComm WACI credential issuance flow - failure scenarios", asy
     const {
       threadID,
       manifest,
-      fulfillment,
+      response,
       presentations,
       normalized,
       domain,
@@ -563,7 +563,7 @@ describe("Wallet DIDComm WACI credential issuance flow - failure scenarios", asy
 
     expect(threadID).to.be.undefined;
     expect(manifest).to.be.undefined;
-    expect(fulfillment).to.be.undefined;
+    expect(response).to.be.undefined;
     expect(presentations).to.be.undefined;
     expect(normalized).to.be.undefined;
     expect(domain).to.be.undefined;
@@ -588,7 +588,7 @@ describe("Wallet DIDComm WACI credential issuance flow - failure scenarios", asy
     issuer.acceptCredentialProposal({
       comment: sampleComment,
       manifest: manifestJSON,
-      fulfillment: fulfillmentJSON,
+      response: responseJSON,
     });
 
     let didcomm = new DIDComm({
@@ -604,7 +604,7 @@ describe("Wallet DIDComm WACI credential issuance flow - failure scenarios", asy
     const {
       threadID,
       manifest,
-      fulfillment,
+      response,
       presentations,
       normalized,
       domain,
@@ -616,7 +616,7 @@ describe("Wallet DIDComm WACI credential issuance flow - failure scenarios", asy
     expect(threadID).to.not.empty;
     expect(manifest).to.not.empty;
     expect(manifest.id).to.be.equal(manifestJSON.id);
-    expect(fulfillment).to.not.empty;
+    expect(response).to.not.empty;
     expect(presentations).to.not.empty;
     expect(normalized).to.not.empty;
     expect(threadID).to.not.empty;

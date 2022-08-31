@@ -497,8 +497,8 @@ export class UniversalWallet {
    *  @param {Object} presentation - to be sent as part of request credential message..
    *
    *  @param {Object} options - (optional) for sending request credential message.
-   *  @param {Bool} options.waitForDone - (optional) If true then wallet will wait for credential fulfillment message or problem report .
-   *  @param {Time} options.WaitForDoneTimeout - (optional) timeout to wait for credential fulfillment or problem report.
+   *  @param {Bool} options.waitForDone - (optional) If true then wallet will wait for credential response message or problem report .
+   *  @param {Time} options.WaitForDoneTimeout - (optional) timeout to wait for credential response or problem report.
    *
    * @returns {Promise<Object>} - promise of object containing request credential status & redirect info or error if operation fails.
    */
@@ -519,7 +519,7 @@ export class UniversalWallet {
   }
 
   /**
-   *  resolves given credential manifest by credential fulfillment or credential.
+   *  resolves given credential manifest by credential response or credential.
    * Supports: https://identity.foundation/credential-manifest/
    *
    *  @see {@link https://identity.foundation/credential-manifest|Credential Manifest }
@@ -527,9 +527,9 @@ export class UniversalWallet {
    *  @param {String} auth -  authorization token for performing this wallet operation.
    *  @param {Object} manifest - credential manifest to be used for resolving credential.
    *
-   *  @param {Object} options - credential or fulfillment to resolve.
+   *  @param {Object} options - credential or response to resolve.
    *
-   *  @param {String} options.fulfillment - (optional) credential fulfillment to be resolved.
+   *  @param {String} options.response - (optional) credential response to be resolved.
    *  if provided, then this option takes precedence over credential resolve option.
    *
    *  @param {Object} options.credential - (optional) raw credential to be resolved (accepting 'ldp_vc' format only).
@@ -544,13 +544,13 @@ export class UniversalWallet {
   async resolveCredential(
     auth,
     manifest,
-    { fulfillment, credential, credentialID = "", descriptorID = "" } = {}
+    { response, credential, credentialID = "", descriptorID = "" } = {}
   ) {
     return await this.agent.vcwallet.resolveCredentialManifest({
       userID: this.user,
       auth,
       manifest,
-      fulfillment,
+      response,
       credential,
       credentialID,
       descriptorID,

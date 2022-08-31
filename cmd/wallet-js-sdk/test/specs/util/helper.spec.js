@@ -8,7 +8,7 @@ import { expect } from "chai";
 import { v4 as uuidv4 } from "uuid";
 import jp from "jsonpath";
 import {
-  ATTACH_FORMAT_CREDENTIAL_FULFILLMENT,
+  ATTACH_FORMAT_CREDENTIAL_RESPONSE,
   ATTACH_FORMAT_CREDENTIAL_MANIFEST,
   getJSONTestData,
   loadFrameworks,
@@ -501,7 +501,7 @@ describe("Testing generic util functions", async function () {
     ).to.be.null;
 
     const manifest = getJSONTestData("udc-cred-manifest.json");
-    const fulfillment = getJSONTestData("cred-fulfillment-udc-vp.json");
+    const response = getJSONTestData("cred-response-udc-vp.json");
 
     let attachments = [];
 
@@ -519,9 +519,9 @@ describe("Testing generic util functions", async function () {
     attachments.push({
       id: uuidv4(),
       media_type: "application/json",
-      format: ATTACH_FORMAT_CREDENTIAL_FULFILLMENT,
+      format: ATTACH_FORMAT_CREDENTIAL_RESPONSE,
       data: {
-        json: fulfillment,
+        json: response,
       },
     });
 
@@ -532,9 +532,9 @@ describe("Testing generic util functions", async function () {
     expect(
       findAttachmentByFormatV2(
         attachments,
-        ATTACH_FORMAT_CREDENTIAL_FULFILLMENT
+        ATTACH_FORMAT_CREDENTIAL_RESPONSE
       )
-    ).to.be.equal(fulfillment);
+    ).to.be.equal(response);
   });
   it("test creating crypto key pair", async function () {
     const keyPair = await createKeyPair("ECDSA", "P-256", true, [

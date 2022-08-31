@@ -184,13 +184,13 @@ describe("Credential Manager data model tests", async function () {
     );
   });
 
-  it("user saves fulfillment presentation into wallet", async function () {
+  it("user saves response presentation into wallet", async function () {
     let credentialManager = new CredentialManager({
       agent: walletUserAgent,
       user: WALLET_USER,
     });
     const manifest = getJSONTestData("udc-cred-manifest.json");
-    const presentation = getJSONTestData("cred-fulfillment-udc-vp.json");
+    const presentation = getJSONTestData("cred-response-udc-vp.json");
 
     await credentialManager.save(auth, { presentation }, { manifest });
   });
@@ -242,10 +242,10 @@ describe("Credential Manager data model tests", async function () {
     expect(resolved).to.have.lengthOf(1);
     expect(resolved[0].properties).to.have.lengthOf(2);
 
-    // resolve credential, using fulfillment & manifest objects
+    // resolve credential, using response & manifest objects
     resolved = await credentialManager.resolveManifest(auth, {
       manifest: getJSONTestData("udc-cred-manifest.json"),
-      fulfillment: getJSONTestData("cred-fulfillment-udc-vp.json"),
+      response: getJSONTestData("cred-response-udc-vp.json"),
     });
     expect(resolved).to.have.lengthOf(1);
     expect(resolved[0].properties).to.have.lengthOf(2);

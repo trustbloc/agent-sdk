@@ -250,7 +250,7 @@ Saves given credential into wallet content store along with credential metadata 
 | auth | <code>string</code> | authorization token for wallet operations. |
 | contents | <code>Object</code> | credential(s) to be saved in wallet content store. |
 | contents.credentials | <code>Array.&lt;Object&gt;</code> | array of credentials to be saved in wallet content store. |
-| contents.presentation | <code>Object</code> | presentation from which all the credentials to be saved in wallet content store.  If credential fulfillment presentation is provided then no need to supply descriptor map along with manifest.  Refer @see [Credential Fulfillment](https://identity.foundation/credential-manifest/#credential-fulfillment) for more details. |
+| contents.presentation | <code>Object</code> | presentation from which all the credentials to be saved in wallet content store.  If credential response presentation is provided then no need to supply descriptor map along with manifest.  Refer @see [Credential Response](https://identity.foundation/credential-manifest/#credential-response) for more details. |
 | options | <code>Object</code> | options for saving credential. |
 | options.verify | <code>boolean</code> | (optional) to verify credential before save. |
 | options.collection | <code>String</code> | (optional) ID of the wallet collection to which the credential should belong. |
@@ -321,9 +321,9 @@ Updates credential metadata. Currently supporting updating only credential name 
 <a name="module_credential--exports.CredentialManager.CredentialManager+resolveManifest"></a>
 
 #### exports.CredentialManager.resolveManifest(auth, options) ⇒ <code>Promise.&lt;Object&gt;</code>
-Resolves credential by credential manifest, descriptor or fulfillment.
+Resolves credential by credential manifest, descriptor or response.
 
-Given credential can be resolved by raw credential, ID of the credential saved in wallet, credential fulfillment,
+Given credential can be resolved by raw credential, ID of the credential saved in wallet, credential response,
 ID of the manifest saved in wallet, raw credential manifest, output descriptor of the manifest etc
 
 **Kind**: instance method of [<code>exports.CredentialManager</code>](#exp_module_credential--exports.CredentialManager)  
@@ -335,10 +335,10 @@ ID of the manifest saved in wallet, raw credential manifest, output descriptor o
 | options | <code>Object</code> | options to resolve credential from wallet. |
 | options.credentialID | <code>String</code> | (optional) ID of the credential to be resolved from wallet content store. |
 | options.credential | <code>String</code> | (optional) raw credential data model to be resolved. |
-| options.fulfillment | <code>String</code> | (optional) credential fulfillment using which given raw credential or credential ID to be resolved. |
+| options.response | <code>String</code> | (optional) credential response using which given raw credential or credential ID to be resolved. |
 | options.manifestID | <code>String</code> | (optional) ID of the manifest from wallet content store. |
 | options.manifest | <code>String</code> | (optional) raw manifest to be used for resolving credential. |
-| options.descriptorID | <code>String</code> | (optional) if fulfillment not provided then this descriptor ID can be used to resolve credential. Refer @see [Credential Manifest Specifications](https://identity.foundation/credential-manifest/) for more details. |
+| options.descriptorID | <code>String</code> | (optional) if response not provided then this descriptor ID can be used to resolve credential. Refer @see [Credential Manifest Specifications](https://identity.foundation/credential-manifest/) for more details. |
 
 <a name="module_credential--exports.CredentialManager.CredentialManager+get"></a>
 
@@ -915,7 +915,7 @@ Initiates WACI credential issuance interaction from wallet.
  If present, reads presentation definition(s) from offer credential message, performs query in wallet and returns response presentation(s) to be shared.
 
 **Kind**: instance method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
-**Returns**: <code>Object</code> - response - promise of object containing offer credential message from issuer or error if operation fails.<code>String</code> - response.threadID - thread ID of credential interaction, to be used for correlation in future.<code>Object</code> - response.error - error containing status, code and redirect URL if requested by issuer.<code>Object</code> - manifest - credential manifest sent by issuer.<code>Object</code> - fulfillment - credential fulfillment sent by issuer.<code>Array.&lt;Object&gt;</code> - response.presentations - array of presentation responses from wallet query.<code>Array.&lt;Object&gt;</code> - response.normalized - normalized version of `response.presentations` where response credentials are grouped by input descriptors.<code>String</code> - domain - domain parameter sent by issuer for proving ownership of DID or freshness of proof.<code>String</code> - challenge - challenge parameter sent by issuer for proving ownership of DID or freshness of proof..<code>String</code> - comment - custom comment sent by issuer along with credential fulfillment.
+**Returns**: <code>Object</code> - response - promise of object containing offer credential message from issuer or error if operation fails.<code>String</code> - response.threadID - thread ID of credential interaction, to be used for correlation in future.<code>Object</code> - response.error - error containing status, code and redirect URL if requested by issuer.<code>Object</code> - manifest - credential manifest sent by issuer.<code>Object</code> - response - credential response sent by issuer.<code>Array.&lt;Object&gt;</code> - response.presentations - array of presentation responses from wallet query.<code>Array.&lt;Object&gt;</code> - response.normalized - normalized version of `response.presentations` where response credentials are grouped by input descriptors.<code>String</code> - domain - domain parameter sent by issuer for proving ownership of DID or freshness of proof.<code>String</code> - challenge - challenge parameter sent by issuer for proving ownership of DID or freshness of proof..<code>String</code> - comment - custom comment sent by issuer along with credential response.
 Can be used to detect multiple credential result for same query.  
 **See**: [WACI Issuance flow ](https://identity.foundation/waci-presentation-exchange/#issuance-2) for more details.  
 
@@ -939,10 +939,10 @@ Can be used to detect multiple credential result for same query.
 #### exports.DIDComm.completeCredentialIssuance(auth, threadID, presentation, proofOptions, options) ⇒ <code>Promise.&lt;Object&gt;</code>
 Completes WACI credential issuance flow.
 
- Sends request credential message to issuer as part of ongoing WACI issuance flow and waits for credential fulfillment response from issuer.
+ Sends request credential message to issuer as part of ongoing WACI issuance flow and waits for credential response response from issuer.
  Optionally sends presentations as credential application attachments as part of request credential message.
 
- Response credentials from credential fulfillment will be saved to collection of choice.
+ Response credentials from credential response will be saved to collection of choice.
 
 **Kind**: instance method of [<code>exports.DIDComm</code>](#exp_module_didcomm--exports.DIDComm)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - - promise of object containing request credential status & redirect info or error if operation fails.  
@@ -952,7 +952,7 @@ Completes WACI credential issuance flow.
 | --- | --- | --- |
 | auth | <code>String</code> | authorization token for performing this wallet operation. |
 | threadID | <code>String</code> | threadID of credential interaction. |
-| presentation | <code>Object</code> | to be sent as part of credential fulfillment. This presentations will be converted into credential fulfillment format |
+| presentation | <code>Object</code> | to be sent as part of credential response. This presentations will be converted into credential response format |
 | proofOptions | <code>Object</code> | proof options for signing presentation. |
 | proofOptions.controller | <code>String</code> | DID to be used for signing. |
 | proofOptions.verificationMethod | <code>String</code> | (optional) VerificationMethod is the URI of the verificationMethod used for the proof.  By default, Controller public key matching 'assertion' for issue or 'authentication' for prove functions. |
@@ -962,8 +962,8 @@ Completes WACI credential issuance flow.
 | proofOptions.proofType | <code>String</code> | (optional) signature type used for signing.  By default, proof will be generated in Ed25519Signature2018 format. |
 | proofOptions.proofRepresentation | <code>String</code> | (optional) type of proof data expected ( "proofValue" or "jws").  By default, 'proofValue' will be used. |
 | options | <code>Object</code> | (optional) for sending message requesting credential. |
-| options.waitForDone | <code>Bool</code> | (optional) If true then wallet will wait for credential fulfillment message or problem report to arrive. |
-| options.WaitForDoneTimeout | <code>Time</code> | (optional) timeout to wait for for credential fulfillment message or problem report to arrive. Will be considered only  when `options.waitForDone` is true. |
+| options.waitForDone | <code>Bool</code> | (optional) If true then wallet will wait for credential response message or problem report to arrive. |
+| options.WaitForDoneTimeout | <code>Time</code> | (optional) timeout to wait for for credential response message or problem report to arrive. Will be considered only  when `options.waitForDone` is true. |
 | options.autoAccept | <code>Bool</code> | (optional) if enabled then incoming issue credential or problem report will be auto accepted. If not provided then  wallet will rely on underlying agent to accept incoming actions. |
 | options.collection | <code>String</code> | (optional) ID of the wallet collection to which the credential should belong. |
 
@@ -1369,13 +1369,13 @@ sends request credential message from wallet to issuer as part of ongoing creden
 | threadID | <code>String</code> | threadID of credential interaction. |
 | presentation | <code>Object</code> | to be sent as part of request credential message.. |
 | options | <code>Object</code> | (optional) for sending request credential message. |
-| options.waitForDone | <code>Bool</code> | (optional) If true then wallet will wait for credential fulfillment message or problem report . |
-| options.WaitForDoneTimeout | <code>Time</code> | (optional) timeout to wait for credential fulfillment or problem report. |
+| options.waitForDone | <code>Bool</code> | (optional) If true then wallet will wait for credential response message or problem report . |
+| options.WaitForDoneTimeout | <code>Time</code> | (optional) timeout to wait for credential response or problem report. |
 
 <a name="module_vcwallet--exports.UniversalWallet.UniversalWallet+resolveCredential"></a>
 
 #### exports.UniversalWallet.resolveCredential(auth, manifest, options) ⇒ <code>Promise.&lt;Object&gt;</code>
-resolves given credential manifest by credential fulfillment or credential.
+resolves given credential manifest by credential response or credential.
 Supports: https://identity.foundation/credential-manifest/
 
 **Kind**: instance method of [<code>exports.UniversalWallet</code>](#exp_module_vcwallet--exports.UniversalWallet)  
@@ -1386,8 +1386,8 @@ Supports: https://identity.foundation/credential-manifest/
 | --- | --- | --- |
 | auth | <code>String</code> | authorization token for performing this wallet operation. |
 | manifest | <code>Object</code> | credential manifest to be used for resolving credential. |
-| options | <code>Object</code> | credential or fulfillment to resolve. |
-| options.fulfillment | <code>String</code> | (optional) credential fulfillment to be resolved.  if provided, then this option takes precedence over credential resolve option. |
+| options | <code>Object</code> | credential or response to resolve. |
+| options.response | <code>String</code> | (optional) credential response to be resolved.  if provided, then this option takes precedence over credential resolve option. |
 | options.credential | <code>Object</code> | (optional) raw credential to be resolved (accepting 'ldp_vc' format only).  This option has to be provided with descriptor ID. |
 | options.credentialID | <code>String</code> | (optional) ID of the credential to be resolved which is persisted in wallet content store.  This option has to be provided with descriptor ID. |
 | options.descriptorID | <code>String</code> | (optional) output descriptor ID of the descriptor from manifest to be used for resolving given  credential or credentialID. This option is required only when a raw credential or credential ID is to be resolved. |
