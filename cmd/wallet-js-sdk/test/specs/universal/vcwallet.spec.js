@@ -14,6 +14,7 @@ import {
   connectToMediator,
   contentTypes,
   createWalletProfile,
+  DIDManager,
   getMediatorConnections,
   UniversalWallet,
 } from "../../../src";
@@ -136,10 +137,186 @@ describe("Lite wallet tests", async function () {
     expect(keyPair.publicKey).to.not.empty;
   });
 
-
   it("wallet user closes wallet", async function () {
     let wallet = new UniversalWallet({ agent: walletAgent, user: WALLET_USER });
 
+    expect((await wallet.close()).closed).to.be.true;
+    expect((await wallet.close()).closed).to.be.false;
+
+    // any operation should fail
+    expect(wallet.getAll({ auth, contentType: contentTypes.METADATA })).to
+      .eventually.be.rejected;
+  });
+});
+
+describe.only("Lite wallet tests", async function () {
+  it("wallet user creates wallet profile", async function () {
+    await createWalletProfile(walletAgent, WALLET_USER, {
+      localKMSPassphrase: testConfig.walletUserPassphrase,
+    });
+  });
+
+  let auth;
+  let wallet;
+
+  it("wallet user opens wallet", async function () {
+    wallet = new UniversalWallet({ agent: walletAgent, user: WALLET_USER });
+    let authResponse = await wallet.open({
+      localKMSPassphrase: testConfig.walletUserPassphrase,
+    });
+    expect(authResponse.token).to.not.empty;
+    auth = authResponse.token;
+  });
+
+
+  let publicDID
+  it("wallet user creates an Orb DID", async function () {
+    let didManager = new DIDManager({agent: walletAgent, user: WALLET_USER})
+    let didResolution = await didManager.createOrbDID(auth, {
+      keyType: "ED25519",
+      purposes: ["assertionMethod", "authentication"]
+    })
+    expect(didResolution).to.not.empty
+
+    publicDID = didResolution.didDocument
+  });
+
+  let cred
+  it("wallet user issues self-issued credential", async function () {
+    let templateCred = {
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ],
+      "credentialSchema": [{
+        "id": "https://www.w3.org/2018/credentials/v1",
+        "type": "JsonSchemaValidator2018"
+      }],
+      "credentialSubject": {
+        "degree": {
+          "type": "BachelorDegree",
+          "university": "MIT"
+        },
+        "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+        "name": "Jayden Doe",
+        "spouse": "did:example:c276e12ec21ebfeb1f712ebc6f1"
+      },
+      "expirationDate": "2020-01-01T19:23:24Z",
+      "id": "http://example.edu/credentials/1872",
+      "issuanceDate": "2010-01-01T19:23:24Z",
+      "issuer": {
+        "id": publicDID.id,
+        "name": "Example University"
+      },
+      "referenceNumber": 83294847,
+      "type": [
+        "VerifiableCredential",
+        "UniversityDegreeCredential"
+      ]
+    };
+
+    cred = await wallet.issue(auth, templateCred, {
+      controller: publicDID.id,
+      proofFormat: "ExternalJWTProofFormat",
+    });
+    expect(cred).to.not.empty;
+    expect(cred.credential).to.not.empty;
+  });
+
+  it("wallet user verifies credential", async function () {
+    let res = await wallet.verify(auth, {rawCredential: cred.credential});
+    expect(res) .to.not.empty;
+    expect(res.error).to.undefined;
+    expect(res.verified).to.eq(true);
+  });
+
+  // TODO: query by pEx
+
+  it("wallet user stores credential", async function () {
+    let res = await wallet.add({auth, contentType: contentTypes.CREDENTIAL, content: cred.credential});
+    expect(res).to.empty;
+  });
+
+  it( "wallet user queries by example", async function () {
+    let queryByEx = {
+      "reason": "Please present your identity document.",
+      "example": {
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "type": ["UniversityDegreeCredential"],
+        "trustedIssuer": [
+          {
+            "required": true,
+            "issuer": publicDID.id
+          }
+        ],
+        "credentialSubject": {
+          "id": "did:example:ebfeb1f712ebc6f1c276e12ec21"
+        },
+        "credentialSchema": {
+          "id": "https://www.w3.org/2018/credentials/v1",
+          "type": "JsonSchemaValidator2018"
+        }
+      }
+    }
+
+    let res = await wallet.query(auth, [{ "type": "QueryByExample", "credentialQuery": [queryByEx]}]);
+    expect(res).to.not.empty;
+    expect(res.results).to.not.undefined;
+    expect(res.results).to.not.empty;
+  });
+
+  it( "wallet user queries by presentation definition", async function () {
+    let presDef = {
+      "id": "ec2f83c5-eac4-4d04-b41e-6636d6670a2e",
+      "input_descriptors": [{
+        "id": "105b1d58-71f8-4d1e-be71-36c9c6f600c9",
+        "constraints": {
+          "fields": [
+            {
+              "path": [
+                "$.issuer.id"
+              ],
+              "filter": {
+                "type": "string",
+                "const": publicDID.id
+              }
+            }
+          ]
+        },
+        "format":{"jwk":{"alg": "EdDSA"}}
+      }]
+    }
+
+    let res = await wallet.query(auth, [{ "type": "PresentationExchange", "credentialQuery": [presDef]}]);
+    expect(res).to.not.empty;
+    expect(res.results).to.not.undefined;
+    expect(res.results).to.not.empty;
+  });
+
+  let presentation
+  it("wallet user creates presentation", async function () {
+    presentation = await wallet.prove(auth, {
+        rawCredentials: [cred.credential]
+      },
+      {
+        controller: publicDID.id,
+        proofFormat: "ExternalJWTProofFormat"
+      });
+    expect(presentation) .to.not.empty;
+    expect(presentation.presentation).to.not.undefined;
+  });
+
+  it("wallet user verifies presentation", async function () {
+    let res = await wallet.verify(auth, {presentation: presentation.presentation});
+    expect(res) .to.not.empty;
+    expect(res.error).to.undefined;
+    expect(res.verified).to.eq(true);
+  });
+
+  it("wallet user closes wallet", async function () {
     expect((await wallet.close()).closed).to.be.true;
     expect((await wallet.close()).closed).to.be.false;
 
