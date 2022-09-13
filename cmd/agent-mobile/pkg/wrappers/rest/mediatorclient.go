@@ -4,7 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package rest //nolint:dupl
+package rest
 
 import (
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/models"

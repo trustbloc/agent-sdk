@@ -4,7 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package command // nolint: dupl
+package command
 
 import (
 	"encoding/json"
@@ -45,6 +45,22 @@ func (de *DIDClient) ResolveOrbDID(request *models.RequestEnvelope) *models.Resp
 	}
 
 	response, cmdErr := exec(de.handlers[didclient.ResolveOrbDIDCommandMethod], args)
+	if cmdErr != nil {
+		return &models.ResponseEnvelope{Error: cmdErr}
+	}
+
+	return &models.ResponseEnvelope{Payload: response}
+}
+
+// ResolveWebDIDFromOrbDID resolve web DID from orb DID.
+func (de *DIDClient) ResolveWebDIDFromOrbDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
+	args := didclient.ResolveOrbDIDRequest{}
+
+	if err := json.Unmarshal(request.Payload, &args); err != nil {
+		return &models.ResponseEnvelope{Error: &models.CommandError{Message: err.Error()}}
+	}
+
+	response, cmdErr := exec(de.handlers[didclient.ResolveWebDIDFromOrbDIDCommandMethod], args)
 	if cmdErr != nil {
 		return &models.ResponseEnvelope{Error: cmdErr}
 	}

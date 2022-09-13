@@ -175,6 +175,7 @@ export class WalletUser {
    *  @param {Object} preferences.description - (optional) wallet user display description.
    *  @param {String} preferences.image - (optional)  wallet user display image in URL format.
    *  @param {String} preferences.controller - (optional) default controller to be used for digital proof for this wallet user.
+   *  @param {Boolean} preferences.controllerPublished - (optional) represents whether controller is published or not.
    *  @param {Object} preferences.verificationMethod - (optional) default verificationMethod to be used for digital proof for this wallet user.
    *  @param {String} preferences.proofType - (optional) default proofType to be used for digital proof for this wallet user.
    *  @param {Boolean} preferences.skipWelcomeMsg - (optional) represents whether this wallet user has dismissed a welcome message in the UI.
@@ -188,6 +189,7 @@ export class WalletUser {
       description = "",
       image = "",
       controller = "",
+      controllerPublished = false,
       verificationMethod = "",
       proofType = "",
       skipWelcomeMsg = false,
@@ -201,6 +203,7 @@ export class WalletUser {
       description,
       image,
       controller,
+      controllerPublished,
       verificationMethod,
       proofType,
       skipWelcomeMsg,
@@ -216,6 +219,7 @@ export class WalletUser {
    *  @param {Object} preferences.description - (optional) wallet user display description.
    *  @param {String} preferences.image - (optional)  wallet user display image in URL format.
    *  @param {String} preferences.controller - (optional) default controller to be used for digital proof for this wallet user.
+   *  @param {Boolean} preferences.controllerPublished - (optional) represents whether controller is published or not.
    *  @param {Object} preferences.verificationMethod - (optional) default verificationMethod to be used for digital proof for this wallet user.
    *  @param {String} preferences.proofType - (optional) default proofType to be used for digital proof for this wallet user.
    *  @param {Boolean} preferences.skipWelcomeMsg - (optional) represents whether this wallet user has dismissed a welcome message in the UI.
@@ -229,6 +233,7 @@ export class WalletUser {
       description,
       image,
       controller,
+      controllerPublished,
       verificationMethod,
       proofType,
       skipWelcomeMsg,
@@ -250,6 +255,7 @@ export class WalletUser {
       description,
       image,
       controller,
+      controllerPublished,
       verificationMethod,
       proofType,
       skipWelcomeMsg,
@@ -265,8 +271,8 @@ export class WalletUser {
   /**
    * Gets TrustBloc wallet user preference.
    *
-   * If controller DID is from orb https domain, then this function checks if that DID is published.
-   * If published then it refreshes DID in underlying wallet content store and updates user preference.
+   * If controller not published, then this function checks if that controller is published.
+   * If published then it change published to true in underlying wallet content store and updates user preference.
    *
    *  @param {String} auth - authorization token for wallet operations.
    *  @returns {Promise<Object>} - promise containing preference metadata or error if operation fails.
@@ -279,15 +285,16 @@ export class WalletUser {
     });
 
     if (
-      result.content.controller &&
-      result.content.controller.includes("did:orb:https")
+      result.content.controllerPublished === false && result.content.controller.includes(`did:web`)
     ) {
-      let refreshedDID = await this.didManager.refreshOrbDID(
+      console.log("check DID is published")
+
+      let published = await this.didManager.checkControllerIsPublished(
         auth,
         result.content.controller
       );
 
-      if (refreshedDID) {
+      if (published === true) {
         await this.wallet.remove({
           auth,
           contentID: `${METADATA_PREFIX}${this.user}`,
@@ -295,13 +302,11 @@ export class WalletUser {
         });
 
         console.log(
-          "DID is published ! switching to canonical ID for controller"
+          "DID is published"
         );
-        result.content.controller = refreshedDID;
+        result.content.controllerPublished = published;
 
         await this.saveMetadata(auth, result.content);
-
-        // TODO refresh credential
       }
     }
 

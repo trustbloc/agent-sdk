@@ -155,13 +155,13 @@ export class DIDManager {
             "exceeded all retry attempts to resolve odb DID by equivalent ID"
           );
         try {
-          // we are using `https` domain now here.
-          return await this.resolveOrbDID(
+          // we are using did web now.
+          return await this.resolveWebDIDFromOrbDID(
             auth,
             content.didDocumentMetadata.equivalentId[0]
           );
         } catch (e) {
-          console.error("failed to resolve orb DID, retrying due to error", e);
+          console.error("failed to resolve web DID, retrying due to error", e);
           await waitFor(1000);
           return await resolveWithRetry(retryCount - 1);
         }
@@ -173,7 +173,7 @@ export class DIDManager {
     await this.saveDID(auth, { content, collection });
 
     console.debug(
-      "created and saved Orb DID successfully",
+      "created and saved Web DID successfully",
       content.didDocument.id
     );
 
@@ -304,35 +304,40 @@ export class DIDManager {
   }
 
   /**
-   * refreshes saved orb DID in wallet content store if it is published.
+   * resolve web DID from orb DID.
+   *
+   *  @param {Object} options
+   *  @param {string} options.auth - authorization token for wallet operations.
+   *  @param {string} options.contentID - DID ID.
+   *
+   * @returns {Promise<Object>} - result.content - DID document resolution from did resolver.
+   */
+  async resolveWebDIDFromOrbDID(auth, contentID) {
+    return await this.agent.didclient.resolveWebDIDFromOrbDID({
+      did: contentID,
+    });
+  }
+
+  /**
+   * check controller if it is published.
    *
    *  @param {Object} options
    *  @param {string} options.auth - authorization token for wallet operations.
    *  @param {string} options.contentID - DID ID (typically orb https domain ID).
    *
-   * @returns {Promise<Object>} - resolved DID ID - Canonical ID of the new published DID or null if not published.
+   * @returns {Promise<Object>} - true if controller is published.
    */
-  async refreshOrbDID(auth, contentID) {
+  async checkControllerIsPublished(auth, contentID) {
     let resolvedDID = await this.resolveOrbDID(auth, contentID);
     if (
       resolvedDID.didDocumentMetadata &&
       resolvedDID.didDocumentMetadata.method &&
       resolvedDID.didDocumentMetadata.method.published
     ) {
-      // resolve canonical DID ID to get fresh DID Document.
-      let content = await this.resolveOrbDID(
-        auth,
-        resolvedDID.didDocumentMetadata.canonicalId
-      );
-      await Promise.all([
-        this.saveDID(auth, { content }),
-        this.removeDID(auth, contentID),
-      ]);
-
-      return resolvedDID.didDocumentMetadata.canonicalId;
+      return resolvedDID.didDocumentMetadata.method.published;
     }
 
-    return null;
+    return true;
   }
 
   /**

@@ -27,19 +27,19 @@ func TestCreateVDRs(t *testing.T) {
 		name: "Empty data",
 		// expects default trustbloc resolver
 		accept:   map[int][]string{0: {"orb"}},
-		expected: 2,
+		expected: 3,
 	}, {
 		name:      "Groups methods by resolver",
 		resolvers: []string{"orb@http://resolver.com", "v1@http://resolver.com"},
 		accept:    map[int][]string{0: {"orb", "v1"}, 1: {"orb"}},
 		// expects resolver.com that supports trustbloc,v1 methods and default trustbloc resolver
-		expected: 3,
+		expected: 4,
 	}, {
 		name:      "Two different resolvers",
 		resolvers: []string{"orb@http://resolver1.com", "v1@http://resolver2.com"},
 		accept:    map[int][]string{0: {"orb"}, 1: {"v1"}, 2: {"orb"}},
 		// expects resolver1.com and resolver2.com that supports trustbloc and v1 methods and default trustbloc resolver
-		expected: 4,
+		expected: 5,
 	}}
 
 	for _, test := range tests {
@@ -55,4 +55,3 @@ func TestCreateVDRs(t *testing.T) {
 		require.Equal(t, test.expected, len(res))
 	}
 }
-

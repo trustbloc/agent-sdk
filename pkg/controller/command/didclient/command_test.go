@@ -150,6 +150,63 @@ func TestCommand_ResolveOrbDID(t *testing.T) {
 	})
 }
 
+func TestCommand_ResolveWebDIDFromOrbDID(t *testing.T) {
+	t.Run("test error from request", func(t *testing.T) {
+		c, err := New("domain", "origin", "", 0, getMockProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		var b bytes.Buffer
+
+		cmdErr := c.ResolveWebDIDFromOrbDID(&b, bytes.NewBufferString("--"))
+		require.Error(t, cmdErr)
+		require.Equal(t, InvalidRequestErrorCode, cmdErr.Code())
+		require.Equal(t, command.ValidationError, cmdErr.Type())
+	})
+
+	t.Run("test error from resolve did", func(t *testing.T) {
+		c, err := New("domain", "origin", "", 0, getMockProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		c.vdrRegistry = &mockvdr.MockVDRegistry{ResolveErr: fmt.Errorf("error resolve did")}
+
+		var b bytes.Buffer
+
+		req, err := json.Marshal(ResolveOrbDIDRequest{DID: "did:123"})
+		require.NoError(t, err)
+
+		cmdErr := c.ResolveWebDIDFromOrbDID(&b, bytes.NewBuffer(req))
+		require.Error(t, cmdErr)
+		require.Equal(t, ResolveDIDErrorCode, cmdErr.Code())
+		require.Equal(t, command.ExecuteError, cmdErr.Type())
+		require.Contains(t, cmdErr.Error(), "error resolve did")
+	})
+
+	t.Run("test success", func(t *testing.T) {
+		c, err := New("domain", "origin", "", 1, getMockProvider())
+		require.NoError(t, err)
+		require.NotNil(t, c)
+
+		c.vdrRegistry = &mockvdr.MockVDRegistry{ResolveValue: &did.Doc{
+			ID:      "did:web:123",
+			Context: []string{"https://www.w3.org/ns/did/v1"},
+		}}
+
+		req, err := json.Marshal(ResolveOrbDIDRequest{DID: "did:123"})
+		require.NoError(t, err)
+
+		var b bytes.Buffer
+		cmdErr := c.ResolveWebDIDFromOrbDID(&b, bytes.NewBuffer(req))
+		require.NoError(t, cmdErr)
+
+		docRes, err := did.ParseDocumentResolution(b.Bytes())
+		require.NoError(t, err)
+		require.NotEmpty(t, docRes)
+		require.Contains(t, "did:web:123", docRes.DIDDocument.ID)
+	})
+}
+
 func TestCommand_CreateOrbDID(t *testing.T) {
 	t.Run("test error from request", func(t *testing.T) {
 		c, err := New("domain", "origin", "", 0, getMockProvider())

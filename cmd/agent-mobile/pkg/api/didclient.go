@@ -18,4 +18,7 @@ type DIDClient interface {
 
 	// ResolveOrbDID resolve orb DID.
 	ResolveOrbDID(request *models.RequestEnvelope) *models.ResponseEnvelope
+
+	// ResolveWebDIDFromOrbDID resolve orb DID.
+	ResolveWebDIDFromOrbDID(request *models.RequestEnvelope) *models.ResponseEnvelope
 }

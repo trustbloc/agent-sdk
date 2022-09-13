@@ -50,6 +50,8 @@ const (
 	CreateOrbDIDCommandMethod = "CreateOrbDID"
 	// ResolveOrbDIDCommandMethod command method.
 	ResolveOrbDIDCommandMethod = "ResolveOrbDID"
+	// ResolveWebDIDFromOrbDIDCommandMethod command method.
+	ResolveWebDIDFromOrbDIDCommandMethod = "ResolveWebDIDFromOrbDID"
 	// CreatePeerDIDCommandMethod command method.
 	CreatePeerDIDCommandMethod = "CreatePeerDID"
 	// log constants.
@@ -188,6 +190,7 @@ func (c *Command) GetHandlers() []command.Handler {
 	handlers := []command.Handler{
 		cmdutil.NewCommandHandler(CommandName, CreateOrbDIDCommandMethod, c.CreateOrbDID),
 		cmdutil.NewCommandHandler(CommandName, ResolveOrbDIDCommandMethod, c.ResolveOrbDID),
+		cmdutil.NewCommandHandler(CommandName, ResolveWebDIDFromOrbDIDCommandMethod, c.ResolveWebDIDFromOrbDID),
 	}
 
 	if c.mediatorClient != nil && c.mediatorSvc != nil {
@@ -196,6 +199,43 @@ func (c *Command) GetHandlers() []command.Handler {
 	}
 
 	return handlers
+}
+
+// ResolveWebDIDFromOrbDID resolve web DID from orb DID.
+func (c *Command) ResolveWebDIDFromOrbDID(rw io.Writer, req io.Reader) command.Error {
+	var request ResolveOrbDIDRequest
+
+	err := json.NewDecoder(req).Decode(&request)
+	if err != nil {
+		logutil.LogError(logger, CommandName, ResolveWebDIDFromOrbDIDCommandMethod, err.Error())
+
+		return command.NewValidationError(InvalidRequestErrorCode, err)
+	}
+
+	didWeb := strings.ReplaceAll(request.DID, "orb:https", "web")
+	didWeb = strings.ReplaceAll(didWeb, "uAAA", "scid")
+
+	docResolution, errRead := c.vdrRegistry.Resolve(didWeb)
+	if errRead != nil {
+		logutil.LogError(logger, CommandName, ResolveWebDIDFromOrbDIDCommandMethod, errRead.Error())
+
+		return command.NewExecuteError(ResolveDIDErrorCode, errRead)
+	}
+
+	bytes, err := docResolution.JSONBytes()
+	if err != nil {
+		logutil.LogError(logger, CommandName, ResolveWebDIDFromOrbDIDCommandMethod, err.Error())
+
+		return command.NewExecuteError(ResolveDIDErrorCode, err)
+	}
+
+	logutil.LogDebug(logger, CommandName, ResolveWebDIDFromOrbDIDCommandMethod, successString)
+
+	if _, err := rw.Write(bytes); err != nil {
+		logger.Errorf(err.Error())
+	}
+
+	return nil
 }
 
 // ResolveOrbDID resolve orb DID.
@@ -207,6 +247,11 @@ func (c *Command) ResolveOrbDID(rw io.Writer, req io.Reader) command.Error {
 		logutil.LogError(logger, CommandName, ResolveOrbDIDCommandMethod, err.Error())
 
 		return command.NewValidationError(InvalidRequestErrorCode, err)
+	}
+
+	if strings.Contains(request.DID, "did:web") {
+		request.DID = strings.ReplaceAll(request.DID, "web", "orb:https")
+		request.DID = strings.ReplaceAll(request.DID, "scid", "uAAA")
 	}
 
 	docResolution, errRead := c.didBlocClient.Read(request.DID)

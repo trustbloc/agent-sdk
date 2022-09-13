@@ -16,6 +16,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hyperledger/aries-framework-go/pkg/vdr/key"
+
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gorilla/mux"
 	"github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb"
@@ -37,6 +39,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
+	"github.com/hyperledger/aries-framework-go/pkg/vdr/web"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/rs/cors"
 	"github.com/spf13/cobra"
@@ -727,7 +730,7 @@ func createVDRs(resolvers []string, trustblocDomain string) ([]vdr.VDR, error) {
 		return nil, err
 	}
 
-	VDRs = append(VDRs, blocVDR)
+	VDRs = append(VDRs, blocVDR, key.New(), web.New())
 
 	return VDRs, nil
 }

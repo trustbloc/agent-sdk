@@ -33,7 +33,8 @@ module.exports = function (config) {
             },
             Chrome_without_security: {
                 base: 'Chrome',
-                flags: ['--disable-web-security', '--disable-site-isolation-trials', '--auto-open-devtools-for-tabs']
+                flags: ['--disable-web-security', '--disable-site-isolation-trials', '--auto-open-devtools-for-tabs',
+                    "--allow-running-insecure-content", "--ignore-certificate-errors"]
             }
         },
         client: {

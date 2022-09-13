@@ -189,6 +189,10 @@ func getDIDClientEndpoints() map[string]*endpoint {
 			Path:   opdidclient.ResolveOrbDIDPath,
 			Method: http.MethodPost,
 		},
+		cmddidclient.ResolveWebDIDFromOrbDIDCommandMethod: {
+			Path:   opdidclient.ResolveWebDIDFromOrbDIDPath,
+			Method: http.MethodPost,
+		},
 		cmddidclient.CreatePeerDIDCommandMethod: {
 			Path:   opdidclient.CreatePeerDIDPath,
 			Method: http.MethodPost,

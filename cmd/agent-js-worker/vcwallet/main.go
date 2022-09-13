@@ -16,7 +16,6 @@ import (
 	"syscall/js"
 
 	"github.com/hyperledger/aries-framework-go/component/storage/indexeddb"
-
 	controllercmd "github.com/hyperledger/aries-framework-go/pkg/controller/command"
 	kmscmd "github.com/hyperledger/aries-framework-go/pkg/controller/command/kms"
 	vcwalletcmd "github.com/hyperledger/aries-framework-go/pkg/controller/command/vcwallet"
@@ -29,6 +28,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/key"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/peer"
+	"github.com/hyperledger/aries-framework-go/pkg/vdr/web"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
 	"github.com/mitchellh/mapstructure"
 	jsonld "github.com/piprate/json-gold/ld"
@@ -391,7 +391,7 @@ func createVDR(vdrs []vdrapi.VDR, startOpts *agentsetup.AgentStartOpts,
 	)
 
 	k := key.New()
-	opts = append(opts, vdr.WithVDR(k))
+	opts = append(opts, vdr.WithVDR(k), vdr.WithVDR(web.New()))
 
 	return vdr.New(opts...), nil
 }
