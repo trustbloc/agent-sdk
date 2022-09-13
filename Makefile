@@ -105,9 +105,11 @@ generate-openapi-demo-specs: clean generate-openapi-spec agent-server-docker
     	DOCKER_IMAGE=$(OPENAPI_DOCKER_IMG) DOCKER_IMAGE_VERSION=$(OPENAPI_DOCKER_IMG_VERSION)  \
     	scripts/generate-openapi-demo-specs.sh
 
+# TODO (#419): frapsoft/openssl only has an amd64 version. While this does work under amd64 and arm64 Mac OS currently,
+#               we should add an arm64 version for systems that can only run arm64 code.
 generate-test-keys: clean
 	@mkdir -p -p deployments/keys/tls
-	@docker run -i --rm \
+	@docker run -i --platform linux/amd64 --rm \
 		-v $(abspath .):/opt/go/src/$(PROJECT_ROOT) \
 		--entrypoint "/opt/go/src/$(PROJECT_ROOT)/scripts/generate_test_keys.sh" \
 		frapsoft/openssl
