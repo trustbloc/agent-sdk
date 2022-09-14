@@ -39,6 +39,7 @@ import (
 	ariesapi "github.com/hyperledger/aries-framework-go/pkg/framework/aries/api"
 	ariesvdr "github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
+	"github.com/hyperledger/aries-framework-go/pkg/vdr/web"
 
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/api"
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/config"
@@ -465,7 +466,7 @@ func createVDRs(resolvers []string, trustblocDomain string) ([]ariesvdr.VDR, err
 		return nil, err
 	}
 
-	VDRs = append(VDRs, blocVDR)
+	VDRs = append(VDRs, blocVDR, web.New())
 
 	return VDRs, nil
 }

@@ -21,14 +21,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
-	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
-	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
-	"github.com/hyperledger/aries-framework-go/pkg/vdr/key"
-
 	"github.com/google/tink/go/keyset"
 	"github.com/google/tink/go/subtle/random"
 	"github.com/google/uuid"
+	"github.com/hyperledger/aries-framework-go-ext/component/vdr/orb"
 	"github.com/hyperledger/aries-framework-go/component/storage/edv"
 	"github.com/hyperledger/aries-framework-go/component/storage/indexeddb"
 	"github.com/hyperledger/aries-framework-go/component/storageutil/batchedstore"
@@ -46,12 +42,16 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/ldcontext/remote"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
+	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/hyperledger/aries-framework-go/pkg/kms/localkms"
 	"github.com/hyperledger/aries-framework-go/pkg/kms/webkms"
 	"github.com/hyperledger/aries-framework-go/pkg/secretlock"
 	"github.com/hyperledger/aries-framework-go/pkg/secretlock/local"
 	ldstore "github.com/hyperledger/aries-framework-go/pkg/store/ld"
+	"github.com/hyperledger/aries-framework-go/pkg/vdr/httpbinding"
+	"github.com/hyperledger/aries-framework-go/pkg/vdr/key"
+	"github.com/hyperledger/aries-framework-go/pkg/vdr/web"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
 	jsonld "github.com/piprate/json-gold/ld"
 	"github.com/trustbloc/auth/spi/gnap/proof/httpsig"
@@ -196,7 +196,7 @@ func CreateVDRs(resolvers []string, trustblocDomain string, unanchoredDIDMaxLife
 		return nil, err
 	}
 
-	VDRs = append(VDRs, blocVDR, key.New())
+	VDRs = append(VDRs, blocVDR, key.New(), web.New())
 
 	return VDRs, nil
 }

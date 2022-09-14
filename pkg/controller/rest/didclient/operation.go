@@ -18,10 +18,11 @@ import (
 
 // constants for endpoints of DIDClient.
 const (
-	OperationID       = "/didclient"
-	CreateOrbDIDPath  = OperationID + "/create-orb-did"
-	CreatePeerDIDPath = OperationID + "/create-peer-did"
-	ResolveOrbDIDPath = OperationID + "/resolve-orb-did"
+	OperationID                 = "/didclient"
+	CreateOrbDIDPath            = OperationID + "/create-orb-did"
+	CreatePeerDIDPath           = OperationID + "/create-peer-did"
+	ResolveOrbDIDPath           = OperationID + "/resolve-orb-did"
+	ResolveWebDIDFromOrbDIDPath = OperationID + "/resolve-web-did-from-orb-did"
 )
 
 // Operation is controller REST service controller for DID Client.
@@ -56,6 +57,7 @@ func (c *Operation) registerHandler() {
 		cmdutil.NewHTTPHandler(CreateOrbDIDPath, http.MethodPost, c.CreateOrbDID),
 		cmdutil.NewHTTPHandler(CreatePeerDIDPath, http.MethodPost, c.CreatePeerDID),
 		cmdutil.NewHTTPHandler(ResolveOrbDIDPath, http.MethodPost, c.ResolveOrbDID),
+		cmdutil.NewHTTPHandler(ResolveWebDIDFromOrbDIDPath, http.MethodPost, c.ResolveWebDIDFromOrbDID),
 	}
 }
 
@@ -79,6 +81,17 @@ func (c *Operation) CreateOrbDID(rw http.ResponseWriter, req *http.Request) {
 //    200: resolveDIDResp
 func (c *Operation) ResolveOrbDID(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.ResolveOrbDID, rw, req.Body)
+}
+
+// ResolveWebDIDFromOrbDID swagger:route POST /didclient/resolve-web-did-from-orb-did didclient resolveWebDIDFromOrbDID
+//
+// Resolve web DID fromorb DID.
+//
+// Responses:
+//    default: genericError
+//    200: resolveDIDResp
+func (c *Operation) ResolveWebDIDFromOrbDID(rw http.ResponseWriter, req *http.Request) {
+	rest.Execute(c.command.ResolveWebDIDFromOrbDID, rw, req.Body)
 }
 
 // CreatePeerDID swagger:route POST /didclient/create-peer-did didclient createPeerDID
