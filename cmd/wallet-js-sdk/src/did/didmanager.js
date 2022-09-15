@@ -337,7 +337,7 @@ export class DIDManager {
       return resolvedDID.didDocumentMetadata.method.published;
     }
 
-    return true;
+    return false;
   }
 
   /**
