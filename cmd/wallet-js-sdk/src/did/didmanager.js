@@ -319,6 +319,21 @@ export class DIDManager {
   }
 
   /**
+   * verify web DID from orb DID.
+   *
+   *  @param {Object} options
+   *  @param {string} options.auth - authorization token for wallet operations.
+   *  @param {string} options.contentID - DID ID.
+   *
+   * @returns {Promise<Object>} - result.content - DID document resolution from did resolver.
+   */
+  async verifyWebDIDFromOrbDID(auth, contentID) {
+    return await this.agent.didclient.verifyWebDIDFromOrbDID({
+      did: contentID,
+    });
+  }
+
+  /**
    * check controller if it is published.
    *
    *  @param {Object} options

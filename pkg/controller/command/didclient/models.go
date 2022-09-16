@@ -26,6 +26,14 @@ type ResolveOrbDIDRequest struct {
 	DID string `json:"did,omitempty"`
 }
 
+// VerifyWebDIDFromOrbDIDRequest model
+//
+// This is used for Verify WebDID From OrbDID.
+//
+type VerifyWebDIDFromOrbDIDRequest struct {
+	DID string `json:"did,omitempty"`
+}
+
 // CreatePeerDIDRequest model
 //
 // This is used for creating peer DID.

@@ -30,7 +30,7 @@ require (
 	github.com/VictoriaMetrics/fastcache v1.5.7 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bluele/gcache v0.0.2 // indirect
-	github.com/btcsuite/btcd v0.22.0-beta // indirect
+	github.com/btcsuite/btcd v0.22.1 // indirect
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -90,9 +90,9 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
 	github.com/trustbloc/edge-core v0.1.8 // indirect
-	github.com/trustbloc/orb v1.0.0-rc2.0.20220811160855-64ffb892b32b // indirect
-	github.com/trustbloc/sidetree-core-go v1.0.0-rc2.0.20220729143551-6cda4cea3bf5 // indirect
-	github.com/trustbloc/vct v1.0.0-rc2 // indirect
+	github.com/trustbloc/orb v1.0.0-rc3.0.20220831215831-d1d1cc5b8a64 // indirect
+	github.com/trustbloc/sidetree-core-go v1.0.0-rc3 // indirect
+	github.com/trustbloc/vct v1.0.0-rc3 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect

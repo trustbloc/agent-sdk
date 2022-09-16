@@ -1504,6 +1504,16 @@ const Agent = function (opts) {
             },
 
             /**
+             * Verify Web DID From Orb DID.
+             *
+             * @param req - json document
+             * @returns {Promise<Object>}
+             */
+            verifyWebDIDFromOrbDID: async function (req) {
+                return invoke(aw, pending, this.pkgname, "VerifyWebDIDFromOrbDID", req, "timeout while verify web did from orb did")
+            },
+
+            /**
              * Creates a peer DID.
              *
              * @param req - json document

@@ -68,6 +68,22 @@ func (de *DIDClient) ResolveWebDIDFromOrbDID(request *models.RequestEnvelope) *m
 	return &models.ResponseEnvelope{Payload: response}
 }
 
+// VerifyWebDIDFromOrbDID verify web DID from orb DID.
+func (de *DIDClient) VerifyWebDIDFromOrbDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
+	args := didclient.VerifyWebDIDFromOrbDIDRequest{}
+
+	if err := json.Unmarshal(request.Payload, &args); err != nil {
+		return &models.ResponseEnvelope{Error: &models.CommandError{Message: err.Error()}}
+	}
+
+	response, cmdErr := exec(de.handlers[didclient.VerifyWebDIDFromOrbDIDCommandMethod], args)
+	if cmdErr != nil {
+		return &models.ResponseEnvelope{Error: cmdErr}
+	}
+
+	return &models.ResponseEnvelope{Payload: response}
+}
+
 // CreatePeerDID creates a new peer DID.
 func (de *DIDClient) CreatePeerDID(request *models.RequestEnvelope) *models.ResponseEnvelope {
 	args := didclient.CreatePeerDIDRequest{}

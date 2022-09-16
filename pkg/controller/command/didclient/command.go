@@ -35,6 +35,8 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/hyperledger/aries-framework-go/pkg/vdr/peer"
 	"github.com/trustbloc/edge-core/pkg/log"
+	diddoctransformer "github.com/trustbloc/orb/pkg/orbclient/doctransformer"
+	"github.com/trustbloc/sidetree-core-go/pkg/document"
 
 	agentcmd "github.com/trustbloc/agent-sdk/pkg/controller/command"
 	"github.com/trustbloc/agent-sdk/pkg/controller/internal/cmdutil"
@@ -52,6 +54,8 @@ const (
 	ResolveOrbDIDCommandMethod = "ResolveOrbDID"
 	// ResolveWebDIDFromOrbDIDCommandMethod command method.
 	ResolveWebDIDFromOrbDIDCommandMethod = "ResolveWebDIDFromOrbDID"
+	// VerifyWebDIDFromOrbDIDCommandMethod command method.
+	VerifyWebDIDFromOrbDIDCommandMethod = "VerifyWebDIDFromOrbDID"
 	// CreatePeerDIDCommandMethod command method.
 	CreatePeerDIDCommandMethod = "CreatePeerDID"
 	// log constants.
@@ -191,6 +195,7 @@ func (c *Command) GetHandlers() []command.Handler {
 		cmdutil.NewCommandHandler(CommandName, CreateOrbDIDCommandMethod, c.CreateOrbDID),
 		cmdutil.NewCommandHandler(CommandName, ResolveOrbDIDCommandMethod, c.ResolveOrbDID),
 		cmdutil.NewCommandHandler(CommandName, ResolveWebDIDFromOrbDIDCommandMethod, c.ResolveWebDIDFromOrbDID),
+		cmdutil.NewCommandHandler(CommandName, VerifyWebDIDFromOrbDIDCommandMethod, c.VerifyWebDIDFromOrbDID),
 	}
 
 	if c.mediatorClient != nil && c.mediatorSvc != nil {
@@ -215,14 +220,14 @@ func (c *Command) ResolveWebDIDFromOrbDID(rw io.Writer, req io.Reader) command.E
 	didWeb := strings.ReplaceAll(request.DID, "orb:https", "web")
 	didWeb = strings.ReplaceAll(didWeb, "uAAA", "scid")
 
-	docResolution, errRead := c.vdrRegistry.Resolve(didWeb)
+	didWebResolution, errRead := c.vdrRegistry.Resolve(didWeb)
 	if errRead != nil {
 		logutil.LogError(logger, CommandName, ResolveWebDIDFromOrbDIDCommandMethod, errRead.Error())
 
 		return command.NewExecuteError(ResolveDIDErrorCode, errRead)
 	}
 
-	bytes, err := docResolution.JSONBytes()
+	bytes, err := didWebResolution.JSONBytes()
 	if err != nil {
 		logutil.LogError(logger, CommandName, ResolveWebDIDFromOrbDIDCommandMethod, err.Error())
 
@@ -236,6 +241,88 @@ func (c *Command) ResolveWebDIDFromOrbDID(rw io.Writer, req io.Reader) command.E
 	}
 
 	return nil
+}
+
+// VerifyWebDIDFromOrbDID verify web DID from orb DID.
+func (c *Command) VerifyWebDIDFromOrbDID(rw io.Writer, req io.Reader) command.Error {
+	var request VerifyWebDIDFromOrbDIDRequest
+
+	err := json.NewDecoder(req).Decode(&request)
+	if err != nil {
+		logutil.LogError(logger, CommandName, VerifyWebDIDFromOrbDIDCommandMethod, err.Error())
+
+		return command.NewValidationError(InvalidRequestErrorCode, err)
+	}
+
+	didWebResolution, errRead := c.vdrRegistry.Resolve(request.DID)
+	if errRead != nil {
+		logutil.LogError(logger, CommandName, VerifyWebDIDFromOrbDIDCommandMethod, errRead.Error())
+
+		return command.NewExecuteError(ResolveDIDErrorCode, errRead)
+	}
+
+	didOrbResolution, errRead := c.didBlocClient.Read(didWebResolution.DIDDocument.AlsoKnownAs[0])
+	if errRead != nil {
+		logutil.LogError(logger, CommandName, VerifyWebDIDFromOrbDIDCommandMethod, errRead.Error())
+
+		return command.NewExecuteError(ResolveDIDErrorCode, errRead)
+	}
+
+	didWebResolutionResult, err := transformToResolutionResult(didWebResolution)
+	if err != nil {
+		logutil.LogError(logger, CommandName, VerifyWebDIDFromOrbDIDCommandMethod, err.Error())
+
+		return command.NewExecuteError(ResolveDIDErrorCode, err)
+	}
+
+	didOrbResolutionResult, err := transformToResolutionResult(didOrbResolution)
+	if err != nil {
+		logutil.LogError(logger, CommandName, VerifyWebDIDFromOrbDIDCommandMethod, err.Error())
+
+		return command.NewExecuteError(ResolveDIDErrorCode, err)
+	}
+
+	if err := diddoctransformer.VerifyWebDocumentFromOrbDocument(didWebResolutionResult,
+		didOrbResolutionResult); err != nil {
+		logutil.LogError(logger, CommandName, VerifyWebDIDFromOrbDIDCommandMethod, err.Error())
+
+		return command.NewExecuteError(ResolveDIDErrorCode, err)
+	}
+
+	logutil.LogDebug(logger, CommandName, VerifyWebDIDFromOrbDIDCommandMethod, successString)
+
+	return nil
+}
+
+func transformToResolutionResult(docResolution *did.DocResolution) (*document.ResolutionResult, error) {
+	docRes := &document.ResolutionResult{}
+
+	didDocBytes, err := docResolution.DIDDocument.JSONBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	docRes.Document, err = document.FromBytes(didDocBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	documentMetadataBytes, err := json.Marshal(docResolution.DocumentMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(documentMetadataBytes, &docRes.DocumentMetadata); err != nil {
+		return nil, err
+	}
+
+	if ctx, ok := docResolution.Context.(string); ok { //nolint: gocritic
+		docRes.Context = ctx
+	} else if ctx, ok := docResolution.Context.([]string); ok {
+		docRes.Context = ctx[0]
+	}
+
+	return docRes, nil
 }
 
 // ResolveOrbDID resolve orb DID.

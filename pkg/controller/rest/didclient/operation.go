@@ -23,6 +23,7 @@ const (
 	CreatePeerDIDPath           = OperationID + "/create-peer-did"
 	ResolveOrbDIDPath           = OperationID + "/resolve-orb-did"
 	ResolveWebDIDFromOrbDIDPath = OperationID + "/resolve-web-did-from-orb-did"
+	VerifyWebDIDFromOrbDIDPath  = OperationID + "/verify-web-did-from-orb-did"
 )
 
 // Operation is controller REST service controller for DID Client.
@@ -58,6 +59,7 @@ func (c *Operation) registerHandler() {
 		cmdutil.NewHTTPHandler(CreatePeerDIDPath, http.MethodPost, c.CreatePeerDID),
 		cmdutil.NewHTTPHandler(ResolveOrbDIDPath, http.MethodPost, c.ResolveOrbDID),
 		cmdutil.NewHTTPHandler(ResolveWebDIDFromOrbDIDPath, http.MethodPost, c.ResolveWebDIDFromOrbDID),
+		cmdutil.NewHTTPHandler(VerifyWebDIDFromOrbDIDPath, http.MethodPost, c.VerifyWebDIDFromOrbDID),
 	}
 }
 
@@ -85,13 +87,23 @@ func (c *Operation) ResolveOrbDID(rw http.ResponseWriter, req *http.Request) {
 
 // ResolveWebDIDFromOrbDID swagger:route POST /didclient/resolve-web-did-from-orb-did didclient resolveWebDIDFromOrbDID
 //
-// Resolve web DID fromorb DID.
+// Resolve web DID from orb DID.
 //
 // Responses:
 //    default: genericError
 //    200: resolveDIDResp
 func (c *Operation) ResolveWebDIDFromOrbDID(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.ResolveWebDIDFromOrbDID, rw, req.Body)
+}
+
+// VerifyWebDIDFromOrbDID swagger:route POST /didclient/verify-web-did-from-orb-did didclient verifyWebDIDFromOrbDID
+//
+// Verify web DID from orb DID.
+//
+// Responses:
+//    default: genericError
+func (c *Operation) VerifyWebDIDFromOrbDID(rw http.ResponseWriter, req *http.Request) {
+	rest.Execute(c.command.VerifyWebDIDFromOrbDID, rw, req.Body)
 }
 
 // CreatePeerDID swagger:route POST /didclient/create-peer-did didclient createPeerDID
