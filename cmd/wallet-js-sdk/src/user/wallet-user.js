@@ -301,6 +301,8 @@ export class WalletUser {
           contentType: contentTypes.METADATA,
         });
 
+        await this.didManager.verifyWebDIDFromOrbDID(auth,result.content.controller)
+
         console.log(
           "DID is published"
         );

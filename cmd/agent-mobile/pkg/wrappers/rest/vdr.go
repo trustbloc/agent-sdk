@@ -4,7 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package rest //nolint:dupl
+package rest
 
 import (
 	cmdvdr "github.com/hyperledger/aries-framework-go/pkg/controller/command/vdr"

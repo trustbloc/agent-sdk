@@ -21,4 +21,7 @@ type DIDClient interface {
 
 	// ResolveWebDIDFromOrbDID resolve orb DID.
 	ResolveWebDIDFromOrbDID(request *models.RequestEnvelope) *models.ResponseEnvelope
+
+	// VerifyWebDIDFromOrbDID verify web DID from orb DID.
+	VerifyWebDIDFromOrbDID(request *models.RequestEnvelope) *models.ResponseEnvelope
 }

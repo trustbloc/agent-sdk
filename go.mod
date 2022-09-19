@@ -7,7 +7,7 @@ module github.com/trustbloc/agent-sdk
 go 1.17
 
 require (
-	github.com/btcsuite/btcd v0.22.0-beta
+	github.com/btcsuite/btcd v0.22.1
 	github.com/google/tink/go v1.6.1
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
@@ -23,6 +23,8 @@ require (
 	github.com/trustbloc/auth/spi/gnap v0.0.0-20220720135047-587833ae9ab1
 	github.com/trustbloc/edge-core v0.1.8
 	github.com/trustbloc/edv v0.1.9-0.20220621144721-c5002b0e0ac3
+	github.com/trustbloc/orb v1.0.0-rc3.0.20220831215831-d1d1cc5b8a64
+	github.com/trustbloc/sidetree-core-go v1.0.0-rc3
 )
 
 require (
@@ -86,9 +88,7 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/sjson v1.1.4 // indirect
-	github.com/trustbloc/orb v1.0.0-rc2.0.20220811160855-64ffb892b32b // indirect
-	github.com/trustbloc/sidetree-core-go v1.0.0-rc2.0.20220729143551-6cda4cea3bf5 // indirect
-	github.com/trustbloc/vct v1.0.0-rc2 // indirect
+	github.com/trustbloc/vct v1.0.0-rc3 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect
