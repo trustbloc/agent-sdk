@@ -7,7 +7,7 @@ module github.com/trustbloc/agent-sdk/cmd/agent-js-worker
 go 1.17
 
 require (
-	github.com/hyperledger/aries-framework-go v0.1.9-0.20220912184116-f7a0dc3a00bd
+	github.com/hyperledger/aries-framework-go v0.1.9-0.20220920215334-e1f4b94b6f8b
 	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20220614152730-3d817acfa48b
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220617141911-82112d172a78
 	github.com/mitchellh/mapstructure v1.4.3
