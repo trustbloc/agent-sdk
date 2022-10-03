@@ -1,0 +1,7 @@
+github.com/hyperledger/aries-framework-go v0.1.8 h1:nKPGTqh+gYWrczJ7mf6clbnDegKPJg7TDis8SYNxcGo=
+github.com/hyperledger/aries-framework-go v0.1.8/go.mod h1:7ilurt17sjWruVIBxZSrwn8qUbROq8LXYYY+O7dNxIM=
+github.com/hyperledger/aries-framework-go v0.1.9-0.20220928162901-2aee6d4c5775 h1:cqMxiv9hi1iQG1eFMkFoob8K8ksOFjkYTxFdyNgxXUo=
+github.com/hyperledger/aries-framework-go v0.1.9-0.20220928162901-2aee6d4c5775/go.mod h1:bypk9kaZKKrWzeZg9DgGWIc73Il21NB+uw0DhkaHgV4=
+github.com/hyperledger/aries-framework-go/spi v0.0.0-20220322085443-50e8f9bd208b h1:Fo9mK3eB+TiYu2/hbTWtt0kWg9j1QRqnnbQQqaytJzE=
+github.com/hyperledger/aries-framework-go/spi v0.0.0-20220322085443-50e8f9bd208b/go.mod h1:4bD5c5fj5K7rkQurVa/8I8+TfNcI4bxIBzaUNcxTOTg=
+github.com/hyperledger/aries-framework-go/spi v0.0.0-20220606124520-53422361c38c/go.mod h1:4bD5c5fj5K7rkQurVa/8I8+TfNcI4bxIBzaUNcxTOTg=
