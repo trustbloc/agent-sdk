@@ -20,7 +20,7 @@ const JSONLD_CREDENTIAL_METADATA_MODEL = [
 
 const MANIFEST_MAPPING_METADATA_TYPE = "ManifestMapping";
 const CREDENTIAL_METADATA_MODEL_TYPE = "CredentialMetadata";
-const SUPPORTED_VC_FORMAT = "ldp_vc";
+const SUPPORTED_VC_FORMAT = ["ldp_vc", "jwt_vc"];
 
 /**
  *  credential module provides wallet credential handling features,
@@ -86,6 +86,7 @@ export class CredentialManager {
         });
 
         if (!verified) {
+          // TODO: error message won't have an ID when rawCredential is a raw JWT VC
           console.error(`verification failed for ${rawCredential.id}`);
           throw `credential verification failed`;
         }
@@ -107,7 +108,7 @@ export class CredentialManager {
     // prepare save metadata
     const _saveMetadata = async (descriptor) => {
       const { id, format, path } = descriptor;
-      if (format != SUPPORTED_VC_FORMAT) {
+      if (!SUPPORTED_VC_FORMAT.includes(format)) {
         console.warn(
           `unsupported credential format '${format}', supporting only '${SUPPORTED_VC_FORMAT}' for now`
         );
@@ -428,6 +429,9 @@ export class CredentialManager {
    *  By default, challenge will not be part of proof.
    *  @param {string} proofOptions.proofType - (optional) signature type used for signing.
    *  By default, proof will be generated in Ed25519Signature2018 format.
+   *  @param {String} proofOptions.proofFormat - (optional) representational format for the credential.
+   *  Valid values are "ExternalJWTProofFormat" and "EmbeddedLDProofFormat".
+   *  By default, credential will be JSON-LD with embedded proof.
    *  @param {string} proofOptions.proofRepresentation - (optional) type of proof data expected ( "proofValue" or "jws").
    *  By default, 'proofValue' will be used.
    *
@@ -443,6 +447,7 @@ export class CredentialManager {
       domain,
       challenge,
       proofType,
+      proofFormat,
       proofRepresentation,
     } = {}
   ) {
@@ -453,6 +458,7 @@ export class CredentialManager {
       domain,
       challenge,
       proofType,
+      proofFormat,
       proofRepresentation,
     });
   }
@@ -477,6 +483,9 @@ export class CredentialManager {
    *  By default, challenge will not be part of proof.
    *  @param {String} proofOptions.proofType - (optional) signature type used for signing.
    *  By default, proof will be generated in Ed25519Signature2018 format.
+   *  @param {String} proofOptions.proofFormat - (optional) representational format for the presentation.
+   *  Valid values are "ExternalJWTProofFormat" and "EmbeddedLDProofFormat".
+   *  By default, presentation will be JSON-LD with embedded proof.
    *  @param {String} proofOptions.proofRepresentation - (optional) type of proof data expected ( "proofValue" or "jws").
    *  By default, 'proofValue' will be used.
    *
@@ -492,6 +501,7 @@ export class CredentialManager {
       domain,
       challenge,
       proofType,
+      proofFormat,
       proofRepresentation,
     } = {}
   ) {
@@ -509,6 +519,7 @@ export class CredentialManager {
         domain,
         challenge,
         proofType,
+        proofFormat,
         proofRepresentation,
       }
     );
