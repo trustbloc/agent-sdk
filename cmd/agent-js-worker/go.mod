@@ -114,4 +114,8 @@ require (
 	nhooyr.io/websocket v1.8.3 // indirect
 )
 
-replace github.com/trustbloc/agent-sdk => ../..
+replace (
+	github.com/piprate/json-gold => github.com/trustbloc/json-gold v0.0.0-20220927171002-9dccd8860d42
+	github.com/trustbloc/agent-sdk => ../..
+	github.com/xeipuuv/gojsonschema v1.2.0 => github.com/trustbloc/gojsonschema v0.0.0-20220922133611-09957794fd65
+)

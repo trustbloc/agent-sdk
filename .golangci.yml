@@ -66,6 +66,9 @@ linters-settings:
     statements: 40
   gomoddirectives:
     replace-local: true
+    replace-allow-list:
+      - github.com/piprate/json-gold
+      - github.com/xeipuuv/gojsonschema
 
 linters:
   enable-all: true
