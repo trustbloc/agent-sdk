@@ -178,6 +178,7 @@ export class WalletUser {
    *  @param {Boolean} preferences.controllerPublished - (optional) represents whether controller is published or not.
    *  @param {Object} preferences.verificationMethod - (optional) default verificationMethod to be used for digital proof for this wallet user.
    *  @param {String} preferences.proofType - (optional) default proofType to be used for digital proof for this wallet user.
+   *  @param {String} preferences.proofFormat - (optional) default format (ldp, jwt) to be used for digital proof for this wallet user.
    *  @param {Boolean} preferences.skipWelcomeMsg - (optional) represents whether this wallet user has dismissed a welcome message in the UI.
    *
    *  @returns {Promise<Object>} - empty promise or error if operation fails.
@@ -192,6 +193,7 @@ export class WalletUser {
       controllerPublished = false,
       verificationMethod = "",
       proofType = "",
+      proofFormat = "",
       skipWelcomeMsg = false,
     } = {}
   ) {
@@ -206,6 +208,7 @@ export class WalletUser {
       controllerPublished,
       verificationMethod,
       proofType,
+      proofFormat,
       skipWelcomeMsg,
     });
   }
@@ -222,6 +225,7 @@ export class WalletUser {
    *  @param {Boolean} preferences.controllerPublished - (optional) represents whether controller is published or not.
    *  @param {Object} preferences.verificationMethod - (optional) default verificationMethod to be used for digital proof for this wallet user.
    *  @param {String} preferences.proofType - (optional) default proofType to be used for digital proof for this wallet user.
+   *  @param {String} preferences.proofFormat - (optional) default format (ldp, jwt) to be used for digital proof for this wallet user.
    *  @param {Boolean} preferences.skipWelcomeMsg - (optional) represents whether this wallet user has dismissed a welcome message in the UI.
    *
    *  @returns {Promise<Object>} - empty promise or error if operation fails.
@@ -236,6 +240,7 @@ export class WalletUser {
       controllerPublished,
       verificationMethod,
       proofType,
+      proofFormat,
       skipWelcomeMsg,
     }
   ) {
@@ -258,6 +263,7 @@ export class WalletUser {
       controllerPublished,
       verificationMethod,
       proofType,
+      proofFormat,
       skipWelcomeMsg,
     });
 
