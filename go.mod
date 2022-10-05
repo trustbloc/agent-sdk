@@ -18,7 +18,7 @@ require (
 	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20220614152730-3d817acfa48b
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220614152730-3d817acfa48b
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220614152730-3d817acfa48b
-	github.com/piprate/json-gold v0.4.1
+	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.7.5
 	github.com/trustbloc/auth/spi/gnap v0.0.0-20220720135047-587833ae9ab1
 	github.com/trustbloc/edge-core v0.1.8
