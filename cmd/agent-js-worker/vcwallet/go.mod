@@ -11,7 +11,7 @@ require (
 	github.com/hyperledger/aries-framework-go/component/storage/indexeddb v0.0.0-20220614152730-3d817acfa48b
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220617141911-82112d172a78
 	github.com/mitchellh/mapstructure v1.4.3
-	github.com/piprate/json-gold v0.4.1
+	github.com/piprate/json-gold v0.4.2
 	github.com/trustbloc/agent-sdk v0.0.0-00010101000000-000000000000
 	github.com/trustbloc/edge-core v0.1.8
 )

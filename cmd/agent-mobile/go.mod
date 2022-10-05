@@ -13,7 +13,7 @@ require (
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220614152730-3d817acfa48b
 	github.com/hyperledger/aries-framework-go/spi v0.0.0-20220614152730-3d817acfa48b
 	github.com/hyperledger/aries-framework-go/test/component v0.0.0-20220614152730-3d817acfa48b
-	github.com/piprate/json-gold v0.4.1
+	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.7.5
 	github.com/trustbloc/agent-sdk v0.0.0-00010101000000-000000000000
 	nhooyr.io/websocket v1.8.3
