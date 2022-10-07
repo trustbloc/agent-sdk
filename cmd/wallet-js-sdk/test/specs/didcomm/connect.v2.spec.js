@@ -35,6 +35,7 @@ before(async function () {
       keyType: "ecdsap256ieee1363",
       keyAgreementType: "p256kw",
       enableDIDComm: true,
+      contextProviderURL: ["http://localhost:10096/agent-startup-contexts.json"]
     });
     bob = await loadFrameworks({
       name: BOB_LABEL_V2,
@@ -42,6 +43,7 @@ before(async function () {
       keyType: "ecdsap256ieee1363",
       keyAgreementType: "p256kw",
       enableDIDComm: true,
+      contextProviderURL: ["http://localhost:10096/agent-startup-contexts.json"]
     });
 
     aliceDID = await createWalletAndPublicDID(alice, ALICE_LABEL_V2, aliceDID)

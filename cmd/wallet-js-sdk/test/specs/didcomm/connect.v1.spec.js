@@ -25,11 +25,13 @@ before(async function () {
       name: ALICE_LABEL,
       mediaTypeProfiles: ["didcomm/aip2;env=rfc19"],
       enableDIDComm: true,
+      contextProviderURL: ["http://localhost:10096/agent-startup-contexts.json"]
     });
     bob = await loadFrameworks({
       name: BOB_LABEL,
       mediaTypeProfiles: ["didcomm/aip2;env=rfc19"],
       enableDIDComm: true,
+      contextProviderURL: ["http://localhost:10096/agent-startup-contexts.json"]
     });
 });
 

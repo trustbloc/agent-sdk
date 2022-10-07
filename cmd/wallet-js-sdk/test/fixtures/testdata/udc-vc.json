@@ -1,13 +1,15 @@
 {
   "@context": [
     "https://www.w3.org/2018/credentials/v1",
-    "https://www.w3.org/2018/credentials/examples/v1"
+    "https://www.w3.org/2018/credentials/examples/v1",
+    "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld",
+    {"description": "https://schema.org/description"}
   ],
   "credentialSchema": [],
   "credentialSubject": {
     "degree": {
       "type": "BachelorDegree",
-      "university": "MIT"
+      "name": "Bachelor of Science and Arts"
     },
     "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
     "name": "Jayden Doe",
@@ -23,7 +25,7 @@
     "id": "did:example:76e12ec712ebc6f1c221ebfeb1f",
     "name": "Example University"
   },
-  "referenceNumber": 83294847,
+  "referenceId": 83294847,
   "type": [
     "VerifiableCredential",
     "UniversityDegreeCredential"

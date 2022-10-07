@@ -153,6 +153,7 @@ func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
 			EDVBatchEndpointExtensionEnabled: true,
 			WebKMSGNAPSigner:                 headerFunc,
 			EDVGNAPSigner:                    headerFunc,
+			ValidateDataModel:                opts.ValidateDataModel,
 		}))
 	if err != nil {
 		return nil, err

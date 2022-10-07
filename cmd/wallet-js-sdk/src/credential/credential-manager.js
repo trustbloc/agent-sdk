@@ -9,13 +9,13 @@ import jp from "jsonpath";
 
 const JSONLD_CTX_BLINDED_ROUTING_MANIFEST_MAPPING = [
   "https://w3id.org/wallet/v1",
-  "https://trustbloc.github.io/context/wallet/manifest-mapping-v1.jsonld",
+  "https://trustbloc.github.io/context/wallet/manifest-mapping-v1.jsonld"
 ];
 
 const JSONLD_CREDENTIAL_METADATA_MODEL = [
   "https://w3id.org/wallet/v1",
   "https://www.w3.org/2018/credentials/v1",
-  "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld",
+  "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld"
 ];
 
 const MANIFEST_MAPPING_METADATA_TYPE = "ManifestMapping";

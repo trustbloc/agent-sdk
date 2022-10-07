@@ -8,6 +8,9 @@ Wallet JavaScript SDK for user agent wallet operations.
 
 Refer this [documentation](docs/wallet_sdk.md) to learn more about wallet SDK.
 
+# Pre requisite
+
+In order to successfully run tests in this wallet package, you must first build and install [agent-js-workder](../agent-js-worker/README.md).
 
 # Build it
 

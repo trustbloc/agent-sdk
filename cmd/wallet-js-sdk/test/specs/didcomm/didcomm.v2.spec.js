@@ -130,6 +130,7 @@ before(async function () {
     keyType: KEY_TYPE,
     keyAgreementType: KEY_AGREEMENT_TYPE,
     enableDIDComm: true,
+    contextProviderURL: ["http://localhost:10096/agent-startup-contexts.json"]
   });
 
   // issuer agent

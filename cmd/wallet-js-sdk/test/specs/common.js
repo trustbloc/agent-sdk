@@ -53,6 +53,7 @@ export async function loadFrameworks({
   keyType = "ed25519",
   keyAgreementType = "p256kw",
   enableDIDComm = false,
+  contextProviderURL = []
 } = {}) {
   let agentOpts = JSON.parse(JSON.stringify(agentStartupOpts));
   agentOpts["indexed-db-namespace"] = `${name}db`;
@@ -61,6 +62,7 @@ export async function loadFrameworks({
   agentOpts["key-type"] = keyType;
   agentOpts["key-agreement-type"] = keyAgreementType;
   agentOpts["enableDIDComm"] = enableDIDComm;
+  agentOpts["context-provider-url"] = contextProviderURL;
 
   if (logLevel) {
     agentOpts["log-level"] = logLevel;
