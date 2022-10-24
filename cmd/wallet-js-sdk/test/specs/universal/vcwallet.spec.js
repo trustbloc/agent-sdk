@@ -30,7 +30,10 @@ let walletAgent, rp, sampleMetadata;
 
 
 before(async function () {
-  walletAgent = await loadFrameworks({ name: WALLET_USER });
+  walletAgent = await loadFrameworks({
+    name: WALLET_USER,
+    contextProviderURL: ["http://localhost:10096/agent-startup-contexts.json"]
+  });
 
   rp = new VerifierAdapter(RELYING_PARTY);
   await rp.init();

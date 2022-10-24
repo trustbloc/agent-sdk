@@ -14,7 +14,11 @@ const JOHN_USER = "john-agent";
 let john;
 
 before(async function () {
-  john = await loadFrameworks({ name: JOHN_USER, enableDIDComm: true });
+  john = await loadFrameworks({
+    name: JOHN_USER,
+    enableDIDComm: true,
+    contextProviderURL: ["http://localhost:10096/agent-startup-contexts.json"]
+  });
 });
 
 after(function () {

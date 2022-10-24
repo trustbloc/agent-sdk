@@ -15,7 +15,11 @@ const signatureType = 'Ed25519VerificationKey2018'
 let rick
 
 before(async function () {
-    rick = await loadFrameworks({ name: RICK_USER, enableDIDComm: true });
+    rick = await loadFrameworks({
+        name: RICK_USER,
+        enableDIDComm: true,
+        contextProviderURL: ["http://localhost:10096/agent-startup-contexts.json"]
+    });
 });
 
 after(function () {

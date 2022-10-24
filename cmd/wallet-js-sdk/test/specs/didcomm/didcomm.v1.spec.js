@@ -43,6 +43,7 @@ before(async function () {
   walletUserAgent = await loadFrameworks({
     name: WALLET_WACI_USER,
     enableDIDComm: true,
+    contextProviderURL: ["http://localhost:10096/agent-startup-contexts.json"]
   });
 
   // issuer agent

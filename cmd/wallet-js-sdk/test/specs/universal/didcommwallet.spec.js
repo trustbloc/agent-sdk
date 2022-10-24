@@ -31,6 +31,7 @@ before(async function () {
   walletAgent = await loadFrameworks({
     name: WALLET_USER,
     enableDIDComm: true,
+    contextProviderURL: ["http://localhost:10096/agent-startup-contexts.json"]
   });
   await connectToMediator(walletAgent, testConfig.mediatorEndPoint);
   let conns = await getMediatorConnections(walletAgent);

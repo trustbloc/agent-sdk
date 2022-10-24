@@ -120,6 +120,7 @@ type AgentStartOpts struct {
 	GNAPSigningJWK           string      `json:"gnap-signing-jwk"`
 	GNAPAccessToken          string      `json:"gnap-access-token"`
 	GNAPUserSubject          string      `json:"gnap-user-subject"`
+	ValidateDataModel        bool        `json:"validate-data-model"`
 }
 
 type UserConfig struct {

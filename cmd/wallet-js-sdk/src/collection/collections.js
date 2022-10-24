@@ -14,7 +14,7 @@ import {
 
 const JSONLD_CTX_COLLECTION = [
   "https://w3id.org/wallet/v1",
-  "https://trustbloc.github.io/context/wallet/collections-v1.jsonld",
+  "https://trustbloc.github.io/context/wallet/manifest-mapping-v1.jsonld"
 ];
 const DEF_COLLECTION_TYPE = "Vault";
 

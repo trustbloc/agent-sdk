@@ -310,6 +310,106 @@
 
         }
       }
+    },
+    {
+      "url": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld",
+      "documentURL": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld",
+      "content": {
+        "@context": {
+          "@version": 1.1,
+
+          "context": {
+            "@id": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld#context",
+            "@context": {
+              "@version": 1.1
+            }
+          },
+          "collection": "https://schema.org/collection",
+          "credentialType": "https://schema.org/credentialType",
+          "issuer": {
+            "@id": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld#issuer",
+            "@context": {
+              "@version": 1.1
+            }
+          },
+          "issuerStyle": {
+            "@id": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld#issuerStyle",
+            "@context": {
+              "@version": 1.1,
+              "styles": "https://schema.org/styles"
+            }
+          },
+          "resolved": {
+            "@id": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld#resolved",
+            "@container": "@set",
+            "@context": {
+              "@version": 1.1,
+              "descriptor_id": "https://schema.org/descriptor_id",
+              "properties": {
+                "@id": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld#properties",
+                "@container": "@set",
+                "@context": {
+                    "@version": 1.1,
+                    "label": "https://schema.org/label",
+                    "schema": "https://schema.org/schema"
+                  }
+                },
+              "customStyle": {
+                "@id": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld#customStyle",
+                "@context": {
+                  "@version": 1.1,
+                  "color": "https://schema.org/color",
+                  "alt": "https://schema.org/alt",
+                  "uri": "https://schema.org/uri"
+                }
+              },
+              "styles": {
+                "@id": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld#styles",
+                "@context": {
+                  "@version": 1.1,
+                  "background": {
+                    "@id": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld#background",
+                    "@type": "customStyle"
+                  },
+                  "hero": {
+                    "@id": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld#hero",
+                    "@type": "customStyle"
+                  },
+                  "text": {
+                    "@id": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld#text",
+                    "@type": "customStyle"
+                  },
+                  "thumbnail": {
+                    "@id": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld#thumbnail",
+                    "@type": "customStyle"
+                  }
+                }
+              }
+            }
+          },
+          "xsd": "http://www.w3.org/2001/XMLSchema#",
+
+          "expirationDate": {
+            "@id": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld#expirationDate",
+            "@type": "xsd:date"
+          },
+          "issuanceDate": {
+            "@id": "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld#issuanceDate",
+            "@type": "xsd:date"
+          },
+          "title": "https://schema.org/title",
+          "subtitle": "https://schema.org/subtitle"
+        }
+      }
+    },
+    {
+      "url": "https://trustbloc.github.io/context/wallet/manifest-mapping-v1.jsonld",
+      "documentURL": "https://trustbloc.github.io/context/wallet/manifest-mapping-v1.jsonld",
+      "content": {
+        "@context": {
+          "@version": 1.1
+        }
+      }
     }
   ]
 }
