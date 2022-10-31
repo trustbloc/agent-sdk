@@ -11,27 +11,27 @@ import { CredentialManager, DIDManager } from "@";
 import * as jose from "jose";
 
 /**
- *  oidc module is the oidc client that provides APIs for OIDC4VC flows.
+ *  OpenID4VP module is the oidc client that provides APIs for OIDC4VP flows.
  *
- *  @module oidc
+ *  @module OpenID4VP
  *
  */
 
 /**
- * Client providing support for OIDC4VC methods.
+ * Client providing support for OIDC4VP methods.
  *
- * @alias module:oidc
+ * @alias module:OpenID4VP
  */
 export class OpenID4VP {
   // Creates a new OpenID4VP client
   constructor({ agent, user }) {
     if (!agent) {
       throw new TypeError(
-        "Error initializing OIDC client: agent cannot be empty"
+        "Error initializing OpenID4VP client: agent cannot be empty"
       );
     } else if (!user) {
       throw new TypeError(
-        "Error initializing OIDC client: user cannot be empty"
+        "Error initializing OpenID4VP client: user cannot be empty"
       );
     }
     this.user = user;
@@ -39,14 +39,26 @@ export class OpenID4VP {
     this.didManager = new DIDManager({ agent, user });
   }
 
-  async initiateOIDCPresentation(url, authToken) {
-    if (!url) {
+  /**
+   *  Fetches OpenID4VP request object and retrieves presentation query for it.
+   *
+   *  @param {string} authToken - authorization token for wallet operations.
+   *  @param {string} url - OpenID4VP presentation request url containing reference to the request object.
+   *
+   *  @returns {Promise<Array>} - presentation query or error if operation fails.
+   */
+  async initiateOIDCPresentation({ authToken, url }) {
+    if (!authToken) {
+      throw new TypeError(
+        "Error initiating OIDC presentation: authToken is missing"
+      );
+    } else if (!url) {
       throw new TypeError("Error initiating OIDC presentation: url is missing");
     }
     const requestURI = new URLSearchParams(url).get("openid-vc://?request_uri");
     if (!requestURI) {
       throw new TypeError(
-        "Error initiating OIDC presentation: request_uri is missing"
+        "Error initiating OIDC presentation: invalid request url: request_uri is missing"
       );
     }
 
@@ -91,7 +103,7 @@ export class OpenID4VP {
     const claims = payload.claims;
 
     // Get Presentation Query
-    const { results } = await this.credentialManager
+    const response = await this.credentialManager
       .query(authToken, [
         {
           type: "PresentationExchange",
@@ -101,13 +113,13 @@ export class OpenID4VP {
       .catch((e) => {
         console.error(e);
         // Error code 12009 is for no result found message
-        if (!e.message.includes("12009")) {
-          return new Error(
+        if (e.message.includes("code: 12009, message: no result found")) {
+          throw new Error(
             "Error initiating credential share: requested credentials were not found"
           );
         }
       });
 
-    return results;
+    return response.results;
   }
 }
