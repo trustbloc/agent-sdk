@@ -28,4 +28,5 @@ export { DeviceLogin } from "./device/login";
 export { DeviceRegister } from "./device/register";
 export { Client as GNAPClient } from "./gnap/client";
 export { HTTPSigner } from "./httpsig/signer";
+export { OpenID4CI } from "./oidc/issuance/openid4ci";
 export { OpenID4VP } from "./oidc/presentation/openid4vp";
