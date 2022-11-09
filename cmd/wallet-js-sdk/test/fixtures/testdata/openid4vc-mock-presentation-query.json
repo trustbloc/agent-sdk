@@ -1,0 +1,58 @@
+[
+  {
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1",
+      "https://identity.foundation/presentation-exchange/submission/v1"
+    ],
+    "presentation_submission": {
+      "definition_id": "22c77155-edf2-4ec5-8d44-b393b4e4fa38",
+      "descriptor_map": [
+        {
+          "format": "ldp_vp",
+          "id": "20b073bb-cede-4912-9e9d-334e5702077b",
+          "path": "$.verifiableCredential[0]"
+        }
+      ],
+      "id": "cc0d1c24-3149-4a52-bc20-ec2e36b5d746"
+    },
+    "type": ["VerifiablePresentation", "PresentationSubmission"],
+    "verifiableCredential": [
+      {
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://w3id.org/citizenship/v1",
+          "https://trustbloc.github.io/context/wallet/credential-metadata-v1.jsonld"
+        ],
+        "credentialSubject": {
+          "birthCountry": "Bahamas",
+          "birthDate": "1958-07-17",
+          "commuterClassification": "C1",
+          "familyName": "SMITH",
+          "gender": "Male",
+          "givenName": "JOHN",
+          "id": "did:example:b34ca6cd37bbf23",
+          "image": "data:image/png;base64,iVBORw0KGgokJggg==",
+          "lprCategory": "C09",
+          "lprNumber": "999-999-999",
+          "residentSince": "2015-01-01",
+          "type": ["PermanentResident", "Person"]
+        },
+        "description": "Government of Example Permanent Resident Card.",
+        "expirationDate": "2029-12-03T12:19:52Z",
+        "id": "https://issuer.oidp.uscis.gov/credentials/83627465",
+        "identifier": "83627465",
+        "issuanceDate": "2019-12-03T12:19:52Z",
+        "issuer": "did:example:b34ca6cd37bbf23",
+        "name": "Permanent Resident Card",
+        "proof": {
+          "created": "2022-11-08T20:48:05.875+01:00",
+          "jws": "eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..CdKYg7ZC4vXNhwzI2CQbxR84RoqB7P8QLuRoKYyNUzqzNtz_o5Jp7v-re314Hkj5LrHHwUb2TEHPpxGy42PkBA",
+          "proofPurpose": "assertionMethod",
+          "type": "Ed25519Signature2018",
+          "verificationMethod": "did:orb:uAAA:EiAdsfTCvRXe596CJub-W_GHknAknyhVKBAyxfXHmNMpTQ#nvWqPiaDxqwR6_vxS8LtQNg-LTzBE_FbQlietWh02TE"
+        },
+        "type": ["VerifiableCredential", "PermanentResidentCard"]
+      }
+    ]
+  }
+]
