@@ -12,11 +12,7 @@ import * as jose from "jose";
 
 // TODO: replace mock function with an actual JWT signer once implemented
 async function signJWT({ header, payload }) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve("mock.signed.jwt");
-    }, 300);
-  });
+  return "mock.signed.jwt";
 }
 
 /**
@@ -111,7 +107,7 @@ export class OpenID4VP {
 
     const claims = payload.claims;
 
-    // Get Presentation Query
+    // Get Presentation Submission
     const response = await this.credentialManager
       .query(authToken, [
         {
@@ -129,9 +125,9 @@ export class OpenID4VP {
         }
       });
 
-    this.client_id = payload.client_id;
+    this.clientId = payload.client_id;
     this.nonce = payload.nonce;
-    this.redirect_uri = payload.redirect_uri;
+    this.redirectUri = payload.redirect_uri;
 
     return response.results;
   }
@@ -139,37 +135,38 @@ export class OpenID4VP {
   /**
    * submitOIDCPresentation performs an OIDC presentation submission
    * @param {string} kid - consumer's verification method's kid.
-   * @param {Object} presentationQuery - presentation query object retrieved from user's wallet.
+   * @param {Object} presentationSubmission - presentation submission object retrieved from user's wallet.
    * @param {string} issuer - the issuer's key id.
    * @param {number} expiry - time in seconds representing the expiry of the presentation.
    *
    *
    * @returns {Promise<Object>} - empty promise or error if operation fails.
    */
-  async submitOIDCPresentation(kid, presentationQuery, issuer, expiry) {
+  async submitOIDCPresentation({
+    kid,
+    presentationSubmission,
+    expiry,
+    alg = "ES256",
+  }) {
     if (!kid) {
       throw new TypeError(
         "Error submitting OpenID4VP presentation: kid cannot be empty"
       );
-    } else if (!presentationQuery) {
+    } else if (!presentationSubmission) {
       throw new TypeError(
-        "Error submitting OpenID4VP presentation: presentationQuery cannot be empty"
+        "Error submitting OpenID4VP presentation: presentationSubmission cannot be empty"
       );
-    } else if (!presentationQuery.presentation_submission) {
+    } else if (!presentationSubmission[0].presentation_submission) {
       throw new TypeError(
         "Error submitting OpenID4VP presentation: presentation_submission is missing"
       );
-    } else if (!presentationQuery.type) {
+    } else if (!presentationSubmission[0].type) {
       throw new TypeError(
         "Error submitting OpenID4VP presentation: type is missing"
       );
-    } else if (!presentationQuery.verifiableCredential) {
+    } else if (!presentationSubmission[0].verifiableCredential) {
       throw new TypeError(
         "Error submitting OpenID4VP presentation: verifiableCredential is missing"
-      );
-    } else if (!issuer) {
-      throw new TypeError(
-        "Error submitting OpenID4VP presentation: issuer is missing"
       );
     } else if (!expiry) {
       throw new TypeError(
@@ -188,32 +185,41 @@ export class OpenID4VP {
       value: "JWT",
     });
 
-    const idToken = await generateIdToken(
+    const idToken = await generateIdToken({
       kid,
-      presentationQuery.presentation_submission,
+      presentationSubmission: presentationSubmission[0].presentation_submission,
       header,
-      expiry
-    );
+      expiry,
+      nonce: this.nonce,
+      clientId: this.clientId,
+    });
 
     const vp = new Object();
     Object.defineProperty(vp, "@context", {
-      value: presentationQuery["@context"],
+      value: presentationSubmission["@context"],
     });
     Object.defineProperty(vp, "type", {
-      value: presentationQuery.type,
+      value: presentationSubmission.type,
     });
     Object.defineProperty(vp, "verifiableCredential", {
       // TODO: encode and sign with JWT
-      value: presentationQuery.verifiableCredential,
+      value: presentationSubmission.verifiableCredential,
     });
 
-    const vpToken = await generateVpToken(kid, header, vp, expiry);
+    const vpToken = await generateVpToken({
+      kid,
+      header,
+      vp,
+      expiry,
+      nonce: this.nonce,
+      clientId: this.clientId,
+    });
 
     const authRequest = new URLSearchParams();
     authRequest.append("id_token", idToken);
     authRequest.append("vp_token", vpToken);
 
-    return await axios.post(this.redirect_uri, authRequest).catch((e) => {
+    return await axios.post(this.redirectUri, authRequest).catch((e) => {
       throw new Error("Error submitting OIDC presentation:", e);
     });
   }
@@ -229,7 +235,14 @@ export class OpenID4VP {
  *
  * @returns {Promise<string>} - a promise resolving with a string containing ID Token or an error.
  */
-async function generateIdToken(kid, presentationSubmission, header, expiry) {
+async function generateIdToken({
+  kid,
+  presentationSubmission,
+  header,
+  expiry,
+  nonce,
+  clientId,
+}) {
   if (!kid) {
     throw new TypeError("Error generating ID Token: kid cannot be empty");
   } else if (!presentationSubmission) {
@@ -240,6 +253,10 @@ async function generateIdToken(kid, presentationSubmission, header, expiry) {
     throw new TypeError("Error generating ID Token: header cannot be empty");
   } else if (!expiry) {
     throw new TypeError("Error generating ID Token: expiry cannot be empty");
+  } else if (!nonce) {
+    throw new TypeError("Error generating ID Token: nonce cannot be empty");
+  } else if (!clientId) {
+    throw new TypeError("Error generating ID Token: clientId cannot be empty");
   }
 
   const vpToken = new Object();
@@ -252,13 +269,13 @@ async function generateIdToken(kid, presentationSubmission, header, expiry) {
     value: kid.split("#")[0],
   });
   Object.defineProperty(payload, "nonce", {
-    value: this.nonce,
+    value: nonce,
   });
   Object.defineProperty(payload, "_vp_token", {
     value: vpToken,
   });
   Object.defineProperty(payload, "aud", {
-    value: this.client_id,
+    value: clientId,
   });
   Object.defineProperty(payload, "iss", {
     value: "https://self-issued.me/v2/openid-vc",
@@ -280,7 +297,7 @@ async function generateIdToken(kid, presentationSubmission, header, expiry) {
  *
  * @returns {Promise<string>} - a promise resolving with a string containing ID Token or an error.
  */
-async function generateVpToken(kid, vp, header, expiry) {
+async function generateVpToken({ kid, vp, header, expiry, nonce, clientId }) {
   if (!kid) {
     throw new TypeError("Error generating VP Token: kid cannot be empty");
   } else if (!vp) {
@@ -289,17 +306,21 @@ async function generateVpToken(kid, vp, header, expiry) {
     throw new TypeError("Error generating VP Token: header cannot be empty");
   } else if (!expiry) {
     throw new TypeError("Error generating VP Token: expiry cannot be empty");
+  } else if (!nonce) {
+    throw new TypeError("Error generating ID Token: nonce cannot be empty");
+  } else if (!clientId) {
+    throw new TypeError("Error generating ID Token: clientId cannot be empty");
   }
 
   const payload = new Object();
   Object.defineProperty(payload, "nonce", {
-    value: this.nonce,
+    value: nonce,
   });
   Object.defineProperty(payload, "vp", {
     value: vp,
   });
   Object.defineProperty(payload, "aud", {
-    value: this.client_id,
+    value: clientId,
   });
   Object.defineProperty(payload, "iss", {
     value: kid.split("#")[0],
