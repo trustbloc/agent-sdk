@@ -50,7 +50,7 @@ export class OpenID4VP {
    *  @param {string} authToken - authorization token for wallet operations.
    *  @param {string} url - OpenID4VP presentation request url containing reference to the request object.
    *
-   *  @returns {Promise<Array>} - presentation query or error if operation fails.
+   *  @returns {Promise<Array>} - presentation or error if operation fails.
    */
   async initiateOIDCPresentation({ authToken, url }) {
     if (!authToken) {
@@ -82,17 +82,17 @@ export class OpenID4VP {
     const header = JSON.parse(decode(encodedRequestTokenArray[0]));
     const payload = JSON.parse(decode(encodedRequestTokenArray[1]));
 
-    const didDoc = await this.didManager.resolveWebDIDFromOrbDID(
+    const { didDocument } = await this.didManager.resolveWebDIDFromOrbDID(
       "",
       header.kid
     );
 
-    const { publicKeyJwk } = didDoc.verificationMethod.find(
+    const { publicKeyJwk } = didDocument.verificationMethod.find(
       (keyPair) => keyPair.id.split("#")[0] === header.kid
     );
     const publicKey = await jose.importJWK(publicKeyJwk, header.alg);
 
-    this.verificationMethodId = didDoc.verificationMethod.id;
+    this.verificationMethodId = didDocument.verificationMethod.id;
 
     try {
       // TODO: https://github.com/trustbloc/agent-sdk/issues/449
@@ -107,7 +107,7 @@ export class OpenID4VP {
 
     const claims = payload.claims;
 
-    // Get Presentation Submission
+    // Get Presentation
     const response = await this.credentialManager
       .query(authToken, [
         {
@@ -136,8 +136,8 @@ export class OpenID4VP {
    * submitOIDCPresentation performs an OIDC presentation submission
    * @param {string} kid - consumer's verification method's kid.
    * @param {Object} presentationSubmission - presentation submission object retrieved from user's wallet.
-   * @param {string} issuer - the issuer's key id.
    * @param {number} expiry - time in seconds representing the expiry of the presentation.
+   * @param {string} alg - encryption algorithm to be used for signing
    *
    *
    * @returns {Promise<Object>} - empty promise or error if operation fails.
