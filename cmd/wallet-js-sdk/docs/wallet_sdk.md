@@ -405,6 +405,7 @@ Issues credential from wallet
 | proofOptions.domain | <code>string</code> | (optional) operational domain of a digital proof.  By default, domain will not be part of proof. |
 | proofOptions.challenge | <code>string</code> | (optional) random or pseudo-random value option authentication.  By default, challenge will not be part of proof. |
 | proofOptions.proofType | <code>string</code> | (optional) signature type used for signing.  By default, proof will be generated in Ed25519Signature2018 format. |
+| proofOptions.proofFormat | <code>String</code> | (optional) representational format for the credential.  Valid values are "ExternalJWTProofFormat" and "EmbeddedLDProofFormat".  By default, credential will be JSON-LD with embedded proof. |
 | proofOptions.proofRepresentation | <code>string</code> | (optional) type of proof data expected ( "proofValue" or "jws").  By default, 'proofValue' will be used. |
 
 <a name="module_credential--exports.CredentialManager.CredentialManager+present"></a>
@@ -429,6 +430,7 @@ Prepares verifiable presentation of given credential(s).
 | proofOptions.domain | <code>String</code> | (optional) operational domain of a digital proof.  By default, domain will not be part of proof. |
 | proofOptions.challenge | <code>String</code> | (optional) random or pseudo-random value option authentication.  By default, challenge will not be part of proof. |
 | proofOptions.proofType | <code>String</code> | (optional) signature type used for signing.  By default, proof will be generated in Ed25519Signature2018 format. |
+| proofOptions.proofFormat | <code>String</code> | (optional) representational format for the presentation.  Valid values are "ExternalJWTProofFormat" and "EmbeddedLDProofFormat".  By default, presentation will be JSON-LD with embedded proof. |
 | proofOptions.proofRepresentation | <code>String</code> | (optional) type of proof data expected ( "proofValue" or "jws").  By default, 'proofValue' will be used. |
 
 <a name="module_credential--exports.CredentialManager.CredentialManager+verify"></a>
@@ -596,7 +598,9 @@ did-manager module provides DID related features for wallet like creating, impor
         * [.getAllDIDs(options)](#module_did-manager--exports.DIDManager.DIDManager+getAllDIDs) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.getDID(options)](#module_did-manager--exports.DIDManager.DIDManager+getDID) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.resolveOrbDID(options)](#module_did-manager--exports.DIDManager.DIDManager+resolveOrbDID) ⇒ <code>Promise.&lt;Object&gt;</code>
-        * [.refreshOrbDID(options)](#module_did-manager--exports.DIDManager.DIDManager+refreshOrbDID) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.resolveWebDIDFromOrbDID(options)](#module_did-manager--exports.DIDManager.DIDManager+resolveWebDIDFromOrbDID) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.verifyWebDIDFromOrbDID(options)](#module_did-manager--exports.DIDManager.DIDManager+verifyWebDIDFromOrbDID) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.checkControllerIsPublished(options)](#module_did-manager--exports.DIDManager.DIDManager+checkControllerIsPublished) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.removeDID(options)](#module_did-manager--exports.DIDManager.DIDManager+removeDID) ⇒ <code>Promise.&lt;Object&gt;</code>
 
 <a name="exp_module_did-manager--exports.DIDManager"></a>
@@ -733,13 +737,41 @@ resolve orb DID.
 | options.auth | <code>string</code> | authorization token for wallet operations. |
 | options.contentID | <code>string</code> | DID ID. |
 
-<a name="module_did-manager--exports.DIDManager.DIDManager+refreshOrbDID"></a>
+<a name="module_did-manager--exports.DIDManager.DIDManager+resolveWebDIDFromOrbDID"></a>
 
-#### exports.DIDManager.refreshOrbDID(options) ⇒ <code>Promise.&lt;Object&gt;</code>
-refreshes saved orb DID in wallet content store if it is published.
+#### exports.DIDManager.resolveWebDIDFromOrbDID(options) ⇒ <code>Promise.&lt;Object&gt;</code>
+resolve web DID from orb DID.
 
 **Kind**: instance method of [<code>exports.DIDManager</code>](#exp_module_did-manager--exports.DIDManager)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - - resolved DID ID - Canonical ID of the new published DID or null if not published.  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - result.content - DID document resolution from did resolver.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| options | <code>Object</code> |  |
+| options.auth | <code>string</code> | authorization token for wallet operations. |
+| options.contentID | <code>string</code> | DID ID. |
+
+<a name="module_did-manager--exports.DIDManager.DIDManager+verifyWebDIDFromOrbDID"></a>
+
+#### exports.DIDManager.verifyWebDIDFromOrbDID(options) ⇒ <code>Promise.&lt;Object&gt;</code>
+verify web DID from orb DID.
+
+**Kind**: instance method of [<code>exports.DIDManager</code>](#exp_module_did-manager--exports.DIDManager)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - result.content - DID document resolution from did resolver.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| options | <code>Object</code> |  |
+| options.auth | <code>string</code> | authorization token for wallet operations. |
+| options.contentID | <code>string</code> | DID ID. |
+
+<a name="module_did-manager--exports.DIDManager.DIDManager+checkControllerIsPublished"></a>
+
+#### exports.DIDManager.checkControllerIsPublished(options) ⇒ <code>Promise.&lt;Object&gt;</code>
+check controller if it is published.
+
+**Kind**: instance method of [<code>exports.DIDManager</code>](#exp_module_did-manager--exports.DIDManager)  
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - true if controller is published.  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1672,8 +1704,10 @@ Saves TrustBloc wallet user preferences.
 | preferences.description | <code>Object</code> | (optional) wallet user display description. |
 | preferences.image | <code>String</code> | (optional)  wallet user display image in URL format. |
 | preferences.controller | <code>String</code> | (optional) default controller to be used for digital proof for this wallet user. |
+| preferences.controllerPublished | <code>Boolean</code> | (optional) represents whether controller is published or not. |
 | preferences.verificationMethod | <code>Object</code> | (optional) default verificationMethod to be used for digital proof for this wallet user. |
 | preferences.proofType | <code>String</code> | (optional) default proofType to be used for digital proof for this wallet user. |
+| preferences.proofFormat | <code>String</code> | (optional) default format (ldp, jwt) to be used for digital proof for this wallet user. |
 | preferences.skipWelcomeMsg | <code>Boolean</code> | (optional) represents whether this wallet user has dismissed a welcome message in the UI. |
 
 <a name="module_wallet-user--exports.WalletUser.WalletUser+updatePreferences"></a>
@@ -1692,8 +1726,10 @@ Updates TrustBloc wallet user preferences.
 | preferences.description | <code>Object</code> | (optional) wallet user display description. |
 | preferences.image | <code>String</code> | (optional)  wallet user display image in URL format. |
 | preferences.controller | <code>String</code> | (optional) default controller to be used for digital proof for this wallet user. |
+| preferences.controllerPublished | <code>Boolean</code> | (optional) represents whether controller is published or not. |
 | preferences.verificationMethod | <code>Object</code> | (optional) default verificationMethod to be used for digital proof for this wallet user. |
 | preferences.proofType | <code>String</code> | (optional) default proofType to be used for digital proof for this wallet user. |
+| preferences.proofFormat | <code>String</code> | (optional) default format (ldp, jwt) to be used for digital proof for this wallet user. |
 | preferences.skipWelcomeMsg | <code>Boolean</code> | (optional) represents whether this wallet user has dismissed a welcome message in the UI. |
 
 <a name="module_wallet-user--exports.WalletUser.WalletUser+getPreferences"></a>
@@ -1701,8 +1737,8 @@ Updates TrustBloc wallet user preferences.
 #### exports.WalletUser.getPreferences(auth) ⇒ <code>Promise.&lt;Object&gt;</code>
 Gets TrustBloc wallet user preference.
 
-If controller DID is from orb https domain, then this function checks if that DID is published.
-If published then it refreshes DID in underlying wallet content store and updates user preference.
+If controller not published, then this function checks if that controller is published.
+If published then it change published to true in underlying wallet content store and updates user preference.
 
 **Kind**: instance method of [<code>exports.WalletUser</code>](#exp_module_wallet-user--exports.WalletUser)  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - - promise containing preference metadata or error if operation fails.  
