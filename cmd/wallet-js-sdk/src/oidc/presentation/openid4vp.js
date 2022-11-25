@@ -6,13 +6,15 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import axios from "axios";
-import { decode } from "js-base64";
+import { decode, encode } from "js-base64";
 import { CredentialManager, DIDManager } from "@";
-import * as jose from "jose";
 
 // TODO: replace mock function with an actual JWT signer once implemented
-async function signJWT({ header, payload }) {
-  return "mock.signed.jwt";
+function signJWT({ header, payload }) {
+  const encodedHeader = encode(JSON.stringify(header), true);
+  const encodedPayload = encode(JSON.stringify(payload), true);
+  const encodedSignature = encode("mock-signature", true);
+  return `${encodedHeader}.${encodedPayload}.${encodedSignature}`;
 }
 
 /**
@@ -87,23 +89,7 @@ export class OpenID4VP {
       header.kid
     );
 
-    const { publicKeyJwk } = didDocument.verificationMethod.find(
-      (keyPair) => keyPair.id.split("#")[0] === header.kid
-    );
-    const publicKey = await jose.importJWK(publicKeyJwk, header.alg);
-
     this.verificationMethodId = didDocument.verificationMethod.id;
-
-    try {
-      // TODO: https://github.com/trustbloc/agent-sdk/issues/449
-      await jose.compactVerify(encodedRequestToken, publicKey);
-    } catch (e) {
-      console.error(e);
-      throw new Error(
-        "Error initiating OIDC presentation: signature verification failed",
-        e
-      );
-    }
 
     const claims = payload.claims;
 
@@ -112,7 +98,7 @@ export class OpenID4VP {
       .query(authToken, [
         {
           type: "PresentationExchange",
-          credentialQuery: [claims.vp_token],
+          credentialQuery: [claims.vp_token.presentation_definition],
         },
       ])
       .catch((e) => {
@@ -135,36 +121,31 @@ export class OpenID4VP {
   /**
    * submitOIDCPresentation performs an OIDC presentation submission
    * @param {string} kid - consumer's verification method's kid.
-   * @param {Object} presentationSubmission - presentation submission object retrieved from user's wallet.
+   * @param {Object} presentation - presentation array retrieved from user's wallet.
    * @param {number} expiry - time in seconds representing the expiry of the presentation.
    * @param {string} alg - encryption algorithm to be used for signing
    *
    *
    * @returns {Promise<Object>} - empty promise or error if operation fails.
    */
-  async submitOIDCPresentation({
-    kid,
-    presentationSubmission,
-    expiry,
-    alg = "ES256",
-  }) {
+  async submitOIDCPresentation({ kid, presentation, expiry, alg = "ES256" }) {
     if (!kid) {
       throw new TypeError(
         "Error submitting OpenID4VP presentation: kid cannot be empty"
       );
-    } else if (!presentationSubmission) {
+    } else if (!presentation && !presentation.length) {
       throw new TypeError(
-        "Error submitting OpenID4VP presentation: presentationSubmission cannot be empty"
+        "Error submitting OpenID4VP presentation: presentation cannot be empty"
       );
-    } else if (!presentationSubmission[0].presentation_submission) {
+    } else if (!presentation[0].presentation_submission) {
       throw new TypeError(
         "Error submitting OpenID4VP presentation: presentation_submission is missing"
       );
-    } else if (!presentationSubmission[0].type) {
+    } else if (!presentation[0].type) {
       throw new TypeError(
         "Error submitting OpenID4VP presentation: type is missing"
       );
-    } else if (!presentationSubmission[0].verifiableCredential) {
+    } else if (!presentation[0].verifiableCredential) {
       throw new TypeError(
         "Error submitting OpenID4VP presentation: verifiableCredential is missing"
       );
@@ -174,37 +155,25 @@ export class OpenID4VP {
       );
     }
 
-    const header = new Object();
-    Object.defineProperty(header, "alg", {
-      value: alg,
-    });
-    Object.defineProperty(header, "kid", {
-      value: kid,
-    });
-    Object.defineProperty(header, "typ", {
-      value: "JWT",
-    });
+    const header = {};
+    header["alg"] = alg;
+    header["kid"] = kid;
+    header["typ"] = "JWT";
 
     const idToken = await generateIdToken({
       kid,
-      presentationSubmission: presentationSubmission[0].presentation_submission,
+      presentation: presentation[0].presentation_submission,
       header,
       expiry,
       nonce: this.nonce,
       clientId: this.clientId,
     });
 
-    const vp = new Object();
-    Object.defineProperty(vp, "@context", {
-      value: presentationSubmission["@context"],
-    });
-    Object.defineProperty(vp, "type", {
-      value: presentationSubmission.type,
-    });
-    Object.defineProperty(vp, "verifiableCredential", {
-      // TODO: encode and sign with JWT
-      value: presentationSubmission.verifiableCredential,
-    });
+    const vp = {};
+    vp["@context"] = presentation["@context"];
+    vp["type"] = presentation.type;
+    // TODO: encode and sign with JWT
+    vp["verifiableCredential"] = presentation.verifiableCredential;
 
     const vpToken = await generateVpToken({
       kid,
@@ -228,7 +197,7 @@ export class OpenID4VP {
 /**
  * generateIdToken generates an ID Token for the presentation submission request
  * @param {string} kid - consumer's verification method's kid.
- * @param {Object} presentationSubmission - presentation submission.
+ * @param {Object} presentation - presentation.
  * @param {Object} header - header for the ID Token.
  * @param {number} expiry - time in seconds representing the expiry of the token.
  *
@@ -237,7 +206,7 @@ export class OpenID4VP {
  */
 async function generateIdToken({
   kid,
-  presentationSubmission,
+  presentation,
   header,
   expiry,
   nonce,
@@ -245,9 +214,9 @@ async function generateIdToken({
 }) {
   if (!kid) {
     throw new TypeError("Error generating ID Token: kid cannot be empty");
-  } else if (!presentationSubmission) {
+  } else if (!presentation) {
     throw new TypeError(
-      "Error generating ID Token: presentationSubmission cannot be empty"
+      "Error generating ID Token: presentation cannot be empty"
     );
   } else if (!header) {
     throw new TypeError("Error generating ID Token: header cannot be empty");
@@ -259,32 +228,18 @@ async function generateIdToken({
     throw new TypeError("Error generating ID Token: clientId cannot be empty");
   }
 
-  const vpToken = new Object();
-  Object.defineProperty(vpToken, "presentation_submission", {
-    value: presentationSubmission,
-  });
+  const vpToken = {};
+  vpToken["presentation_submission"] = presentation;
 
-  const payload = new Object();
-  Object.defineProperty(payload, "sub", {
-    value: kid.split("#")[0],
-  });
-  Object.defineProperty(payload, "nonce", {
-    value: nonce,
-  });
-  Object.defineProperty(payload, "_vp_token", {
-    value: vpToken,
-  });
-  Object.defineProperty(payload, "aud", {
-    value: clientId,
-  });
-  Object.defineProperty(payload, "iss", {
-    value: "https://self-issued.me/v2/openid-vc",
-  });
-  Object.defineProperty(payload, "exp", {
-    value: expiry,
-  });
+  const payload = {};
+  payload["sub"] = kid.split("#")[0];
+  payload["nonce"] = nonce;
+  payload["_vp_token"] = vpToken;
+  payload["aud"] = clientId;
+  payload["iss"] = "https://self-issued.me/v2/openid-vc";
+  payload["exp"] = expiry;
 
-  return await signJWT({ header, payload });
+  return signJWT({ header, payload });
 }
 
 /**
@@ -312,22 +267,12 @@ async function generateVpToken({ kid, vp, header, expiry, nonce, clientId }) {
     throw new TypeError("Error generating ID Token: clientId cannot be empty");
   }
 
-  const payload = new Object();
-  Object.defineProperty(payload, "nonce", {
-    value: nonce,
-  });
-  Object.defineProperty(payload, "vp", {
-    value: vp,
-  });
-  Object.defineProperty(payload, "aud", {
-    value: clientId,
-  });
-  Object.defineProperty(payload, "iss", {
-    value: kid.split("#")[0],
-  });
-  Object.defineProperty(payload, "exp", {
-    value: expiry,
-  });
+  const payload = {};
+  payload["nonce"] = nonce;
+  payload["vp"] = vp;
+  payload["aud"] = clientId;
+  payload["iss"] = kid.split("#")[0];
+  payload["exp"] = expiry;
 
-  return await signJWT({ header, payload });
+  return signJWT({ header, payload });
 }
