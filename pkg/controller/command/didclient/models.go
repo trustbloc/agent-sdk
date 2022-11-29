@@ -1,5 +1,7 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
+
 SPDX-License-Identifier: Apache-2.0
 */
 
@@ -8,7 +10,6 @@ package didclient
 // CreateOrbDIDRequest model
 //
 // This is used for creating orb DID.
-//
 type CreateOrbDIDRequest struct {
 	ServiceID          string      `json:"serviceID,omitempty"`
 	ServiceEndpoint    string      `json:"serviceEndpoint,omitempty"`
@@ -21,7 +22,6 @@ type CreateOrbDIDRequest struct {
 // ResolveOrbDIDRequest model
 //
 // This is used for resolving orb DID.
-//
 type ResolveOrbDIDRequest struct {
 	DID string `json:"did,omitempty"`
 }
@@ -29,7 +29,6 @@ type ResolveOrbDIDRequest struct {
 // VerifyWebDIDFromOrbDIDRequest model
 //
 // This is used for Verify WebDID From OrbDID.
-//
 type VerifyWebDIDFromOrbDIDRequest struct {
 	DID string `json:"did,omitempty"`
 }
@@ -37,7 +36,6 @@ type VerifyWebDIDFromOrbDIDRequest struct {
 // CreatePeerDIDRequest model
 //
 // This is used for creating peer DID.
-//
 type CreatePeerDIDRequest struct {
 	RouterConnectionID string `json:"routerConnectionID,omitempty"`
 }

@@ -1,5 +1,7 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
+
 SPDX-License-Identifier: Apache-2.0
 */
 
@@ -124,8 +126,9 @@ type mediatorClient interface {
 	GetConfig(connID string) (*mediatorservice.Config, error)
 }
 
-func newCommand(domain, didAnchorOrigin, token string, unanchoredDIDMaxLifeTime int, p Provider,
-	mediatorClient mediatorClient, mediatorSvc mediatorservice.ProtocolService) (*Command, error) {
+func newCommand(domain, didAnchorOrigin, token string, unanchoredDIDMaxLifeTime int,
+	p Provider, mediatorClient mediatorClient, mediatorSvc mediatorservice.ProtocolService,
+) (*Command, error) {
 	orbOpts := make([]orb.Option, 0)
 
 	if unanchoredDIDMaxLifeTime > 0 {
@@ -156,8 +159,9 @@ func New(domain, didAnchorOrigin, token string, unanchoredDIDMaxLifeTime int, p 
 }
 
 // NewWithMediator returns new DID Exchange controller command instance.
-func NewWithMediator(domain, didAnchorOrigin, token string,
-	unanchoredDIDMaxLifeTime int, p ProviderWithMediator) (*Command, error) {
+func NewWithMediator(domain, didAnchorOrigin, token string, unanchoredDIDMaxLifeTime int,
+	p ProviderWithMediator,
+) (*Command, error) {
 	mClient, err := mediator.New(p)
 	if err != nil {
 		return nil, err
@@ -365,7 +369,7 @@ func (c *Command) ResolveOrbDID(rw io.Writer, req io.Reader) command.Error {
 }
 
 // CreateOrbDID creates a new orb DID.
-func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { // nolint: funlen,gocyclo,gocognit
+func (c *Command) CreateOrbDID(rw io.Writer, req io.Reader) command.Error { //nolint: funlen,gocyclo,gocognit,maintidx
 	var request CreateOrbDIDRequest
 
 	err := json.NewDecoder(req).Decode(&request)
@@ -610,7 +614,7 @@ func getKey(keyType string, value []byte) (interface{}, error) {
 }
 
 // CreatePeerDID creates a new peer DID.
-func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { // nolint: funlen,gocyclo
+func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { //nolint: funlen,gocyclo
 	var request CreatePeerDIDRequest
 
 	err := json.NewDecoder(req).Decode(&request)
@@ -645,6 +649,7 @@ func (c *Command) CreatePeerDID(rw io.Writer, req io.Reader) command.Error { // 
 		peer.DIDMethod,
 		&did.Doc{
 			Service: []did.Service{{
+				Type: didCommV2ServiceType,
 				ServiceEndpoint: model.NewDIDCommV2Endpoint(
 					[]model.DIDCommV2Endpoint{{URI: config.Endpoint(), RoutingKeys: config.Keys()}}),
 			}},

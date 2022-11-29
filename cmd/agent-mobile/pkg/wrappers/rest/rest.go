@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -11,7 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -91,17 +92,19 @@ func makeHTTPRequest(httpClient httpClient, method, agentURL, token string, body
 		}
 	}()
 
-	return ioutil.ReadAll(response.Body)
+	return io.ReadAll(response.Body)
 }
 
-func embedParams(reqPath string, body []byte) (newURL string, err error) {
+func embedParams(reqPath string, body []byte) (string, error) {
 	params := []string{"piid", "id", "name"}
-	newURL = reqPath
+	newURL := reqPath
 
 	for _, param := range params {
+		var err error
+
 		newURL, err = embedParam(newURL, param, body)
 		if err != nil {
-			return
+			return "", err
 		}
 	}
 

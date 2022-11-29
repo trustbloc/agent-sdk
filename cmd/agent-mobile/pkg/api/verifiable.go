@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -11,8 +12,7 @@ import (
 )
 
 // VerifiableController defines methods for the verifiable controller.
-type VerifiableController interface {
-
+type VerifiableController interface { //nolint: interfacebloat
 	// ValidateCredential validates the verifiable credential.
 	ValidateCredential(request *models.RequestEnvelope) *models.ResponseEnvelope
 

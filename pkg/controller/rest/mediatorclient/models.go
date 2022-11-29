@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -15,7 +16,7 @@ import (
 // Request for connecting agent to given mediator with invitation provided.
 //
 // swagger:parameters connect
-type connectionRequest struct { // nolint: unused,deadcode
+type connectionRequest struct { //nolint: unused,deadcode
 	// Params for connecting to mediator.
 	//
 	// in: body
@@ -38,7 +39,7 @@ type connectionResponse struct {
 // Request for creating out-of-band invitation through mediator client.
 //
 // swagger:parameters createMediatorInvitation
-type createInvitationRequest struct { // nolint: unused,deadcode
+type createInvitationRequest struct { //nolint: unused,deadcode
 	// Params for creating invitation.
 	//
 	// in: body
@@ -48,10 +49,10 @@ type createInvitationRequest struct { // nolint: unused,deadcode
 
 // createInvitationResponse model
 //
-//  Response of creating out-of-band invitation through mediator client.
+//	Response of creating out-of-band invitation through mediator client.
 //
 // swagger:response createInvitationResponse
-type createInvitationResponse struct { // nolint: unused,deadcode
+type createInvitationResponse struct { //nolint: unused,deadcode
 	// in: body
 	Response mediatorclient.CreateInvitationResponse
 }
@@ -71,10 +72,10 @@ type createConnectionRequest struct {
 
 // createConnectionResponse model
 //
-//  Response of creating out-of-band invitation through mediator client.
+//	Response of creating out-of-band invitation through mediator client.
 //
 // swagger:response createConnectionResponse
-type createConnectionResponse struct { // nolint: unused,deadcode
+type createConnectionResponse struct { //nolint: unused,deadcode
 	// in: body
 	Response mediatorclient.CreateConnectionResponse
 }

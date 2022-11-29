@@ -1,5 +1,6 @@
 #
 # Copyright SecureKey Technologies Inc. All Rights Reserved.
+# Copyright Avast Software. All Rights Reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -10,7 +11,7 @@ run:
   issues-exit-code: 1
   tests: true
   build-tags: [""]
-  skip-dirs:  [""]
+  skip-dirs: [""]
 
 output:
   format: colored-line-number
@@ -78,7 +79,7 @@ linters:
     - goerr113 # not good: https://github.com/Djarvur/go-err113/issues/10
     - paralleltest
     - exhaustivestruct
-#    - tparallel
+    #    - tparallel
     - interfacer # deprecated by the author https://github.com/mvdan/interfacer#interfacer
     - scopelint # deprecated by the author https://github.com/kyoh86/scopelint#obsoleted
     - maligned # deprecated by the author https://github.com/mdempsky/maligned
@@ -87,6 +88,10 @@ linters:
     - wrapcheck # TODO enable
     - forbidigo # TODO enable
     - gci # giving spurious errors for imports of syscall/js
+    - exhaustruct # Results in unneeded struct member declarations
+    - ireturn # Required by aries-framework-go, a library we use
+    - varnamelen # This linter prevents us from using "i" as an index variable or "vc" for a variable name for a Verifiable Credential, both of which are very common in our code
+    - tagliatelle # JSON tags using camel-case required by the specs we implement
 
 issues:
   exclude-use-default: false
@@ -95,9 +100,11 @@ issues:
       linters:
         - dupl
         - funlen
+        - nonamedreturns
+        - maintidx
 
   exclude:
     # Allow package logger variables (for now)
     - \`logger\` is a global variable
     - logger is a global variable
-    -  Line contains TODO/BUG/FIXME
+    - Line contains TODO/BUG/FIXME

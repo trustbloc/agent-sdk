@@ -5,6 +5,7 @@ package agentsetup
 
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -83,7 +84,7 @@ const (
 )
 
 // AgentStartOpts contains opts for starting agent.
-// nolint:lll
+//nolint:lll
 type AgentStartOpts struct {
 	Label                    string      `json:"agent-default-label"`
 	HTTPResolvers            []string    `json:"http-resolver-url"`
@@ -773,7 +774,7 @@ func prepareLocalJWEKey(kmsStorageProvider storage.Provider, kmsImpl kms.KeyMana
 }
 
 func prepareRemoteKeyURL(opts *AgentStartOpts, keyType kms.KeyType) string {
-	switch keyType { // nolint:exhaustive // no need to check for other key types, only HMAC key is a special case.
+	switch keyType { //nolint:exhaustive // no need to check for other key types, only HMAC key is a special case.
 	case kms.HMACSHA256Tag256Type:
 		return opts.EDVHMACKIDURL
 	case kms.NISTP256ECDHKW:

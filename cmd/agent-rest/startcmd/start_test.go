@@ -1,9 +1,11 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
+
 SPDX-License-Identifier: Apache-2.0
 */
 
-package startcmd // nolint: testpackage
+package startcmd //nolint: testpackage
 
 import (
 	"context"
@@ -11,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -37,13 +38,17 @@ func (s *mockServer) ListenAndServe(host string, handler http.Handler, certFile,
 	return nil
 }
 
-func randomURL() string {
-	return fmt.Sprintf("localhost:%d", mustGetRandomPort(3))
+func randomURL(t *testing.T) string {
+	t.Helper()
+
+	return fmt.Sprintf("localhost:%d", mustGetRandomPort(t, 3))
 }
 
-func mustGetRandomPort(n int) int {
+func mustGetRandomPort(t *testing.T, n int) int {
+	t.Helper()
+
 	for ; n > 0; n-- {
-		port, err := getRandomPort()
+		port, err := getRandomPort(t)
 		if err != nil {
 			continue
 		}
@@ -53,7 +58,9 @@ func mustGetRandomPort(n int) int {
 	panic("cannot acquire the random port")
 }
 
-func getRandomPort() (int, error) {
+func getRandomPort(t *testing.T) (int, error) {
+	t.Helper()
+
 	const network = "tcp"
 
 	addr, err := net.ResolveTCPAddr(network, "localhost:0")
@@ -71,7 +78,10 @@ func getRandomPort() (int, error) {
 		return 0, err
 	}
 
-	return listener.Addr().(*net.TCPAddr).Port, nil
+	tcpAddr, ok := listener.Addr().(*net.TCPAddr)
+	require.True(t, ok)
+
+	return tcpAddr.Port, nil
 }
 
 func TestStartCmdContents(t *testing.T) {
@@ -89,7 +99,8 @@ func TestStartCmdContents(t *testing.T) {
 }
 
 func checkFlagPropertiesCorrect(t *testing.T, cmd *cobra.Command, flagName,
-	flagShorthand, flagUsage, expectedVal string) {
+	flagShorthand, flagUsage, expectedVal string,
+) {
 	t.Helper()
 
 	flag := cmd.Flag(flagName)
@@ -105,8 +116,8 @@ func checkFlagPropertiesCorrect(t *testing.T, cmd *cobra.Command, flagName,
 }
 
 func TestStartAriesDRequests(t *testing.T) {
-	testHostURL := randomURL()
-	testInboundHostURL := randomURL()
+	testHostURL := randomURL(t)
+	testInboundHostURL := randomURL(t)
 
 	go func() {
 		parameters := &agentParameters{
@@ -146,7 +157,7 @@ func listenFor(host string) error {
 }
 
 type requestTestParams struct {
-	name               string //nolint:structcheck
+	name               string
 	r                  *http.Request
 	expectedStatus     int
 	expectResponseData bool
@@ -156,31 +167,37 @@ func runRequestTests(t *testing.T, tests []requestTestParams) {
 	t.Helper()
 
 	for _, tt := range tests {
-		resp, err := http.DefaultClient.Do(tt.r)
+		runRequestTest(t, tt)
+	}
+}
+
+func runRequestTest(t *testing.T, tt requestTestParams) {
+	t.Helper()
+
+	resp, err := http.DefaultClient.Do(tt.r)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		e := resp.Body.Close()
+		if e != nil {
+			panic(err)
+		}
+	}()
+
+	require.Equal(t, tt.expectedStatus, resp.StatusCode)
+
+	if tt.expectResponseData {
+		require.NotEmpty(t, resp.Body)
+
+		response, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		defer func() {
-			e := resp.Body.Close()
-			if e != nil {
-				panic(err)
-			}
-		}()
-
-		require.Equal(t, tt.expectedStatus, resp.StatusCode)
-
-		if tt.expectResponseData {
-			require.NotEmpty(t, resp.Body)
-
-			response, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			require.NotEmpty(t, response)
-			require.True(t, isJSON(response))
-		}
+		require.NotEmpty(t, response)
+		require.True(t, isJSON(response))
 	}
 }
 
@@ -279,7 +296,7 @@ func TestStartCmdWithBlankHostArg(t *testing.T) {
 	require.NoError(t, err)
 
 	args := []string{
-		"--" + agentHostFlagName, "", "--" + agentInboundHostFlagName, randomURL(),
+		"--" + agentHostFlagName, "", "--" + agentInboundHostFlagName, randomURL(t),
 		"--" + databaseTypeFlagName, databaseTypeMemOption, "--" + agentWebhookFlagName, "",
 	}
 	startCmd.SetArgs(args)
@@ -294,7 +311,7 @@ func TestStartCmdWithMissingHostArg(t *testing.T) {
 	require.NoError(t, err)
 
 	args := []string{
-		"--" + agentInboundHostFlagName, randomURL(), "--" + databaseTypeFlagName, databaseTypeMemOption,
+		"--" + agentInboundHostFlagName, randomURL(t), "--" + databaseTypeFlagName, databaseTypeMemOption,
 		"--" + agentWebhookFlagName, "",
 	}
 	startCmd.SetArgs(args)
@@ -309,7 +326,7 @@ func TestStartCmdWithMissingHostArg(t *testing.T) {
 func TestStartAgentWithBlankHost(t *testing.T) {
 	parameters := &agentParameters{
 		server:               &mockServer{},
-		inboundHostInternals: []string{randomURL()},
+		inboundHostInternals: []string{randomURL(t)},
 	}
 
 	err := startAgent(parameters)
@@ -322,7 +339,7 @@ func TestStartCmdWithoutInboundHostArg(t *testing.T) {
 	require.NoError(t, err)
 
 	args := []string{
-		"--" + agentHostFlagName, randomURL(), "--" + databaseTypeFlagName, databaseTypeMemOption,
+		"--" + agentHostFlagName, randomURL(t), "--" + databaseTypeFlagName, databaseTypeMemOption,
 		"--" + agentWebhookFlagName, "",
 	}
 
@@ -365,9 +382,9 @@ func TestStartCmdWithoutDBType(t *testing.T) {
 
 	args := []string{
 		"--" + agentHostFlagName,
-		randomURL(),
+		randomURL(t),
 		"--" + agentInboundHostFlagName,
-		randomURL(),
+		randomURL(t),
 		"--" + agentWebhookFlagName,
 		"",
 	}
@@ -385,11 +402,11 @@ func TestStartCmdWithoutWebhookURL(t *testing.T) {
 
 	args := []string{
 		"--" + agentHostFlagName,
-		randomURL(),
+		randomURL(t),
 		"--" + agentInboundHostFlagName,
-		httpProtocol + "@" + randomURL(),
+		httpProtocol + "@" + randomURL(t),
 		"--" + agentInboundHostExternalFlagName,
-		httpProtocol + "@" + randomURL(),
+		httpProtocol + "@" + randomURL(t),
 		"--" + databaseTypeFlagName,
 		databaseTypeMemOption,
 	}
@@ -405,11 +422,11 @@ func TestStartCmdWithLogLevel(t *testing.T) {
 
 		args := []string{
 			"--" + agentHostFlagName,
-			randomURL(),
+			randomURL(t),
 			"--" + agentInboundHostFlagName,
-			httpProtocol + "@" + randomURL(),
+			httpProtocol + "@" + randomURL(t),
 			"--" + agentInboundHostExternalFlagName,
-			httpProtocol + "@" + randomURL(),
+			httpProtocol + "@" + randomURL(t),
 			"--" + databaseTypeFlagName,
 			databaseTypeMemOption,
 			"--" + agentAutoAcceptFlagName,
@@ -475,11 +492,11 @@ func TestStartCmdWithoutWebhookURLAndAutoAccept(t *testing.T) {
 
 	args := []string{
 		"--" + agentHostFlagName,
-		randomURL(),
+		randomURL(t),
 		"--" + agentInboundHostFlagName,
-		httpProtocol + "@" + randomURL(),
+		httpProtocol + "@" + randomURL(t),
 		"--" + agentInboundHostExternalFlagName,
-		httpProtocol + "@" + randomURL(),
+		httpProtocol + "@" + randomURL(t),
 		"--" + databaseTypeFlagName,
 		databaseTypeMemOption,
 		"--" + agentAutoAcceptFlagName,
@@ -497,7 +514,7 @@ func TestStartCmdBadTimeout(t *testing.T) {
 
 	args := []string{
 		"--" + agentHostFlagName,
-		randomURL(),
+		randomURL(t),
 		"--" + databaseTypeFlagName,
 		databaseTypeMemOption,
 		"--" + databaseTimeoutFlagName,
@@ -516,7 +533,7 @@ func TestStartCmdInvalidSyntax(t *testing.T) {
 
 	args := []string{
 		"--" + agentHostFlagName,
-		randomURL(),
+		randomURL(t),
 		"--" + databaseTypeFlagName,
 		databaseTypeMemOption,
 		"--" + agentAutoAcceptFlagName,
@@ -535,11 +552,11 @@ func TestStartCmdWithInvalidReadLimit(t *testing.T) {
 
 	args := []string{
 		"--" + agentHostFlagName,
-		randomURL(),
+		randomURL(t),
 		"--" + agentInboundHostFlagName,
-		httpProtocol + "@" + randomURL(),
+		httpProtocol + "@" + randomURL(t),
 		"--" + agentInboundHostExternalFlagName,
-		httpProtocol + "@" + randomURL(),
+		httpProtocol + "@" + randomURL(t),
 		"--" + agentWebSocketReadLimitFlagName,
 		"invalid",
 		"--" + databaseTypeFlagName,
@@ -562,11 +579,11 @@ func TestStartCmdValidArgs(t *testing.T) {
 
 	args := []string{
 		"--" + agentHostFlagName,
-		randomURL(),
+		randomURL(t),
 		"--" + agentInboundHostFlagName,
-		httpProtocol + "@" + randomURL(),
+		httpProtocol + "@" + randomURL(t),
 		"--" + agentInboundHostExternalFlagName,
-		httpProtocol + "@" + randomURL(),
+		httpProtocol + "@" + randomURL(t),
 		"--" + databaseTypeFlagName,
 		databaseTypeMemOption,
 		"--" + agentDefaultLabelFlagName,
@@ -585,17 +602,11 @@ func TestStartCmdValidArgsEnvVar(t *testing.T) {
 	startCmd, err := Cmd(&mockServer{})
 	require.NoError(t, err)
 
-	err = os.Setenv(agentHostEnvKey, randomURL())
-	require.Nil(t, err)
-	err = os.Setenv(agentInboundHostEnvKey, httpProtocol+"@"+randomURL())
-	require.Nil(t, err)
-
-	err = os.Setenv(databaseTypeEnvKey, databaseTypeMemOption)
-	require.Nil(t, err)
-	err = os.Setenv(agentWebhookEnvKey, "")
-	require.Nil(t, err)
-	err = os.Setenv(agentDefaultLabelEnvKey, "")
-	require.Nil(t, err)
+	t.Setenv(agentHostEnvKey, randomURL(t))
+	t.Setenv(agentInboundHostEnvKey, httpProtocol+"@"+randomURL(t))
+	t.Setenv(databaseTypeEnvKey, databaseTypeMemOption)
+	t.Setenv(agentWebhookEnvKey, "")
+	t.Setenv(agentDefaultLabelEnvKey, "")
 
 	err = startCmd.Execute()
 
@@ -638,8 +649,8 @@ func TestStartMultipleAgentsWithSameHost(t *testing.T) {
 
 func TestStartAriesErrorWithResolvers(t *testing.T) {
 	t.Run("start aries with resolver - invalid resolver error", func(t *testing.T) {
-		testHostURL := randomURL()
-		testInboundHostURL := randomURL()
+		testHostURL := randomURL(t)
+		testInboundHostURL := randomURL(t)
 
 		parameters := &agentParameters{
 			server:               &HTTPServer{},
@@ -656,8 +667,8 @@ func TestStartAriesErrorWithResolvers(t *testing.T) {
 	})
 
 	t.Run("start aries with resolver - url invalid error", func(t *testing.T) {
-		testHostURL := randomURL()
-		testInboundHostURL := randomURL()
+		testHostURL := randomURL(t)
+		testInboundHostURL := randomURL(t)
 
 		parameters := &agentParameters{
 			server:               &HTTPServer{},
@@ -675,8 +686,8 @@ func TestStartAriesErrorWithResolvers(t *testing.T) {
 
 func TestStartAriesWithOutboundTransports(t *testing.T) {
 	t.Run("start aries with outbound transports success", func(t *testing.T) {
-		testHostURL := randomURL()
-		testInboundHostURL := randomURL()
+		testHostURL := randomURL(t)
+		testInboundHostURL := randomURL(t)
 
 		go func() {
 			parameters := &agentParameters{
@@ -698,8 +709,8 @@ func TestStartAriesWithOutboundTransports(t *testing.T) {
 	})
 
 	t.Run("start aries with outbound transport wrong flag", func(t *testing.T) {
-		testHostURL := randomURL()
-		testInboundHostURL := randomURL()
+		testHostURL := randomURL(t)
+		testInboundHostURL := randomURL(t)
 
 		parameters := &agentParameters{
 			server:               &HTTPServer{},
@@ -717,8 +728,8 @@ func TestStartAriesWithOutboundTransports(t *testing.T) {
 
 func TestStartAriesWithInboundTransport(t *testing.T) {
 	t.Run("start aries with inbound transports success", func(t *testing.T) {
-		testHostURL := randomURL()
-		testInboundHostURL := randomURL()
+		testHostURL := randomURL(t)
+		testInboundHostURL := randomURL(t)
 
 		go func() {
 			parameters := &agentParameters{
@@ -738,8 +749,8 @@ func TestStartAriesWithInboundTransport(t *testing.T) {
 	})
 
 	t.Run("start aries with inbound transport wrong flag", func(t *testing.T) {
-		testHostURL := randomURL()
-		testInboundHostURL := randomURL()
+		testHostURL := randomURL(t)
+		testInboundHostURL := randomURL(t)
 
 		parameters := &agentParameters{
 			server:               &HTTPServer{},
@@ -756,8 +767,8 @@ func TestStartAriesWithInboundTransport(t *testing.T) {
 
 func TestStartAriesWithAutoAccept(t *testing.T) {
 	t.Run("start aries with auto accept success", func(t *testing.T) {
-		testHostURL := randomURL()
-		testInboundHostURL := randomURL()
+		testHostURL := randomURL(t)
+		testInboundHostURL := randomURL(t)
 
 		go func() {
 			parameters := &agentParameters{
@@ -782,8 +793,8 @@ func TestStartAriesWithAutoAccept(t *testing.T) {
 
 func TestCreateAriesAgent(t *testing.T) {
 	t.Run("fail to create aries instance", func(t *testing.T) {
-		testHostURL := randomURL()
-		testInboundHostURL := randomURL()
+		testHostURL := randomURL(t)
+		testInboundHostURL := randomURL(t)
 
 		parameters := &agentParameters{
 			server:               &HTTPServer{},
@@ -819,8 +830,8 @@ func TestStartAriesWithAuthorization(t *testing.T) {
 		badToken  = "BCDE"
 	)
 
-	testHostURL := randomURL()
-	testInboundHostURL := randomURL()
+	testHostURL := randomURL(t)
+	testInboundHostURL := randomURL(t)
 
 	go func() {
 		parameters := &agentParameters{

@@ -3,6 +3,7 @@
 
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -24,7 +25,7 @@ import (
 )
 
 // test callbacks.
-var callbacks = make(map[string]chan *wasmsetup.Result) // nolint:gochecknoglobals
+var callbacks = make(map[string]chan *wasmsetup.Result) //nolint:gochecknoglobals
 
 func TestSetup(t *testing.T) {
 	results := make(chan *wasmsetup.Result)
@@ -105,7 +106,7 @@ var (
 )
 
 func setup() {
-	input := make(chan *wasmsetup.Command, 10) // nolint: gomnd
+	input := make(chan *wasmsetup.Command, 10) //nolint: gomnd
 	output := make(chan *wasmsetup.Result)
 
 	go wasmsetup.Pipe(input, output, func(pkgMap map[string]map[string]func(*wasmsetup.Command) *wasmsetup.Result) {

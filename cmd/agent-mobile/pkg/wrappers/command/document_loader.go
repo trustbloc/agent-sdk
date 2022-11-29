@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -17,7 +18,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// nolint:gochecknoglobals // embedded test contexts
 var (
 	//go:embed contexts/credentials-examples_v1.jsonld
 	credentialExamples []byte

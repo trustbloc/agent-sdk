@@ -1,15 +1,16 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package rest // nolint:testpackage // uses internal implementation details
+package rest //nolint:testpackage // uses internal implementation details
 
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -37,10 +38,10 @@ func (client *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 		return nil, fmt.Errorf("wrong method: expected - %s got - %s", client.method, req.Method)
 	}
 
-	r := ioutil.NopCloser(bytes.NewReader([]byte(client.data)))
+	r := io.NopCloser(bytes.NewReader([]byte(client.data)))
 
 	return &http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Body:       r,
 	}, nil
 }

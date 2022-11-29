@@ -1,10 +1,11 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package rest // nolint:testpackage // uses internal implementation details
+package rest //nolint:testpackage // uses internal implementation details
 
 import (
 	"fmt"
@@ -80,9 +81,9 @@ const (
 		]
 	}
 }`
-	mockCredentialName   = "mock_credential"
+	mockCredentialName   = "mock_credential" //nolint: gosec // False positive
 	mockPresentationName = "mock_vp_name"
-	mockCredentialID     = "http://example.edu/credentials/1989"
+	mockCredentialID     = "http://example.edu/credentials/1989" //nolint: gosec // False positive
 	mockPresentationID   = "http://example.edu/presentations/1989"
 	mockVP               = `{"verifiablePresentation":{"@context":["https://www.w3.org/2018/credentials/v1","https://www.w3.org/2018/credentials/examples/v1"],"type":["VerifiablePresentation"],"id":"http://example.edu/presentations/1989","verifiableCredential":[{"@context":["https://www.w3.org/2018/credentials/v1","https://www.w3.org/2018/credentials/examples/v1"],"credentialSchema":[],"credentialStatus":{"id":"http://issuer.vc.rest.example.com:8070/status/1","type":"CredentialStatusList2017"},"credentialSubject":{"degree":{"degree":"MIT","type":"BachelorDegree"},"id":"did:example:ebfeb1f712ebc6f1c276e12ec21","name":"Jayden Doe","spouse":"did:example:c276e12ec21ebfeb1f712ebc6f1"},"id":"https://example.com/credentials/9315d0fd-da93-436e-9e20-2121f2821df3","issuanceDate":"2020-03-16T22:37:26.544Z","issuer":{"id":"did:elem:EiBJJPdo-ONF0jxqt8mZYEj9Z7FbdC87m2xvN0_HAbcoEg","name":"alice_ca31684e-6cbb-40f9-b7e6-87e1ab5661ae"},"proof":{"created":"2020-04-08T21:19:02Z","jws":"eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..yGHHYmRp4mWd918SDSzmBDs8eq-SX7WPl8moGB8oJeSqEMmuEiI81D4s5-BPWGmKy3VlCsKJxYrTNqrEGJpNAQ","proofPurpose":"assertionMethod","type":"Ed25519Signature2018","verificationMethod":"did:elem:EiBJJPdo-ONF0jxqt8mZYEj9Z7FbdC87m2xvN0_HAbcoEg#xqc3gS1gz1vch7R3RvNebWMjLvBOY-n_14feCYRPsUo"},"type":["VerifiableCredential","UniversityDegreeCredential"]}]},"name":"sampleVpName"}`
 	mockDID              = "did:peer:123456789abcdefghi#inbox"
@@ -147,7 +148,7 @@ func TestVerifiable_SaveCredential(t *testing.T) {
 			method: http.MethodPost, url: mockAgentURL + opverifiable.SaveCredentialPath,
 		}
 
-		reqData := fmt.Sprintf(`{"verifiableCredential": %s, "name": "%s"}`,
+		reqData := fmt.Sprintf(`{"verifiableCredential": %s, "name": %q}`,
 			strconv.Quote(mockVC), mockCredentialName)
 		req := &models.RequestEnvelope{Payload: []byte(reqData)}
 		resp := v.SaveCredential(req)
@@ -182,7 +183,7 @@ func TestVerifiable_GetCredential(t *testing.T) {
 		v := getVerifiableController(t)
 
 		mockResponse := fmt.Sprintf(`{"verifiableCredential": %s}`, strconv.Quote(mockVC))
-		reqData := fmt.Sprintf(`{"id":"%s"}`, mockCredentialID)
+		reqData := fmt.Sprintf(`{"id":%q}`, mockCredentialID)
 
 		mockURL, err := parseURL(mockAgentURL, opverifiable.GetCredentialPath, reqData)
 		require.NoError(t, err, "failed to parse test url")
@@ -211,7 +212,7 @@ func TestVerifiable_SignCredential(t *testing.T) {
 			method: http.MethodPost, url: mockAgentURL + opverifiable.SignCredentialsPath,
 		}
 
-		reqData := fmt.Sprintf(`{"credential": %s, "did": "%s", "signatureType": "%s"}`,
+		reqData := fmt.Sprintf(`{"credential": %s, "did": %q, "signatureType": %q}`,
 			strconv.Quote(mockVC), mockDID, cmdverifiable.Ed25519Signature2018)
 		req := &models.RequestEnvelope{Payload: []byte(reqData)}
 		resp := v.SignCredential(req)
@@ -227,7 +228,7 @@ func TestVerifiable_GetPresentation(t *testing.T) {
 		v := getVerifiableController(t)
 
 		mockResponse := fmt.Sprintf(`{"verifiablePresentation": %s}`, strconv.Quote(mockVP))
-		reqData := fmt.Sprintf(`{"id":"%s"}`, mockPresentationID)
+		reqData := fmt.Sprintf(`{"id":%q}`, mockPresentationID)
 
 		mockURL, err := parseURL(mockAgentURL, opverifiable.GetPresentationPath, reqData)
 		require.NoError(t, err, "failed to parse test url")
@@ -248,7 +249,7 @@ func TestVerifiable_GetCredentialByName(t *testing.T) {
 		v := getVerifiableController(t)
 
 		mockResponse := fmt.Sprintf(`{"name": %s, "id": %s}`, mockCredentialName, mockCredentialID)
-		reqData := fmt.Sprintf(`{"name":"%s"}`, mockCredentialName)
+		reqData := fmt.Sprintf(`{"name":%q}`, mockCredentialName)
 
 		mockURL, err := parseURL(mockAgentURL, opverifiable.GetCredentialByNamePath, reqData)
 		require.NoError(t, err, "failed to parse test url")
@@ -268,7 +269,7 @@ func TestVerifiable_GetCredentials(t *testing.T) {
 	t.Run("test it performs a get credentials request", func(t *testing.T) {
 		v := getVerifiableController(t)
 
-		mockResponse := fmt.Sprintf(`{"result": [{"name": "%s", "id":" %s"}, {"name": "%s"", "id": "%s""}]`,
+		mockResponse := fmt.Sprintf(`{"result": [{"name": %q, "id": %q}, {"name": %q, "id": %q"}]`,
 			mockCredentialName, mockCredentialID, mockCredentialName, mockCredentialID)
 		v.httpClient = &mockHTTPClient{
 			data:   mockResponse,
@@ -289,7 +290,7 @@ func TestVerifiable_GetPresentations(t *testing.T) {
 	t.Run("test it performs a get presentations request", func(t *testing.T) {
 		v := getVerifiableController(t)
 
-		mockResponse := fmt.Sprintf(`{"result": [{"name": "%s", "id":" %s"}, {"name": "%s"", "id": "%s""}]`,
+		mockResponse := fmt.Sprintf(`{"result": [{"name": %q, "id": %q}, {"name": %q, "id": %q"}]`,
 			mockPresentationName, mockPresentationID, mockPresentationName, mockPresentationID)
 		v.httpClient = &mockHTTPClient{
 			data:   mockResponse,
@@ -316,7 +317,7 @@ func TestVerifiable_GeneratePresentation(t *testing.T) {
 		}
 
 		credList := fmt.Sprintf(`[%s, %s]`, mockVC, mockVC)
-		reqData := fmt.Sprintf(`{"verifiableCredential": %s, "did": "%s", "signatureType": "%s"}`,
+		reqData := fmt.Sprintf(`{"verifiableCredential": %s, "did": %q, "signatureType": %q}`,
 			credList, mockDID, cmdverifiable.Ed25519Signature2018)
 		req := &models.RequestEnvelope{Payload: []byte(reqData)}
 		resp := v.GeneratePresentation(req)
@@ -338,7 +339,7 @@ func TestVerifiable_GeneratePresentationByID(t *testing.T) {
 		}
 
 		credList := fmt.Sprintf(`[%s, %s]`, mockVC, mockVC)
-		reqData := fmt.Sprintf(`{"verifiableCredential": %s, "did": "%s", "signatureType": "%s"}`,
+		reqData := fmt.Sprintf(`{"verifiableCredential": %s, "did": %q, "signatureType": %q}`,
 			credList, mockDID, cmdverifiable.Ed25519Signature2018)
 
 		req := &models.RequestEnvelope{Payload: []byte(reqData)}
@@ -355,7 +356,7 @@ func TestVerifiable_RemoveCredentialByName(t *testing.T) {
 		v := getVerifiableController(t)
 
 		mockResponse := ``
-		reqData := fmt.Sprintf(`{"name":"%s"}`, mockCredentialName)
+		reqData := fmt.Sprintf(`{"name":%q}`, mockCredentialName)
 
 		mockURL, err := parseURL(mockAgentURL, opverifiable.RemoveCredentialByNamePath, reqData)
 		require.NoError(t, err, "failed to parse test url")
@@ -376,7 +377,7 @@ func TestVerifiable_RemovePresentationByName(t *testing.T) {
 		v := getVerifiableController(t)
 
 		mockResponse := ``
-		reqData := fmt.Sprintf(`{"name":"%s"}`, mockCredentialName)
+		reqData := fmt.Sprintf(`{"name":%q}`, mockCredentialName)
 
 		mockURL, err := parseURL(mockAgentURL, opverifiable.RemovePresentationByNamePath, reqData)
 		require.NoError(t, err, "failed to parse test url")

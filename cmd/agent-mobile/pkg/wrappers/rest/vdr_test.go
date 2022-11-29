@@ -1,10 +1,11 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package rest // nolint:testpackage // uses internal implementation details
+package rest //nolint:testpackage // uses internal implementation details
 
 import (
 	"net/http"

@@ -1,5 +1,7 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
+
 SPDX-License-Identifier: Apache-2.0
 */
 
@@ -14,7 +16,7 @@ import (
 // Request for sending did doc request.
 //
 // swagger:parameters didDocRequest
-type didDocRequest struct { // nolint: unused,deadcode
+type didDocRequest struct { //nolint: unused,deadcode
 	// Params for sending did doc request.
 	//
 	// in: body
@@ -38,7 +40,7 @@ type didDocResponse struct {
 // send did doc request operation.
 //
 // swagger:parameters registerRoute
-type registerRouteRequest struct { // nolint: unused,deadcode
+type registerRouteRequest struct { //nolint: unused,deadcode
 	// Params for sending did doc request.
 	//
 	// in: body

@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -10,7 +11,6 @@ import "github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/models"
 
 // MessagingController defines methods for the Messaging controller.
 type MessagingController interface {
-
 	// RegisterService registers new message service to message handler registrar.
 	RegisterService(request *models.RequestEnvelope) *models.ResponseEnvelope
 

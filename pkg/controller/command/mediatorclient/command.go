@@ -1,5 +1,7 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
+
 SPDX-License-Identifier: Apache-2.0
 */
 
@@ -218,7 +220,8 @@ func (c *Command) Connect(rw io.Writer, req io.Reader) command.Error {
 }
 
 func (c *Command) createOOBInvitation(inv *outofband.Invitation,
-	myLabel, stateCompleteMessageType string) (string, error) {
+	myLabel, stateCompleteMessageType string,
+) (string, error) {
 	var notificationCh chan messaging.NotificationPayload
 
 	var statusCh chan service.StateMsg
@@ -276,6 +279,7 @@ func (c *Command) createOOBInvitation(inv *outofband.Invitation,
 }
 
 // CreateInvitation creates out-of-band invitation from one of the mediator connections.
+//
 //nolint:funlen
 func (c *Command) CreateInvitation(rw io.Writer, req io.Reader) command.Error {
 	connections, err := c.mediator.GetConnections()
@@ -398,9 +402,9 @@ func (c *Command) SendCreateConnectionRequest(rw io.Writer, req io.Reader) comma
 	return nil
 }
 
-//nolint: gocyclo
-func (c *Command) waitForConnect(didStateMsgs chan service.StateMsg,
-	notificationCh chan messaging.NotificationPayload, connID string) error {
+func (c *Command) waitForConnect(didStateMsgs chan service.StateMsg, //nolint: gocyclo
+	notificationCh chan messaging.NotificationPayload, connID string,
+) error {
 	if notificationCh != nil {
 		select {
 		case <-notificationCh:

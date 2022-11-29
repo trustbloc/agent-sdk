@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -121,8 +122,9 @@ func NewAries(opts *config.Options) (*Aries, error) {
 }
 
 // TODO (#48): Add support for EDV storage.
-func prepareFrameworkOptions(opts *config.Options, // nolint: gocyclo
-	msgHandler ariesapi.MessageServiceProvider) ([]aries.Option, error) {
+func prepareFrameworkOptions(opts *config.Options, //nolint: gocyclo
+	msgHandler ariesapi.MessageServiceProvider,
+) ([]aries.Option, error) {
 	var options []aries.Option
 	options = append(options, aries.WithMessageServiceProvider(msgHandler))
 

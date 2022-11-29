@@ -1,10 +1,11 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package rest // nolint:testpackage // uses internal implementation details
+package rest //nolint:testpackage // uses internal implementation details
 
 import (
 	"fmt"
@@ -54,7 +55,7 @@ func TestDIDExchange_CreateInvitation(t *testing.T) {
 			method: http.MethodPost, url: mockAgentURL + opdidexch.CreateInvitationPath,
 		}
 
-		reqData := fmt.Sprintf(`{"alias":"myalias", "public": "%s"}`, publicDID)
+		reqData := fmt.Sprintf(`{"alias":"myalias", "public": %q}`, publicDID)
 		req := &models.RequestEnvelope{Payload: []byte(reqData)}
 		resp := de.CreateInvitation(req)
 

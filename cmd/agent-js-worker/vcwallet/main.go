@@ -3,10 +3,12 @@
 
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
+// Package vc-wallet runs aries-framework-go vcwallet wasm startup code.
 package main
 
 import (
@@ -53,7 +55,8 @@ const (
 )
 
 // TODO Signal JS when WASM is loaded and ready.
-//      This is being used in tests for now.
+//
+//	This is being used in tests for now.
 var (
 	ready  = make(chan struct{}) //nolint:gochecknoglobals
 	isTest = false               //nolint:gochecknoglobals
@@ -66,7 +69,7 @@ func main() {
 	//  Looks like js worker are not able to pick up 'output chan *wasmsetup.Result'.
 	//  Another fix for that is to wrap 'in <- cmd' in a goroutine. e.g go func() { in <- cmd }()
 	//  We need to figure out what is the root cause of deadlock and fix it properly.
-	input := make(chan *wasmsetup.Command, 10) // nolint: gomnd
+	input := make(chan *wasmsetup.Command, 10) //nolint: gomnd
 	output := make(chan *wasmsetup.Result)
 
 	go wasmsetup.Pipe(input, output, addAgentHandlers, workers)
@@ -131,7 +134,8 @@ func addAgentHandlers(pkgMap map[string]map[string]func(*wasmsetup.Command) *was
 }
 
 func getAriesHandlers(ctx *walletServices,
-	opts *agentsetup.AgentStartOpts) ([]controllercmd.Handler, error) {
+	opts *agentsetup.AgentStartOpts,
+) ([]controllercmd.Handler, error) {
 	var (
 		headerFunc func(r2 *http.Request) (*http.Header, error)
 		err        error
@@ -167,7 +171,8 @@ func getAriesHandlers(ctx *walletServices,
 }
 
 func getAgentHandlers(ctx *walletServices,
-	opts *agentsetup.AgentStartOpts) ([]controllercmd.Handler, error) {
+	opts *agentsetup.AgentStartOpts,
+) ([]controllercmd.Handler, error) {
 	// did client command operation.
 	didClientCmd, err := didclientcmd.New(opts.BlocDomain, opts.DidAnchorOrigin, opts.SidetreeToken,
 		opts.UnanchoredDIDMaxLifeTime, ctx)
@@ -342,7 +347,8 @@ func createAgentServices(startOpts *agentsetup.AgentStartOpts) (*walletServices,
 }
 
 func createMainStorageProvider(startOpts *agentsetup.AgentStartOpts, indexedDBProvider *indexeddb.Provider,
-	kmsImpl kms.KeyManager, cryptoImpl cryptoapi.Crypto) (storage.Provider, error) {
+	kmsImpl kms.KeyManager, cryptoImpl cryptoapi.Crypto,
+) (storage.Provider, error) {
 	var storageProvider storage.Provider
 
 	switch startOpts.StorageType {
@@ -363,7 +369,8 @@ func createMainStorageProvider(startOpts *agentsetup.AgentStartOpts, indexedDBPr
 }
 
 func createVDR(vdrs []vdrapi.VDR, startOpts *agentsetup.AgentStartOpts,
-	storageProvider storage.Provider) (*vdr.Registry, error) {
+	storageProvider storage.Provider,
+) (*vdr.Registry, error) {
 	var opts []vdr.Option
 	for _, v := range vdrs {
 		opts = append(opts, vdr.WithVDR(v))

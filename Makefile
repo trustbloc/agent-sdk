@@ -1,4 +1,5 @@
 # Copyright SecureKey Technologies Inc.
+# Copyright Avast Software. All Rights Reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -6,7 +7,7 @@
 GOBIN_PATH             = $(abspath .)/build/bin
 ARIES_AGENT_REST_PATH=cmd/agent-rest
 ARIES_AGENT_MOBILE_PATH=cmd/agent-mobile
-ARIES_FRAMEWORK_COMMIT=e1f4b94b6f8b9051e556875e65e95b287fe0c198
+ARIES_FRAMEWORK_COMMIT=46b78a522903753257572359b2adb7a747da650b
 PROJECT_ROOT = github.com/trustbloc/agent-sdk
 OPENAPI_SPEC_PATH=build/rest/openapi/spec
 OPENAPI_DOCKER_IMG=quay.io/goswagger/swagger
@@ -17,8 +18,8 @@ DOCKER_OUTPUT_NS   ?= ghcr.io
 REPO_IMAGE_NAME   ?= trustbloc
 DOCKER_AGENT_NAME ?= agent-sdk-server
 
-ALPINE_VER ?= 3.15
-GO_VER ?= 1.17
+ALPINE_VER ?= 3.16
+GO_VER ?= 1.19
 
 .PHONY: all
 all: clean checks unit-test unit-test-wasm agent-rest agent-server-docker bdd-test

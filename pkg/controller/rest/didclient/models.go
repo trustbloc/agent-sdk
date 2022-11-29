@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -17,7 +18,7 @@ import (
 // Request to create a new trust bloc DID.
 //
 // swagger:parameters createOrbDID
-type createOrbDIDRequest struct { // nolint: unused,deadcode
+type createOrbDIDRequest struct { //nolint: unused,deadcode
 	// Params for creating a Orb DID.
 	//
 	// in: body
@@ -30,7 +31,7 @@ type createOrbDIDRequest struct { // nolint: unused,deadcode
 // Request to resolve a new orb DID.
 //
 // swagger:parameters resolveOrbDID
-type resolveOrbDIDRequest struct { // nolint: unused,deadcode
+type resolveOrbDIDRequest struct { //nolint: unused,deadcode
 	// Params for resolving Orb DID.
 	//
 	// in: body
@@ -43,7 +44,7 @@ type resolveOrbDIDRequest struct { // nolint: unused,deadcode
 // Request to create a new peer DID.
 //
 // swagger:parameters createPeerDID
-type createPeerDIDRequest struct { // nolint: unused,deadcode
+type createPeerDIDRequest struct { //nolint: unused,deadcode
 	// Params for creating a TrustBlocDID.
 	//
 	// in: body
@@ -56,7 +57,7 @@ type createPeerDIDRequest struct { // nolint: unused,deadcode
 // This is used as the response model for create TrustBloc/ DID operations.
 //
 // swagger:response createDIDResp
-type createDIDResp struct { // nolint: unused,deadcode
+type createDIDResp struct { //nolint: unused,deadcode
 	// in: body
 	Response *did.DocResolution
 }
@@ -66,7 +67,7 @@ type createDIDResp struct { // nolint: unused,deadcode
 // This is used as the response model for resolve Orb/ DID operations.
 //
 // swagger:response resolveDIDResp
-type resolveDIDResp struct { // nolint: unused,deadcode
+type resolveDIDResp struct { //nolint: unused,deadcode
 	// in: body
 	Response *did.DocResolution
 }

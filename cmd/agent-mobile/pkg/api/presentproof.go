@@ -1,16 +1,16 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package api // nolint: dupl
+package api //nolint: dupl
 
 import "github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/models"
 
 // PresentProofController defines methods for the PresentProof protocol controller.
-type PresentProofController interface {
-
+type PresentProofController interface { //nolint: interfacebloat
 	// Actions returns pending actions that have not yet to be executed or canceled.
 	Actions(request *models.RequestEnvelope) *models.ResponseEnvelope
 

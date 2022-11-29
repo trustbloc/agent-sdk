@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -10,7 +11,6 @@ import "github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/models"
 
 // DIDExchangeController  defines methods for the DIDExchange protocol controller.
 type DIDExchangeController interface {
-
 	// CreateInvitation creates a new connection invitation.
 	CreateInvitation(request *models.RequestEnvelope) *models.ResponseEnvelope
 

@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -147,8 +148,7 @@ func TestCommand_Query(t *testing.T) {
 
 	t.Run("Failure while getting first result from iterator", func(t *testing.T) {
 		storeProvider := mocks.NewMockStoreProvider()
-		storeProvider.Store =
-			&mocks.MockStore{QueryReturnItr: &mocks.MockIterator{ErrNext: errors.New("next failure")}}
+		storeProvider.Store = &mocks.MockStore{QueryReturnItr: &mocks.MockIterator{ErrNext: errors.New("next failure")}}
 
 		cmd, err := New(&protocol.MockProvider{StoreProvider: storeProvider})
 		require.NoError(t, err)

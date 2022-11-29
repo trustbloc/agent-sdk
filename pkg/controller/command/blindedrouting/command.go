@@ -1,5 +1,7 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
+
 SPDX-License-Identifier: Apache-2.0
 */
 
@@ -115,7 +117,7 @@ func (c *Command) SendDIDDocRequest(rw io.Writer, req io.Reader) ariescmd.Error 
 		return ariescmd.NewValidationError(SendDIDDocRequestError, fmt.Errorf(errInvalidConnectionID))
 	}
 
-	msgStr := fmt.Sprintf(`{"@id":"%s","@type": "%s"}`, uuid.New().String(), didDocRequestMsgType)
+	msgStr := fmt.Sprintf(`{"@id":%q,"@type":%q}`, uuid.New().String(), didDocRequestMsgType)
 
 	ctx, cancel := context.WithTimeout(context.Background(), sendMsgTimeOut)
 	defer cancel()

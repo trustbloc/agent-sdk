@@ -1,5 +1,7 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
+
 SPDX-License-Identifier: Apache-2.0
 */
 
@@ -47,8 +49,7 @@ func LookupHandler(t *testing.T, op restOperation, path string) rest.Handler {
 
 // GetSuccessResponseFromHandler reads response from given http handle func.
 // expects http status OK.
-func GetSuccessResponseFromHandler(handler rest.Handler, requestBody io.Reader,
-	path string) (*bytes.Buffer, error) {
+func GetSuccessResponseFromHandler(handler rest.Handler, requestBody io.Reader, path string) (*bytes.Buffer, error) {
 	response, status, err := SendRequestToHandler(handler, requestBody, path)
 	if status != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code: got %v, want %v",

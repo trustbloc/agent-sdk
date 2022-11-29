@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -34,7 +35,8 @@ type Operation struct {
 
 // New returns new DID client rest instance.
 func New(ctx didclient.ProviderWithMediator, domain, didAnchorOrigin, token string,
-	unanchoredDIDMaxLifeTime int) (*Operation, error) {
+	unanchoredDIDMaxLifeTime int,
+) (*Operation, error) {
 	client, err := didclient.NewWithMediator(domain, didAnchorOrigin, token, unanchoredDIDMaxLifeTime, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize did-client command: %w", err)
@@ -68,8 +70,9 @@ func (c *Operation) registerHandler() {
 // Creates a new orb DID.
 //
 // Responses:
-//    default: genericError
-//    200: createDIDResp
+//
+//	default: genericError
+//	200: createDIDResp
 func (c *Operation) CreateOrbDID(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.CreateOrbDID, rw, req.Body)
 }
@@ -79,8 +82,9 @@ func (c *Operation) CreateOrbDID(rw http.ResponseWriter, req *http.Request) {
 // Resolve orb DID.
 //
 // Responses:
-//    default: genericError
-//    200: resolveDIDResp
+//
+//	default: genericError
+//	200: resolveDIDResp
 func (c *Operation) ResolveOrbDID(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.ResolveOrbDID, rw, req.Body)
 }
@@ -90,8 +94,9 @@ func (c *Operation) ResolveOrbDID(rw http.ResponseWriter, req *http.Request) {
 // Resolve web DID from orb DID.
 //
 // Responses:
-//    default: genericError
-//    200: resolveDIDResp
+//
+//	default: genericError
+//	200: resolveDIDResp
 func (c *Operation) ResolveWebDIDFromOrbDID(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.ResolveWebDIDFromOrbDID, rw, req.Body)
 }
@@ -101,7 +106,8 @@ func (c *Operation) ResolveWebDIDFromOrbDID(rw http.ResponseWriter, req *http.Re
 // Verify web DID from orb DID.
 //
 // Responses:
-//    default: genericError
+//
+//	default: genericError
 func (c *Operation) VerifyWebDIDFromOrbDID(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.VerifyWebDIDFromOrbDID, rw, req.Body)
 }
@@ -111,8 +117,9 @@ func (c *Operation) VerifyWebDIDFromOrbDID(rw http.ResponseWriter, req *http.Req
 // Creates a new peer DID.
 //
 // Responses:
-//    default: genericError
-//    200: createDIDResp
+//
+//	default: genericError
+//	200: createDIDResp
 func (c *Operation) CreatePeerDID(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.CreatePeerDID, rw, req.Body)
 }

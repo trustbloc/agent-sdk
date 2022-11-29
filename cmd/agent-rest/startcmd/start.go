@@ -1,5 +1,7 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
+
 SPDX-License-Identifier: Apache-2.0
 */
 
@@ -57,7 +59,7 @@ const (
 
 	// api token flag.
 	agentTokenFlagName      = "api-token"
-	agentTokenEnvKey        = "ARIESD_API_TOKEN" // nolint:gosec
+	agentTokenEnvKey        = "ARIESD_API_TOKEN" //nolint:gosec
 	agentTokenFlagShorthand = "t"
 	agentTokenFlagUsage     = "Check for bearer token in the authorization header (optional)." +
 		" Alternatively, this can be set with the following environment variable: " + agentTokenEnvKey
@@ -279,12 +281,13 @@ type dbParam struct {
 }
 
 // TODO (#47): Add support for EDV storage.
-// nolint:gochecknoglobals
+//
+//nolint:gochecknoglobals
 var supportedStorageProviders = map[string]func(url, prefix string) (storage.Provider, error){
-	databaseTypeMemOption: func(_, _ string) (storage.Provider, error) { // nolint:unparam
+	databaseTypeMemOption: func(_, _ string) (storage.Provider, error) { //nolint:unparam
 		return mem.NewProvider(), nil
 	},
-	databaseTypeLevelDBOption: func(_, path string) (storage.Provider, error) { // nolint:unparam
+	databaseTypeLevelDBOption: func(_, path string) (storage.Provider, error) { //nolint:unparam
 		return leveldb.NewProvider(path), nil
 	},
 	databaseTypeCouchDBOption: func(url, prefix string) (storage.Provider, error) {
@@ -308,10 +311,10 @@ type HTTPServer struct{}
 // ListenAndServe starts the server using the standard Go HTTP server implementation.
 func (s *HTTPServer) ListenAndServe(host string, router http.Handler, certFile, keyFile string) error {
 	if certFile != "" && keyFile != "" {
-		return http.ListenAndServeTLS(host, certFile, keyFile, router)
+		return http.ListenAndServeTLS(host, certFile, keyFile, router) //nolint: gosec // TODO (#464)
 	}
 
-	return http.ListenAndServe(host, router)
+	return http.ListenAndServe(host, router) //nolint: gosec // TODO (#464)
 }
 
 // Cmd returns the Cobra start command.
@@ -323,7 +326,7 @@ func Cmd(server server) (*cobra.Command, error) {
 	return startCmd, nil
 }
 
-func createStartCMD(server server) *cobra.Command { // nolint: funlen, gocyclo, gocognit
+func createStartCMD(server server) *cobra.Command { //nolint: funlen, gocyclo, gocognit
 	return &cobra.Command{
 		Use:   "start",
 		Short: "Start an agent",
@@ -549,7 +552,7 @@ func getWebSocketReadLimit(cmd *cobra.Command) (int64, error) {
 	return readLimit, nil
 }
 
-func createFlags(startCmd *cobra.Command) { // nolint: funlen
+func createFlags(startCmd *cobra.Command) { //nolint: funlen
 	// agent host flag
 	startCmd.Flags().StringP(agentHostFlagName, agentHostFlagShorthand, "", agentHostFlagUsage)
 
@@ -770,7 +773,8 @@ func getOutboundTransportOpts(outboundTransports []string, websocketReadLimit in
 }
 
 func getInboundTransportOpts(inboundHostInternals, inboundHostExternals []string, certFile,
-	keyFile string, websocketReadLimit int64) ([]aries.Option, error) {
+	keyFile string, websocketReadLimit int64,
+) ([]aries.Option, error) {
 	internalHost, err := getInboundSchemeToURLMap(inboundHostInternals)
 	if err != nil {
 		return nil, fmt.Errorf("inbound internal host : %w", err)
@@ -836,7 +840,7 @@ func validateAuthorizationBearerToken(w http.ResponseWriter, r *http.Request, to
 
 	if subtle.ConstantTimeCompare([]byte(actHdr), []byte(expHdr)) != 1 {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("Unauthorised.\n")) // nolint:gosec,errcheck
+		w.Write([]byte("Unauthorised.\n")) //nolint:gosec,errcheck
 
 		return false
 	}
@@ -937,7 +941,7 @@ var (
 	}
 )
 
-func createAriesAgent(parameters *agentParameters) (*context.Provider, error) { // nolint: funlen,gocyclo
+func createAriesAgent(parameters *agentParameters) (*context.Provider, error) { //nolint: funlen,gocyclo
 	var opts []aries.Option
 
 	storePro, err := createStoreProviders(parameters)

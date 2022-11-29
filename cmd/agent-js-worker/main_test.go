@@ -3,11 +3,12 @@
 
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package main // nolint: testpackage
+package main
 
 import (
 	"encoding/json"
