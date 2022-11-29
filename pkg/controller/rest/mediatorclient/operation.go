@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -34,7 +35,8 @@ type Operation struct {
 
 // New returns new mediator client rest instance.
 func New(ctx mediatorclient.Provider, msgHandler ariescmd.MessageHandler,
-	notifier ariescmd.Notifier) (*Operation, error) {
+	notifier ariescmd.Notifier,
+) (*Operation, error) {
 	client, err := mediatorclient.New(ctx, msgHandler, notifier)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize mediator-client command: %w", err)
@@ -66,8 +68,9 @@ func (c *Operation) registerHandler() {
 // Connects to mediator.
 //
 // Responses:
-//    default: genericError
-//    200: connectionResponse
+//
+//	default: genericError
+//	200: connectionResponse
 func (c *Operation) Connect(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.Connect, rw, req.Body)
 }
@@ -77,8 +80,9 @@ func (c *Operation) Connect(rw http.ResponseWriter, req *http.Request) {
 // Creates out-of-band invitation through mediator.
 //
 // Responses:
-//    default: genericError
-//    200: createInvitationResponse
+//
+//	default: genericError
+//	200: createInvitationResponse
 func (c *Operation) CreateInvitation(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.CreateInvitation, rw, req.Body)
 }
@@ -90,8 +94,9 @@ func (c *Operation) CreateInvitation(rw http.ResponseWriter, req *http.Request) 
 // Sends create connection request to mediator.
 //
 // Responses:
-//    default: genericError
-//    200: createConnectionResponse
+//
+//	default: genericError
+//	200: createConnectionResponse
 func (c *Operation) SendCreateConnectionRequest(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.SendCreateConnectionRequest, rw, req.Body)
 }

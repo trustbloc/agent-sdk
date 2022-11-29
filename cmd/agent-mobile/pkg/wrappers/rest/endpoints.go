@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -73,7 +74,7 @@ func getControllerEndpoints() map[string]map[string]*endpoint {
 	return allEndpoints
 }
 
-func getIntroduceEndpoints() map[string]*endpoint { // nolint: dupl
+func getIntroduceEndpoints() map[string]*endpoint { //nolint: dupl
 	return map[string]*endpoint{
 		cmdintroduce.Actions: {
 			Path:   opintroduce.Actions,
@@ -306,7 +307,7 @@ func getIssueCredentialEndpoints() map[string]*endpoint {
 	}
 }
 
-func getPresentProofEndpoints() map[string]*endpoint { // nolint: dupl
+func getPresentProofEndpoints() map[string]*endpoint { //nolint: dupl
 	return map[string]*endpoint{
 		cmdpresproof.Actions: {
 			Path:   oppresproof.Actions,

@@ -1,10 +1,11 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package rest // nolint:testpackage // uses internal implementation details
+package rest //nolint:testpackage // uses internal implementation details
 
 import (
 	"context"
@@ -61,12 +62,12 @@ func TestAries_RegisterHandler(t *testing.T) {
 
 	done := make(chan struct{})
 
-	l, err := net.Listen("tcp", ":0") // nolint: gosec
+	l, err := net.Listen("tcp", ":0") //nolint: gosec
 	require.NoError(t, err)
 
 	wsURL := strings.Replace(fmt.Sprintf("ws://%v", l.Addr()), "[::]", "localhost", 1)
 
-	s := &http.Server{Handler: wsFunc(func(w http.ResponseWriter, r *http.Request) {
+	s := &http.Server{Handler: wsFunc(func(w http.ResponseWriter, r *http.Request) { //nolint: gosec
 		var c *websocket.Conn
 
 		c, err = websocket.Accept(w, r, &websocket.AcceptOptions{})
@@ -76,11 +77,11 @@ func TestAries_RegisterHandler(t *testing.T) {
 			require.NoError(t, c.Close(websocket.StatusNormalClosure, "closed"))
 		}()
 
-		require.NoError(t, c.Write(context.Background(), websocket.MessageText, []byte(
+		require.NoError(t, c.Write(context.Background(), websocket.MessageText, []byte( //nolint: contextcheck
 			`{"topic":"`+topic+`", "message":{"state":"pre_state"}}`,
 		)))
 
-		require.NoError(t, c.Write(context.Background(), websocket.MessageText, []byte(
+		require.NoError(t, c.Write(context.Background(), websocket.MessageText, []byte( //nolint: contextcheck
 			`{"topic":"`+topic+`", "message":{"state":"post_state"}}`,
 		)))
 

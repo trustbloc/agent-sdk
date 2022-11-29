@@ -1,10 +1,11 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package command // nolint:testpackage // uses internal implementation details
+package command //nolint:testpackage // uses internal implementation details
 
 import (
 	"fmt"
@@ -79,9 +80,9 @@ const (
 		]
 	}
 }`
-	mockCredentialName   = "mock_credential"
+	mockCredentialName   = "mock_credential" //nolint: gosec // False positive
 	mockPresentationName = "mock_vp_name"
-	mockCredentialID     = "http://example.edu/credentials/1989"
+	mockCredentialID     = "http://example.edu/credentials/1989" //nolint: gosec // False positive
 	mockPresentationID   = "http://example.edu/presentations/1989"
 	mockVP               = `{"verifiablePresentation":{"@context":["https://www.w3.org/2018/credentials/v1","https://www.w3.org/2018/credentials/examples/v1"],"type":["VerifiablePresentation"],"id":"http://example.edu/presentations/1989","verifiableCredential":[{"@context":["https://www.w3.org/2018/credentials/v1","https://www.w3.org/2018/credentials/examples/v1"],"credentialSchema":[],"credentialStatus":{"id":"http://issuer.vc.rest.example.com:8070/status/1","type":"CredentialStatusList2017"},"credentialSubject":{"degree":{"degree":"MIT","type":"BachelorDegree"},"id":"did:example:ebfeb1f712ebc6f1c276e12ec21","name":"Jayden Doe","spouse":"did:example:c276e12ec21ebfeb1f712ebc6f1"},"id":"https://example.com/credentials/9315d0fd-da93-436e-9e20-2121f2821df3","issuanceDate":"2020-03-16T22:37:26.544Z","issuer":{"id":"did:elem:EiBJJPdo-ONF0jxqt8mZYEj9Z7FbdC87m2xvN0_HAbcoEg","name":"alice_ca31684e-6cbb-40f9-b7e6-87e1ab5661ae"},"proof":{"created":"2020-04-08T21:19:02Z","jws":"eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..yGHHYmRp4mWd918SDSzmBDs8eq-SX7WPl8moGB8oJeSqEMmuEiI81D4s5-BPWGmKy3VlCsKJxYrTNqrEGJpNAQ","proofPurpose":"assertionMethod","type":"Ed25519Signature2018","verificationMethod":"did:elem:EiBJJPdo-ONF0jxqt8mZYEj9Z7FbdC87m2xvN0_HAbcoEg#xqc3gS1gz1vch7R3RvNebWMjLvBOY-n_14feCYRPsUo"},"type":["VerifiableCredential","UniversityDegreeCredential"]}]},"name":"sampleVpName"}`
 	mockDID              = "did:peer:123456789abcdefghi#inbox"
@@ -133,7 +134,7 @@ func TestVerifiable_SaveCredential(t *testing.T) {
 		fakeHandler := mockCommandRunner{data: []byte(mockResponse)}
 		v.handlers[cmdverifiable.SaveCredentialCommandMethod] = fakeHandler.exec
 
-		payload := fmt.Sprintf(`{"verifiableCredential": %s, "name": "%s"}`, strconv.Quote(mockVC), mockCredentialName)
+		payload := fmt.Sprintf(`{"verifiableCredential": %s, "name": %q}`, strconv.Quote(mockVC), mockCredentialName)
 
 		req := &models.RequestEnvelope{Payload: []byte(payload)}
 		resp := v.SaveCredential(req)
@@ -173,7 +174,7 @@ func TestVerifiable_GetCredential(t *testing.T) {
 		fakeHandler := mockCommandRunner{data: []byte(mockResponse)}
 		v.handlers[cmdverifiable.GetCredentialCommandMethod] = fakeHandler.exec
 
-		payload := fmt.Sprintf(`{"id":"%s"}`, mockCredentialID)
+		payload := fmt.Sprintf(`{"id":%q}`, mockCredentialID)
 
 		req := &models.RequestEnvelope{Payload: []byte(payload)}
 		resp := v.GetCredential(req)
@@ -217,7 +218,7 @@ func TestVerifiable_GetPresentation(t *testing.T) {
 		fakeHandler := mockCommandRunner{data: []byte(mockResponse)}
 		v.handlers[cmdverifiable.GetPresentationCommandMethod] = fakeHandler.exec
 
-		payload := fmt.Sprintf(`{"id":"%s"}`, mockPresentationID)
+		payload := fmt.Sprintf(`{"id":%q}`, mockPresentationID)
 
 		req := &models.RequestEnvelope{Payload: []byte(payload)}
 		resp := v.GetPresentation(req)
@@ -237,7 +238,7 @@ func TestVerifiable_GetCredentialByName(t *testing.T) {
 		fakeHandler := mockCommandRunner{data: []byte(mockResponse)}
 		v.handlers[cmdverifiable.GetCredentialByNameCommandMethod] = fakeHandler.exec
 
-		payload := fmt.Sprintf(`{"name":"%s"}`, mockCredentialName)
+		payload := fmt.Sprintf(`{"name":%q}`, mockCredentialName)
 
 		req := &models.RequestEnvelope{Payload: []byte(payload)}
 		resp := v.GetCredentialByName(req)
@@ -253,7 +254,7 @@ func TestVerifiable_GetCredentials(t *testing.T) {
 	t.Run("test it gets all stored verifiable credentials", func(t *testing.T) {
 		v := getVerifiableController(t)
 
-		mockResponse := fmt.Sprintf(`{"result": [{"name": "%s", "id":" %s"}, {"name": "%s"", "id": "%s""}]`,
+		mockResponse := fmt.Sprintf(`{"result": [{"name": %q, "id": %q}, {"name": %q, "id": %q"}]`,
 			mockCredentialName, mockCredentialID, mockCredentialName, mockCredentialID)
 		fakeHandler := mockCommandRunner{data: []byte(mockResponse)}
 		v.handlers[cmdverifiable.GetCredentialsCommandMethod] = fakeHandler.exec
@@ -274,7 +275,7 @@ func TestVerifiable_GetPresentations(t *testing.T) {
 	t.Run("test it gets all stored verifiable presentations", func(t *testing.T) {
 		v := getVerifiableController(t)
 
-		mockResponse := fmt.Sprintf(`{"result": [{"name": "%s", "id":" %s"}, {"name": "%s"", "id": "%s""}]`,
+		mockResponse := fmt.Sprintf(`{"result": [{"name": %q, "id": %q}, {"name": %q, "id": %q"}]`,
 			mockPresentationName, mockPresentationID, mockPresentationName, mockPresentationID)
 		fakeHandler := mockCommandRunner{data: []byte(mockResponse)}
 		v.handlers[cmdverifiable.GetPresentationsCommandMethod] = fakeHandler.exec
@@ -325,7 +326,7 @@ func TestVerifiable_GeneratePresentationByID(t *testing.T) {
 		v.handlers[cmdverifiable.GeneratePresentationByIDCommandMethod] = fakeHandler.exec
 
 		payload := fmt.Sprintf(`{
-		"id": "%s",
+		"id": %q,
 		"did": "%s",
 		"signatureType": "%s"
 }`, mockCredentialID, mockDID, cmdverifiable.Ed25519Signature2018)
@@ -348,7 +349,7 @@ func TestVerifiable_RemoveCredentialByName(t *testing.T) {
 		fakeHandler := mockCommandRunner{data: []byte(mockResponse)}
 		v.handlers[cmdverifiable.RemoveCredentialByNameCommandMethod] = fakeHandler.exec
 
-		payload := fmt.Sprintf(`{"name":"%s"}`, mockCredentialName)
+		payload := fmt.Sprintf(`{"name":%q}`, mockCredentialName)
 
 		req := &models.RequestEnvelope{Payload: []byte(payload)}
 		resp := v.RemoveCredentialByName(req)
@@ -368,7 +369,7 @@ func TestVerifiable_RemovePresentationByName(t *testing.T) {
 		fakeHandler := mockCommandRunner{data: []byte(mockResponse)}
 		v.handlers[cmdverifiable.RemovePresentationByNameCommandMethod] = fakeHandler.exec
 
-		payload := fmt.Sprintf(`{"name":"%s"}`, mockPresentationName)
+		payload := fmt.Sprintf(`{"name":%q}`, mockPresentationName)
 
 		req := &models.RequestEnvelope{Payload: []byte(payload)}
 		resp := v.RemovePresentationByName(req)

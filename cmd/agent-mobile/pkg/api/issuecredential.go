@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -9,8 +10,7 @@ package api
 import "github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/models"
 
 // IssueCredentialController defines methods for the IssueCredential protocol controller.
-type IssueCredentialController interface {
-
+type IssueCredentialController interface { //nolint: interfacebloat
 	// Actions returns pending actions that have not yet to be executed or canceled.
 	Actions(request *models.RequestEnvelope) *models.ResponseEnvelope
 

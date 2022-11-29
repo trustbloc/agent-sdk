@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -8,8 +9,7 @@ SPDX-License-Identifier: Apache-2.0
 package api
 
 // AriesController provides Aries agent protocols tailored to mobile platforms.
-type AriesController interface {
-
+type AriesController interface { //nolint: interfacebloat
 	// GetIntroduceController returns an implementation of IntroduceController
 	GetIntroduceController() (IntroduceController, error)
 

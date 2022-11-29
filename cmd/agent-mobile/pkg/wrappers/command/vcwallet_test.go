@@ -1,10 +1,11 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package command // nolint:testpackage // uses internal implementation details
+package command //nolint:testpackage // uses internal implementation details
 
 import (
 	"encoding/json"
@@ -18,7 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// nolint: lll
 const (
 	sampleUserAuth = `{"userID":"user1", "localKMSPassphrase": "fakepassphrase"}`
 	sampleUDCVC    = `{
@@ -128,10 +128,12 @@ const (
                 }`
 	sampleKeyContentBase58 = `{
   			"@context": ["https://w3id.org/wallet/v1"],
-  		  	"id": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5",
+  		  	"id": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv` +
+		`4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5",
   		  	"controller": "did:example:123456789abcdefghi",
 			"type": "Ed25519VerificationKey2018",
-			"privateKeyBase58":"2MP5gWCnf67jvW3E4Lz8PpVrDWAXMYY1sDxjnkEnKhkkbKD7yP2mkVeyVpu5nAtr3TeDgMNjBPirk2XcQacs3dvZ"
+			"privateKeyBase58":"2MP5gWCnf67jvW3E4Lz8PpVrDWAXMYY1sDxjnkEnKhkkb` +
+		`KD7yP2mkVeyVpu5nAtr3TeDgMNjBPirk2XcQacs3dvZ"
   		}`
 	sampleDIDResolutionResponse = `{
         "@context": [
@@ -154,27 +156,33 @@ const (
             "id": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5",
             "publicKey": [
                 {
-                    "id": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5",
+                    "id": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5` +
+		`#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5",
                     "type": "Ed25519VerificationKey2018",
                     "controller": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5",
                     "publicKeyBase58": "8jkuMBqmu1TRA6is7TT5tKBksTZamrLhaXrg9NAczqeh"
                 }
             ],
             "authentication": [
-                "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5"
+                "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6Mk` +
+		`nC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5"
             ],
             "assertionMethod": [
-                "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5"
+                "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv` +
+		`4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5"
             ],
             "capabilityDelegation": [
-                "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5"
+                "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6` +
+		`MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5"
             ],
             "capabilityInvocation": [
-                "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5"
+                "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv` +
+		`4S5#z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5"
             ],
             "keyAgreement": [
                 {
-                    "id": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5#z6LSmjNfS5FC9W59JtPZq7fHgrjThxsidjEhZeMxCarbR998",
+                    "id": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4G` +
+		`Ymbye8dv4S5#z6LSmjNfS5FC9W59JtPZq7fHgrjThxsidjEhZeMxCarbR998",
                     "type": "X25519KeyAgreementKey2019",
                     "controller": "did:key:z6MknC1wwS6DEYwtGbZZo2QvjQjkh2qSBjb4GYmbye8dv4S5",
                     "publicKeyBase58": "B4CVumSL43MQDW1oJU9LNGWyrpLbw84YgfeGi8D4hmNN"
@@ -329,7 +337,6 @@ func TestVCWallet_Open_Close(t *testing.T) {
 	})
 }
 
-// nolint: lll
 func TestVCWallet_Add_Get_GetAll(t *testing.T) {
 	vcwalletController := getVCWalletController(t)
 	require.NotNil(t, vcwalletController)
@@ -370,7 +377,8 @@ func TestVCWallet_Add_Get_GetAll(t *testing.T) {
 
 	t.Run("add credential", func(t *testing.T) {
 		// add proper content
-		addPayload := fmt.Sprintf(`{"userID":"user1", "auth": "%s", "contentType":"credential", "content":%s}`, tokenResponse.Token, sampleUDCVC)
+		addPayload := fmt.Sprintf(`{"userID":"user1", "auth": %q, "contentType":"credential", "content":%s}`,
+			tokenResponse.Token, sampleUDCVC)
 		fmt.Println(addPayload)
 		addReq := &models.RequestEnvelope{Payload: []byte(addPayload)}
 
@@ -384,7 +392,8 @@ func TestVCWallet_Add_Get_GetAll(t *testing.T) {
 
 	t.Run("get content", func(t *testing.T) {
 		// get it back
-		getPayload := fmt.Sprintf(`{"userID":"user1", "auth": "%s", "contentType": "credential", "contentID": "http://example.edu/credentials/1877"}`, tokenResponse.Token)
+		getPayload := fmt.Sprintf(`{"userID":"user1", "auth": %q,`+
+			` "contentType": "credential", "contentID": "http://example.edu/credentials/1877"}`, tokenResponse.Token)
 		getReq := &models.RequestEnvelope{Payload: []byte(getPayload)}
 		getResp := vcwalletController.Get(getReq)
 		require.NotNil(t, getResp)
@@ -399,7 +408,8 @@ func TestVCWallet_Add_Get_GetAll(t *testing.T) {
 	})
 
 	t.Run("get all", func(t *testing.T) {
-		addPayload := fmt.Sprintf(`{"userID":"user1", "auth": "%s", "contentType":"credential", "content":%s}`, tokenResponse.Token, sampleUDCVC2)
+		addPayload := fmt.Sprintf(`{"userID":"user1", "auth": %q,`+
+			` "contentType":"credential", "content":%s}`, tokenResponse.Token, sampleUDCVC2)
 		fmt.Println(addPayload)
 		addReq := &models.RequestEnvelope{Payload: []byte(addPayload)}
 		addResp := vcwalletController.Add(addReq)
@@ -410,7 +420,7 @@ func TestVCWallet_Add_Get_GetAll(t *testing.T) {
 			string(addResp.Payload))
 
 		// get all
-		getPayload := fmt.Sprintf(`{"userID":"user1", "auth": "%s", "contentType": "credential"}`, tokenResponse.Token)
+		getPayload := fmt.Sprintf(`{"userID":"user1", "auth": %q, "contentType": "credential"}`, tokenResponse.Token)
 		getReq := &models.RequestEnvelope{Payload: []byte(getPayload)}
 		getResp := vcwalletController.GetAll(getReq)
 		require.NotNil(t, getResp)
@@ -427,7 +437,8 @@ func TestVCWallet_Add_Get_GetAll(t *testing.T) {
 
 	t.Run("remove", func(t *testing.T) {
 		// remove one
-		removePayload := fmt.Sprintf(`{"userID":"user1", "auth": "%s", "contentType": "credential", "contentID": "http://example.edu/credentials/1877"}`, tokenResponse.Token)
+		removePayload := fmt.Sprintf(`{"userID":"user1", "auth": %q,`+
+			` "contentType": "credential", "contentID": "http://example.edu/credentials/1877"}`, tokenResponse.Token)
 		removeReq := &models.RequestEnvelope{Payload: []byte(removePayload)}
 		removeResp := vcwalletController.Remove(removeReq)
 		require.NotNil(t, removeResp)
@@ -438,7 +449,7 @@ func TestVCWallet_Add_Get_GetAll(t *testing.T) {
 	})
 
 	t.Run("query", func(t *testing.T) {
-		payload := fmt.Sprintf(`{"userID":"user1", "auth": "%s", "query": [
+		payload := fmt.Sprintf(`{"userID":"user1", "auth": %q, "query": [
 			{"type":"QueryByExample", "credentialQuery":[%s]},
 			{"type":"QueryByFrame", "credentialQuery":[%s]}
 		] }`, tokenResponse.Token, sampleQueryByExample, sampleQueryByFrame)
@@ -456,7 +467,7 @@ func TestVCWallet_Add_Get_GetAll(t *testing.T) {
 	})
 
 	t.Run("query with invalid user", func(t *testing.T) {
-		payload := fmt.Sprintf(`{"userID":"user12", "auth": "%s", "query": [
+		payload := fmt.Sprintf(`{"userID":"user12", "auth": %q, "query": [
 			{"type":"QueryByExample", "credentialQuery":[%s]},
 			{"type":"QueryByFrame", "credentialQuery":[%s]}
 		] }`, tokenResponse.Token, sampleQueryByExample, sampleQueryByFrame)
@@ -467,7 +478,7 @@ func TestVCWallet_Add_Get_GetAll(t *testing.T) {
 	})
 
 	t.Run("query with invalid auth", func(t *testing.T) {
-		payload := fmt.Sprintf(`{"userID":"user1", "auth": "%s", "query": [
+		payload := fmt.Sprintf(`{"userID":"user1", "auth": %q, "query": [
 			{"type":"QueryByExample", "credentialQuery":[%s]},
 			{"type":"QueryByFrame", "credentialQuery":[%s]}
 		] }`, "crap", sampleQueryByExample, sampleQueryByFrame)
@@ -478,7 +489,7 @@ func TestVCWallet_Add_Get_GetAll(t *testing.T) {
 	})
 
 	t.Run("query with invalid query", func(t *testing.T) {
-		payload := fmt.Sprintf(`{"userID":"user12", "auth": "%s", "query": [
+		payload := fmt.Sprintf(`{"userID":"user12", "auth": %q, "query": [
 			{"type":"QueryByXExample", "credentialQuery":[%s]},
 			{"type":"QueryByXFrame", "credentialQuery":[%s]}
 		] }`, tokenResponse.Token, sampleQueryByExample, sampleQueryByFrame)
@@ -489,7 +500,6 @@ func TestVCWallet_Add_Get_GetAll(t *testing.T) {
 	})
 }
 
-// nolint: lll
 func TestVCWallet_Issue(t *testing.T) {
 	vcwalletController := getVCWalletController(t)
 	require.NotNil(t, vcwalletController)
@@ -525,11 +535,13 @@ func TestVCWallet_Issue(t *testing.T) {
 	}
 
 	// add proper content
-	addPayload := fmt.Sprintf(`{"userID":"user1", "auth": "%s", "contentType":"key", "content":%s}`, tokenResponse.Token, sampleKeyContentBase58)
+	addPayload := fmt.Sprintf(`{"userID":"user1", "auth": %q,`+
+		` "contentType":"key", "content":%s}`, tokenResponse.Token, sampleKeyContentBase58)
 
 	addContent(t, vcwalletController, addPayload)
 
-	addPayload = fmt.Sprintf(`{"userID":"user1", "auth": "%s", "contentType":"didResolutionResponse", "content":%s}`, tokenResponse.Token, sampleDIDResolutionResponse)
+	addPayload = fmt.Sprintf(`{"userID":"user1", "auth": %q, "contentType":"didResolutionResponse",`+
+		` "content":%s}`, tokenResponse.Token, sampleDIDResolutionResponse)
 
 	addContent(t, vcwalletController, addPayload)
 }

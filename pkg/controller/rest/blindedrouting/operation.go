@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -33,7 +34,8 @@ type Operation struct {
 
 // New returns new blinded routing rest instance.
 func New(ctx blindedrouting.Provider, msgHandler ariescmd.MessageHandler,
-	notifier ariescmd.Notifier) (*Operation, error) {
+	notifier ariescmd.Notifier,
+) (*Operation, error) {
 	client, err := blindedrouting.New(ctx, msgHandler, notifier)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize blinded routing command: %w", err)
@@ -64,8 +66,9 @@ func (c *Operation) registerHandler() {
 // Sends DID doc request over a connection.
 //
 // Responses:
-//    default: genericError
-//    200: didDocResponse
+//
+//	default: genericError
+//	200: didDocResponse
 func (c *Operation) SendDIDDocRequest(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.SendDIDDocRequest, rw, req.Body)
 }
@@ -77,8 +80,9 @@ func (c *Operation) SendDIDDocRequest(rw http.ResponseWriter, req *http.Request)
 // Sends register route request as a response to reply from send DID doc request.
 //
 // Responses:
-//    default: genericError
-//    200: registerRouteResponse
+//
+//	default: genericError
+//	200: registerRouteResponse
 func (c *Operation) SendRegisterRouteRequest(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(c.command.SendRegisterRouteRequest, rw, req.Body)
 }

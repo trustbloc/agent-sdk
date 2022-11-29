@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 # Copyright SecureKey Technologies Inc. All Rights Reserved.
+# Copyright Avast Software. All Rights Reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -9,7 +10,7 @@ set -e
 
 echo "Running $0"
 
-GOLANGCI_LINT_VER=v1.39.0
+GOLANGCI_LINT_VER=v1.50.1
 DOCKER_CMD=${DOCKER_CMD:-docker}
 
 if [ ! $(command -v ${DOCKER_CMD}) ]; then

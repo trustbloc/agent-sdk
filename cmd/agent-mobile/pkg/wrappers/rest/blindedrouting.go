@@ -1,10 +1,11 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package rest // nolint: dupl
+package rest //nolint: dupl
 
 import (
 	"github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/models"
@@ -31,7 +32,8 @@ func (br *BlindedRouting) SendRegisterRouteRequest(request *models.RequestEnvelo
 }
 
 func (br *BlindedRouting) createRespEnvelope(request *models.RequestEnvelope,
-	endpoint string) *models.ResponseEnvelope {
+	endpoint string,
+) *models.ResponseEnvelope {
 	return exec(&restOperation{
 		url:        br.URL,
 		token:      br.Token,

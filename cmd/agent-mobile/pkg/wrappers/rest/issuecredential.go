@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -91,8 +92,9 @@ func (ic *IssueCredential) DeclineCredential(request *models.RequestEnvelope) *m
 	return ic.createRespEnvelope(request, cmdisscred.DeclineCredential)
 }
 
-//nolint: lll
-func (ic *IssueCredential) createRespEnvelope(request *models.RequestEnvelope, endpoint string) *models.ResponseEnvelope {
+func (ic *IssueCredential) createRespEnvelope(request *models.RequestEnvelope,
+	endpoint string,
+) *models.ResponseEnvelope {
 	return exec(&restOperation{
 		url:        ic.URL,
 		token:      ic.Token,

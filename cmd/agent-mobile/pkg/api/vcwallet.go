@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -10,8 +11,7 @@ import "github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/models"
 
 // VCWalletController is a Verifiable Credential Wallet based on Universal Wallet 2020
 // https://w3c-ccg.github.io/universal-wallet-interop-spec/#interface.
-type VCWalletController interface {
-
+type VCWalletController interface { //nolint: interfacebloat
 	// Creates new wallet profile and returns error if wallet profile is already created.
 	CreateProfile(request *models.RequestEnvelope) *models.ResponseEnvelope
 

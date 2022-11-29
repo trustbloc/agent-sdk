@@ -1,10 +1,11 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package rest // nolint:testpackage // uses internal implementation details
+package rest //nolint:testpackage // uses internal implementation details
 
 import (
 	"fmt"
@@ -147,7 +148,7 @@ func TestPresentProof_DeclineRequestPresentation(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		p := getPresentProofController(t)
 
-		reqData := fmt.Sprintf(`{"piid": "%s"}`, mockPIID)
+		reqData := fmt.Sprintf(`{"piid": %q}`, mockPIID)
 		mockURL, err := parseURL(mockAgentURL, oppresproof.DeclineRequestPresentation, reqData)
 		require.NoError(t, err, "failed to parse test url")
 
@@ -193,7 +194,7 @@ func TestPresentProof_DeclineProposePresentation(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		p := getPresentProofController(t)
 
-		reqData := fmt.Sprintf(`{"piid": "%s"}`, mockPIID)
+		reqData := fmt.Sprintf(`{"piid": %q}`, mockPIID)
 		mockURL, err := parseURL(mockAgentURL, oppresproof.DeclineProposePresentation, reqData)
 		require.NoError(t, err, "failed to parse test url")
 
@@ -216,7 +217,7 @@ func TestPresentProof_AcceptPresentation(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		p := getPresentProofController(t)
 
-		reqData := fmt.Sprintf(`{"piid": "%s"}`, mockPIID)
+		reqData := fmt.Sprintf(`{"piid": %q}`, mockPIID)
 		mockURL, err := parseURL(mockAgentURL, oppresproof.AcceptPresentation, reqData)
 		require.NoError(t, err, "failed to parse test url")
 
@@ -239,7 +240,7 @@ func TestPresentProof_AcceptProblemReport(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		p := getPresentProofController(t)
 
-		reqData := fmt.Sprintf(`{"piid": "%s"}`, mockPIID)
+		reqData := fmt.Sprintf(`{"piid": %q}`, mockPIID)
 		mockURL, err := parseURL(mockAgentURL, oppresproof.AcceptProblemReport, reqData)
 		require.NoError(t, err, "failed to parse test url")
 
@@ -262,7 +263,7 @@ func TestPresentProof_DeclinePresentation(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		p := getPresentProofController(t)
 
-		reqData := fmt.Sprintf(`{"piid": "%s"}`, mockPIID)
+		reqData := fmt.Sprintf(`{"piid": %q}`, mockPIID)
 		mockURL, err := parseURL(mockAgentURL, oppresproof.DeclinePresentation, reqData)
 		require.NoError(t, err, "failed to parse test url")
 

@@ -3,10 +3,12 @@
 
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
+// Package agent-js-worker runs aries-framework-go wasm startup code.
 package main
 
 import (
@@ -42,7 +44,8 @@ const (
 )
 
 // TODO Signal JS when WASM is loaded and ready.
-//      This is being used in tests for now.
+//
+//	This is being used in tests for now.
 var (
 	ready  = make(chan struct{}) //nolint:gochecknoglobals
 	isTest = false               //nolint:gochecknoglobals
@@ -50,12 +53,13 @@ var (
 
 // main registers the 'handleMsg' function in the JS context's global scope to receive commands.
 // Results are posted back to the 'handleResult' JS function.
-// nolint:lll
+//
+//nolint:lll
 func main() {
 	// TODO: capacity was added due to deadlock. Looks like js worker are not able to pick up 'output chan *wasmsetup.Result'.
 	//  Another fix for that is to wrap 'in <- cmd' in a goroutine. e.g go func() { in <- cmd }()
 	//  We need to figure out what is the root cause of deadlock and fix it properly.
-	input := make(chan *wasmsetup.Command, 10) // nolint: gomnd
+	input := make(chan *wasmsetup.Command, 10) //nolint: gomnd
 	output := make(chan *wasmsetup.Result)
 
 	go wasmsetup.Pipe(input, output, addAgentHandlers, workers)
@@ -132,7 +136,8 @@ func addAgentHandlers(pkgMap map[string]map[string]func(*wasmsetup.Command) *was
 }
 
 func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
-	opts *agentsetup.AgentStartOpts) ([]controllercmd.Handler, error) {
+	opts *agentsetup.AgentStartOpts,
+) ([]controllercmd.Handler, error) {
 	var (
 		headerFunc func(r2 *http.Request) (*http.Header, error)
 		err        error
@@ -163,7 +168,8 @@ func getAriesHandlers(ctx *context.Provider, r controllercmd.MessageHandler,
 }
 
 func getAgentHandlers(ctx *context.Provider,
-	r controllercmd.MessageHandler, opts *agentsetup.AgentStartOpts) ([]controllercmd.Handler, error) {
+	r controllercmd.MessageHandler, opts *agentsetup.AgentStartOpts,
+) ([]controllercmd.Handler, error) {
 	handlers, err := agentctrl.GetCommandHandlers(ctx, agentctrl.WithBlocDomain(opts.BlocDomain),
 		agentctrl.WithDidAnchorOrigin(opts.DidAnchorOrigin), agentctrl.WithSidetreeToken(opts.SidetreeToken),
 		agentctrl.WithUnanchoredDIDMaxLifeTime(opts.UnanchoredDIDMaxLifeTime), agentctrl.WithMessageHandler(r),

@@ -1,10 +1,11 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package rest // nolint: dupl
+package rest //nolint: dupl
 
 import (
 	cmdpresproof "github.com/hyperledger/aries-framework-go/pkg/controller/command/presentproof"

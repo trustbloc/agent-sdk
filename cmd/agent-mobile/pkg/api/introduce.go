@@ -1,16 +1,16 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
 
-package api // nolint: dupl
+package api //nolint: dupl
 
 import "github.com/trustbloc/agent-sdk/cmd/agent-mobile/pkg/wrappers/models"
 
 // IntroduceController defines methods for the introduce protocol controller.
-type IntroduceController interface {
-
+type IntroduceController interface { //nolint: interfacebloat
 	// Actions returns unfinished actions for the async usage.
 	Actions(request *models.RequestEnvelope) *models.ResponseEnvelope
 

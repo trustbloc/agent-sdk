@@ -1,9 +1,11 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
+
 SPDX-License-Identifier: Apache-2.0
 */
 
-package didclient // nolint:testpackage // uses internal implementation details
+package didclient //nolint:testpackage // uses internal implementation details
 
 import (
 	"bytes"
@@ -694,7 +696,7 @@ func TestCommand_CreateOrbDID(t *testing.T) {
 		var b bytes.Buffer
 		cmdErr := badC.CreateOrbDID(&b, bytes.NewBuffer(r))
 		require.Contains(t, cmdErr.Error(), "failed to register did doc recipient key")
-		require.True(t, errors.As(cmdErr, &addRouterKeyErr))
+		require.Contains(t, cmdErr.Error(), addRouterKeyErr.Error())
 	})
 
 	t.Run("test success create did with custom properties and NISTP256ECDHKW keyAgreement", func(t *testing.T) {
