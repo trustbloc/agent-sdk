@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -556,6 +557,44 @@ export class UniversalWallet {
       descriptorID,
     });
   }
+
+  /**
+   *  signs a JWT using a key in wallet.
+   *
+   *  @param {Object} request
+   *  @param {String} request.auth -  authorization token for performing this wallet operation.
+   *  @param {String} request.headers - JWT token headers.
+   *  @param {String} request.claims - JWT token claims.
+   *  @param {String} request.kid - wallet's key id.
+   *
+   * @returns {Promise<Object>} - promise of object containing signed JWT string.
+   */
+  async signJWT({ auth, headers, claims, kid } = {}) {
+    return await this.agent.vcwallet.signJWT({
+      userID: this.user,
+      auth,
+      headers,
+      claims,
+      kid,
+    });
+  }
+
+  /**
+   *  verifies a JWT using wallet.
+   *
+   *  @param {Object} request
+   *  @param {String} request.auth -  authorization token for performing this wallet operation.
+   *  @param {String} request.jwt - JWT token to be verified.
+   *
+   * @returns {Promise<Object>} - promise of object containing a boolean representing verification result or an error if operation fails.
+   */
+     async verifyJWT({ auth, jwt } = {}) {
+      return await this.agent.vcwallet.verifyJWT({
+        userID: this.user,
+        auth,
+        jwt,
+      });
+    }
 }
 
 /**

@@ -1,5 +1,6 @@
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
+Copyright Avast Software. All Rights Reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -1465,6 +1466,30 @@ const Agent = function (opts) {
              */
             resolveCredentialManifest: async function (req) {
                 return invoke(aw, pending, this.pkgname, "ResolveCredentialManifest", req, "timeout while resolving credential manifest from wallet")
+            },
+
+            /**
+             *
+             * SignJWT signs a JWT using a key in wallet.
+             *
+             *  Returns signed JWT.
+             *
+             * @returns {Promise<Object>}
+             */
+            signJWT: async function (req) {
+                return invoke(aw, pending, this.pkgname, "SignJWT", req, "timeout while signing JWT using a key in wallet")
+            },
+
+            /**
+             *
+             * VerifyJWT verifies a JWT using wallet.
+             *
+             *  Returns a boolean indicating verification status and an error, if any.
+             *
+             * @returns {Promise<Object>}
+             */
+             verifyJWT: async function (req) {
+                return invoke(aw, pending, this.pkgname, "VerifyJWT", req, "timeout while verifying JWT using wallet")
             },
         },
         /**
