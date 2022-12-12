@@ -19,6 +19,7 @@ import {
   createWalletProfile,
   CredentialManager,
   DIDManager,
+  JWTManager,
   OpenID4VP,
   UniversalWallet,
 } from "@";
@@ -43,7 +44,7 @@ const MOCK_PRESENTATION_QUERY = getJSONTestData(
 );
 const MOCK_KID = "did:key:mockjwt#sign";
 
-let agent, issuer, openID4VP, samplePRC;
+let agent, issuer, openID4VP, samplePRC, authToken;
 
 before(async function () {
   agent = await loadFrameworks({ name: USER_ID });
@@ -91,6 +92,8 @@ describe("OpenID4VP - Constructor", async function () {
     expect(openID4VP.credentialManager).to.be.an.instanceof(CredentialManager);
     expect(openID4VP).to.have.property("didManager");
     expect(openID4VP.didManager).to.be.an.instanceof(DIDManager);
+    expect(openID4VP).to.have.property("jwtManager");
+    expect(openID4VP.jwtManager).to.be.an.instanceof(JWTManager);
   });
 });
 
@@ -109,7 +112,6 @@ describe("OpenID4VP - Initiate Presentation", async function () {
     });
   });
 
-  let authToken;
   it("user opens wallet", async function () {
     const wallet = new UniversalWallet({ agent: agent, user: USER_ID });
     const authResponse = await wallet.open({
@@ -148,6 +150,10 @@ describe("OpenID4VP - Initiate Presentation", async function () {
       request.respondWith({ status: 200, response: MOCK_JWT });
     }, 5);
 
+    sinon.stub(openID4VP.jwtManager, "verifyJWT").callsFake(() => {
+      verified: true;
+    });
+
     sinon
       .stub(openID4VP.didManager, "resolveWebDIDFromOrbDID")
       .callsFake(() => MOCK_DID_DOC);
@@ -156,7 +162,6 @@ describe("OpenID4VP - Initiate Presentation", async function () {
       authToken,
       url: MOCK_REQUEST_URL,
     });
-    console.log("presentation", presentation);
 
     expect(presentation).to.have.lengthOf(1);
     expect(presentation[0].verifiableCredential).to.have.lengthOf(1);
@@ -194,23 +199,6 @@ describe("OpenID4VP - Initiate Presentation", async function () {
     );
   });
 
-  it("throws an error when url parameter is missing", function () {
-    moxios.wait(() => {
-      const request = moxios.requests.mostRecent();
-      request.respondWith({ status: 200, response: MOCK_JWT });
-    }, 5);
-
-    expect(
-      openID4VP.initiateOIDCPresentation({
-        authToken,
-        url: MOCK_INVALID_REQUEST_URL,
-      })
-    ).to.eventually.throw(
-      TypeError,
-      "Error initiating OIDC presentation: invalid request url: request_uri is missing"
-    );
-  });
-
   it("throws an error when request_uri is missing in the url", function () {
     moxios.wait(() => {
       const request = moxios.requests.mostRecent();
@@ -230,9 +218,23 @@ describe("OpenID4VP - Initiate Presentation", async function () {
 });
 
 describe("OpenID4VP - Submit Presentation", async function () {
+  it("throws an error when authToken parameter is missing", function () {
+    expect(
+      openID4VP.submitOIDCPresentation({
+        kid: MOCK_KID,
+        presentationQuery: MOCK_PRESENTATION_QUERY,
+        expiry: new Date().getTime() / 1000 + 60 * 10,
+      })
+    ).to.eventually.throw(
+      TypeError,
+      "Error submitting OpenID4VP presentation: kid cannot be empty"
+    );
+  });
   it("throws an error when kid parameter is missing", function () {
     expect(
       openID4VP.submitOIDCPresentation({
+        authToken,
+        kid: MOCK_KID,
         presentationQuery: MOCK_PRESENTATION_QUERY,
         expiry: new Date().getTime() / 1000 + 60 * 10,
       })
@@ -244,6 +246,7 @@ describe("OpenID4VP - Submit Presentation", async function () {
   it("throws an error when presentationQuery parameter is missing", function () {
     expect(
       openID4VP.submitOIDCPresentation({
+        authToken,
         kid: MOCK_KID,
         expiry: new Date().getTime() / 1000 + 60 * 10,
       })
@@ -255,6 +258,7 @@ describe("OpenID4VP - Submit Presentation", async function () {
   it("throws an error when expiry parameter is missing", function () {
     expect(
       openID4VP.submitOIDCPresentation({
+        authToken,
         kid: MOCK_KID,
         presentationQuery: MOCK_PRESENTATION_QUERY,
       })
@@ -271,6 +275,7 @@ describe("OpenID4VP - Submit Presentation", async function () {
 
     expect(
       openID4VP.submitOIDCPresentation({
+        authToken,
         kid: MOCK_KID,
         presentationQuery: MOCK_PRESENTATION_QUERY,
         expiry: new Date().getTime() / 1000 + 60 * 10,

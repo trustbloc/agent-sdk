@@ -6,16 +6,8 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 import axios from "axios";
-import { decode, encode } from "js-base64";
-import { CredentialManager, DIDManager } from "@";
-
-// TODO: replace mock function with an actual JWT signer once implemented
-function signJWT({ header, payload }) {
-  const encodedHeader = encode(JSON.stringify(header), true);
-  const encodedPayload = encode(JSON.stringify(payload), true);
-  const encodedSignature = encode("mock-signature", true);
-  return `${encodedHeader}.${encodedPayload}.${encodedSignature}`;
-}
+import { decode } from "js-base64";
+import { CredentialManager, DIDManager, JWTManager } from "@";
 
 /**
  *  OpenID4VP module is the oidc client that provides APIs for OIDC4VP flows.
@@ -44,6 +36,7 @@ export class OpenID4VP {
     this.user = user;
     this.credentialManager = new CredentialManager({ agent, user });
     this.didManager = new DIDManager({ agent, user });
+    this.jwtManager = new JWTManager({ agent, user });
   }
 
   /**
@@ -79,14 +72,27 @@ export class OpenID4VP {
         );
       });
 
+    const jwtVerificationStatus = await this.jwtManager.verifyJWT(authToken, {
+      jwt: encodedRequestToken,
+    });
+
+    // TODO: enable the check once mock verifier is updated to sign the request object
+    console.log("jwtVerificationStatus", jwtVerificationStatus);
+    // if (!jwtVerificationStatus.verified) {
+    //   throw new Error(
+    //     "Error initiating OIDC presentation: failed to verify signature on request token:",
+    //     jwtVerificationStatus.error
+    //   );
+    // }
+
     const encodedRequestTokenArray = encodedRequestToken.split(".");
 
-    const header = JSON.parse(decode(encodedRequestTokenArray[0]));
+    const headers = JSON.parse(decode(encodedRequestTokenArray[0]));
     const payload = JSON.parse(decode(encodedRequestTokenArray[1]));
 
     const { didDocument } = await this.didManager.resolveWebDIDFromOrbDID(
       "",
-      header.kid
+      headers.kid
     );
 
     this.verificationMethodId = didDocument.verificationMethod.id;
@@ -128,8 +134,12 @@ export class OpenID4VP {
    *
    * @returns {Promise<Object>} - empty promise or error if operation fails.
    */
-  async submitOIDCPresentation({ kid, presentation, expiry, alg = "ES256" }) {
-    if (!kid) {
+  async submitOIDCPresentation({ authToken, kid, presentation, expiry }) {
+    if (!authToken) {
+      throw new TypeError(
+        "Error submitting OpenID4VP presentation: authToken is missing"
+      );
+    } else if (!kid) {
       throw new TypeError(
         "Error submitting OpenID4VP presentation: kid cannot be empty"
       );
@@ -155,15 +165,14 @@ export class OpenID4VP {
       );
     }
 
-    const header = {};
-    header["alg"] = alg;
-    header["kid"] = kid;
-    header["typ"] = "JWT";
+    const headers = {};
+    headers["kid"] = kid;
+    headers["typ"] = "JWT";
 
-    const idToken = await generateIdToken({
+    const { jwt: idToken } = await generateIdToken(this.jwtManager, authToken, {
       kid,
       presentation: presentation[0].presentation_submission,
-      header,
+      headers,
       expiry,
       nonce: this.nonce,
       clientId: this.clientId,
@@ -173,11 +182,11 @@ export class OpenID4VP {
     vp["@context"] = presentation["@context"];
     vp["type"] = presentation.type;
     // TODO: encode and sign with JWT
-    vp["verifiableCredential"] = presentation.verifiableCredential;
+    vp["verifiableCredential"] = presentation[0].verifiableCredential;
 
-    const vpToken = await generateVpToken({
+    const { jwt: vpToken } = await generateVpToken(this.jwtManager, authToken, {
       kid,
-      header,
+      headers,
       vp,
       expiry,
       nonce: this.nonce,
@@ -198,28 +207,25 @@ export class OpenID4VP {
  * generateIdToken generates an ID Token for the presentation submission request
  * @param {string} kid - consumer's verification method's kid.
  * @param {Object} presentation - presentation.
- * @param {Object} header - header for the ID Token.
+ * @param {Object} headers - headers for the ID Token.
  * @param {number} expiry - time in seconds representing the expiry of the token.
  *
  *
  * @returns {Promise<string>} - a promise resolving with a string containing ID Token or an error.
  */
-async function generateIdToken({
-  kid,
-  presentation,
-  header,
-  expiry,
-  nonce,
-  clientId,
-}) {
+async function generateIdToken(
+  jwtManager,
+  authToken,
+  { kid, presentation, headers, expiry, nonce, clientId }
+) {
   if (!kid) {
     throw new TypeError("Error generating ID Token: kid cannot be empty");
   } else if (!presentation) {
     throw new TypeError(
       "Error generating ID Token: presentation cannot be empty"
     );
-  } else if (!header) {
-    throw new TypeError("Error generating ID Token: header cannot be empty");
+  } else if (!headers) {
+    throw new TypeError("Error generating ID Token: headers cannot be empty");
   } else if (!expiry) {
     throw new TypeError("Error generating ID Token: expiry cannot be empty");
   } else if (!nonce) {
@@ -231,48 +237,52 @@ async function generateIdToken({
   const vpToken = {};
   vpToken["presentation_submission"] = presentation;
 
-  const payload = {};
-  payload["sub"] = kid.split("#")[0];
-  payload["nonce"] = nonce;
-  payload["_vp_token"] = vpToken;
-  payload["aud"] = clientId;
-  payload["iss"] = "https://self-issued.me/v2/openid-vc";
-  payload["exp"] = expiry;
+  const claims = {};
+  claims["sub"] = kid.split("#")[0];
+  claims["nonce"] = nonce;
+  claims["_vp_token"] = vpToken;
+  claims["aud"] = clientId;
+  claims["iss"] = "https://self-issued.me/v2/openid-vc";
+  claims["exp"] = expiry;
 
-  return signJWT({ header, payload });
+  return jwtManager.signJWT(authToken, { headers, claims, kid });
 }
 
 /**
  * generateVpToken generates a VP Token for the presentation submission request
  * @param {string} kid - consumer's verification method's kid.
  * @param {Object} vp - object containing details for the presentation.
- * @param {Object} header - header for the VP Token.
+ * @param {Object} headers - headers for the VP Token.
  * @param {number} expiry - time in seconds representing the expiry of the token.
  *
  *
  * @returns {Promise<string>} - a promise resolving with a string containing ID Token or an error.
  */
-async function generateVpToken({ kid, vp, header, expiry, nonce, clientId }) {
+async function generateVpToken(
+  jwtManager,
+  authToken,
+  { kid, vp, headers, expiry, nonce, clientId }
+) {
   if (!kid) {
     throw new TypeError("Error generating VP Token: kid cannot be empty");
   } else if (!vp) {
     throw new TypeError("Error generating VP Token: vp cannot be empty");
-  } else if (!header) {
-    throw new TypeError("Error generating VP Token: header cannot be empty");
+  } else if (!headers) {
+    throw new TypeError("Error generating VP Token: headers cannot be empty");
   } else if (!expiry) {
     throw new TypeError("Error generating VP Token: expiry cannot be empty");
   } else if (!nonce) {
-    throw new TypeError("Error generating ID Token: nonce cannot be empty");
+    throw new TypeError("Error generating VD Token: nonce cannot be empty");
   } else if (!clientId) {
-    throw new TypeError("Error generating ID Token: clientId cannot be empty");
+    throw new TypeError("Error generating VD Token: clientId cannot be empty");
   }
 
-  const payload = {};
-  payload["nonce"] = nonce;
-  payload["vp"] = vp;
-  payload["aud"] = clientId;
-  payload["iss"] = kid.split("#")[0];
-  payload["exp"] = expiry;
+  const claims = {};
+  claims["nonce"] = nonce;
+  claims["vp"] = vp;
+  claims["aud"] = clientId;
+  claims["iss"] = kid.split("#")[0];
+  claims["exp"] = expiry;
 
-  return signJWT({ header, payload });
+  return jwtManager.signJWT(authToken, { headers, claims, kid });
 }
