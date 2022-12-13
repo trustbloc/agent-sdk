@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import axios from "axios";
 import { decode } from "js-base64";
-import { CredentialManager, DIDManager, JWTManager } from "@";
+import { CredentialManager, JWTManager } from "@";
 
 /**
  *  OpenID4VP module is the oidc client that provides APIs for OIDC4VP flows.
@@ -35,7 +35,6 @@ export class OpenID4VP {
     }
     this.user = user;
     this.credentialManager = new CredentialManager({ agent, user });
-    this.didManager = new DIDManager({ agent, user });
     this.jwtManager = new JWTManager({ agent, user });
   }
 
@@ -76,27 +75,14 @@ export class OpenID4VP {
       jwt: encodedRequestToken,
     });
 
-    // TODO: enable the check once mock verifier is updated to sign the request object
-    console.log("jwtVerificationStatus", jwtVerificationStatus);
-    // if (!jwtVerificationStatus.verified) {
-    //   throw new Error(
-    //     "Error initiating OIDC presentation: failed to verify signature on request token:",
-    //     jwtVerificationStatus.error
-    //   );
-    // }
+    if (!jwtVerificationStatus.verified) {
+      throw new Error(
+        "Error initiating OIDC presentation: failed to verify signature on the request token:",
+        jwtVerificationStatus.error
+      );
+    }
 
-    const encodedRequestTokenArray = encodedRequestToken.split(".");
-
-    const headers = JSON.parse(decode(encodedRequestTokenArray[0]));
-    const payload = JSON.parse(decode(encodedRequestTokenArray[1]));
-
-    const { didDocument } = await this.didManager.resolveWebDIDFromOrbDID(
-      "",
-      headers.kid
-    );
-
-    this.verificationMethodId = didDocument.verificationMethod.id;
-
+    const payload = JSON.parse(decode(encodedRequestToken.split(".")[1]));
     const claims = payload.claims;
 
     // Get Presentation
@@ -181,7 +167,6 @@ export class OpenID4VP {
     const vp = {};
     vp["@context"] = presentation["@context"];
     vp["type"] = presentation.type;
-    // TODO: encode and sign with JWT
     vp["verifiableCredential"] = presentation[0].verifiableCredential;
 
     const { jwt: vpToken } = await generateVpToken(this.jwtManager, authToken, {

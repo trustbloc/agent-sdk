@@ -18,7 +18,6 @@ import {
 import {
   createWalletProfile,
   CredentialManager,
-  DIDManager,
   JWTManager,
   OpenID4VP,
   UniversalWallet,
@@ -90,8 +89,6 @@ describe("OpenID4VP - Constructor", async function () {
     expect(openID4VP.user).to.equal(USER_ID);
     expect(openID4VP).to.have.property("credentialManager");
     expect(openID4VP.credentialManager).to.be.an.instanceof(CredentialManager);
-    expect(openID4VP).to.have.property("didManager");
-    expect(openID4VP.didManager).to.be.an.instanceof(DIDManager);
     expect(openID4VP).to.have.property("jwtManager");
     expect(openID4VP.jwtManager).to.be.an.instanceof(JWTManager);
   });
@@ -151,12 +148,10 @@ describe("OpenID4VP - Initiate Presentation", async function () {
     }, 5);
 
     sinon.stub(openID4VP.jwtManager, "verifyJWT").callsFake(() => {
-      verified: true;
+      return {
+        verified: true,
+      };
     });
-
-    sinon
-      .stub(openID4VP.didManager, "resolveWebDIDFromOrbDID")
-      .callsFake(() => MOCK_DID_DOC);
 
     const presentation = await openID4VP.initiateOIDCPresentation({
       authToken,
