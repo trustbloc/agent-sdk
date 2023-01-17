@@ -321,7 +321,7 @@ async function getCredential(
     },
   };
 
-  const credentialResponse = await axios
+  const { credential, format } = await axios
     .post(
       transactionData.issuerMetadata.credential_endpoint,
       credentialRequest,
@@ -337,9 +337,20 @@ async function getCredential(
     });
   // TODO deferred flow implementation deferred
 
+  const jwtVerificationStatus = await jwtManager.verifyJWT(authToken, {
+    jwt: credential,
+  });
+
+  if (!jwtVerificationStatus.verified) {
+    throw new Error(
+      "Error issuing a credential through OpenID4CI: failed to verify signature on the issued credential:",
+      jwtVerificationStatus.error
+    );
+  }
+
   return {
-    format: credentialResponse.format,
-    credential: credentialResponse.credential,
+    format,
+    credential,
   };
 }
 
